@@ -4,21 +4,16 @@ import * as fs from 'fs';
 import request from 'supertest';
 import express from 'express';
 import { BookStore } from '../app/services/BookStore';
+import { UserStore } from '../app/services/UserStore';
 import { createOpdsRouter } from '../app/routes/opds';
-import { AppConfig } from '../app/types';
 
 let booksDir: string;
+let dbPath: string;
 let bookStore: BookStore;
+let userStore: UserStore;
 let app: express.Express;
 
-const config: AppConfig = {
-  username: 'admin',
-  password: 'pass',
-  booksDir: '',
-  dataDir: '/tmp',
-  port: 3000,
-};
-
+// OPDS uses HTTP Basic Auth — password is sent plaintext (RFC 7617).
 function basicAuth(username: string, password: string) {
   const encoded = Buffer.from(`${username}:${password}`).toString('base64');
   return { Authorization: `Basic ${encoded}` };
@@ -26,12 +21,18 @@ function basicAuth(username: string, password: string) {
 
 beforeEach(() => {
   booksDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hass-odps-opds-'));
+  dbPath = path.join(os.tmpdir(), `hass-odps-opds-test-${Date.now()}.sqlite`);
   bookStore = new BookStore(booksDir);
+  userStore = new UserStore(dbPath);
+  // Register a test user the same way KOSync registration does: store MD5(password).
+  userStore.createUser('alice', UserStore.hashPassword('secret'));
   app = express();
-  app.use('/opds', createOpdsRouter(bookStore, { ...config, booksDir }));
+  app.use('/opds', createOpdsRouter(bookStore, userStore));
 });
 
 afterEach(() => {
+  userStore.close();
+  fs.unlinkSync(dbPath);
   fs.rmSync(booksDir, { recursive: true });
 });
 
@@ -41,14 +42,24 @@ describe('GET /opds/', () => {
     expect(res.status).toBe(401);
   });
 
+  it('returns 401 with wrong password', async () => {
+    const res = await request(app).get('/opds/').set(basicAuth('alice', 'wrong'));
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 for unknown user', async () => {
+    const res = await request(app).get('/opds/').set(basicAuth('nobody', 'secret'));
+    expect(res.status).toBe(401);
+  });
+
   it('returns 200 with valid credentials', async () => {
-    const res = await request(app).get('/opds/').set(basicAuth('admin', 'pass'));
+    const res = await request(app).get('/opds/').set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/atom\+xml/);
   });
 
   it('returns valid XML containing a link to /opds/books', async () => {
-    const res = await request(app).get('/opds/').set(basicAuth('admin', 'pass'));
+    const res = await request(app).get('/opds/').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('/opds/books');
     expect(res.text).toContain('<?xml');
   });
@@ -56,21 +67,21 @@ describe('GET /opds/', () => {
 
 describe('GET /opds/books', () => {
   it('returns an empty feed when no books exist', async () => {
-    const res = await request(app).get('/opds/books').set(basicAuth('admin', 'pass'));
+    const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.text).toContain('<feed');
   });
 
   it('includes an entry for each book', async () => {
     fs.writeFileSync(path.join(booksDir, 'My Book.epub'), 'x');
-    const res = await request(app).get('/opds/books').set(basicAuth('admin', 'pass'));
+    const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('My Book');
     expect(res.text).toContain('opds-spec.org/acquisition');
   });
 
   it('escapes special characters in titles', async () => {
     fs.writeFileSync(path.join(booksDir, 'A & B <Test>.epub'), 'x');
-    const res = await request(app).get('/opds/books').set(basicAuth('admin', 'pass'));
+    const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('A &amp; B &lt;Test&gt;');
     expect(res.text).not.toContain('<Test>');
   });
@@ -80,7 +91,7 @@ describe('GET /opds/books/:id/download', () => {
   it('returns 404 for unknown book id', async () => {
     const res = await request(app)
       .get('/opds/books/deadbeefdeadbeef/download')
-      .set(basicAuth('admin', 'pass'));
+      .set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(404);
   });
 
@@ -89,7 +100,7 @@ describe('GET /opds/books/:id/download', () => {
     const [book] = bookStore.listBooks();
     const res = await request(app)
       .get(`/opds/books/${book.id}/download`)
-      .set(basicAuth('admin', 'pass'));
+      .set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/epub/);
   });

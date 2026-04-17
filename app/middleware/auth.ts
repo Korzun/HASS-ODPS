@@ -1,32 +1,35 @@
 // app/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
-import { AppConfig } from '../types';
 import { UserStore } from '../services/UserStore';
 import { logger } from '../logger';
 
 const log = logger('Auth');
 
-/** HTTP Basic Auth — validates against admin config credentials. Used for OPDS. */
-export function basicAuth(config: AppConfig) {
+/**
+ * HTTP Basic Auth for OPDS — validates against the KOSync UserStore.
+ * OPDS clients send the password as plaintext (just Base64-encoded per RFC 7617),
+ * so we hash it with MD5 before comparing against the stored key.
+ */
+export function opdsAuth(userStore: UserStore) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const header = req.headers.authorization;
     if (!header?.startsWith('Basic ')) {
-      log.warn('Basic auth failed — missing or malformed Authorization header');
+      log.warn('OPDS auth failed — missing or malformed Authorization header');
       res.set('WWW-Authenticate', 'Basic realm="HASS-ODPS"');
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).send();
       return;
     }
     const decoded = Buffer.from(header.slice(6), 'base64').toString();
     const colonIndex = decoded.indexOf(':');
-    const user = decoded.slice(0, colonIndex);
-    const pass = decoded.slice(colonIndex + 1);
-    if (user === config.username && pass === config.password) {
-      next();
-    } else {
-      log.warn(`Basic auth failed for user "${user}"`);
+    const username = decoded.slice(0, colonIndex);
+    const password = decoded.slice(colonIndex + 1);
+    if (!userStore.authenticate(username, UserStore.hashPassword(password))) {
+      log.warn(`OPDS auth failed for user "${username}"`);
       res.set('WWW-Authenticate', 'Basic realm="HASS-ODPS"');
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).send();
+      return;
     }
+    next();
   };
 }
 

@@ -1,8 +1,9 @@
 // app/routes/opds.ts
 import { Router, Request, Response } from 'express';
 import { BookStore } from '../services/BookStore';
-import { AppConfig, Book } from '../types';
-import { basicAuth } from '../middleware/auth';
+import { UserStore } from '../services/UserStore';
+import { Book } from '../types';
+import { opdsAuth } from '../middleware/auth';
 import { logger } from '../logger';
 
 const log = logger('OPDS');
@@ -66,9 +67,9 @@ ${entries}
 </feed>`;
 }
 
-export function createOpdsRouter(bookStore: BookStore, config: AppConfig): Router {
+export function createOpdsRouter(bookStore: BookStore, userStore: UserStore): Router {
   const router = Router();
-  const auth = basicAuth(config);
+  const auth = opdsAuth(userStore);
 
   router.get('/', auth, (req: Request, res: Response) => {
     log.debug('Root catalog served');
