@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.2.3)"
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  version:
+    name: Bump version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - run: echo "placeholder"
+
+  build:
+    name: Build & push images
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "placeholder"
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "placeholder"
