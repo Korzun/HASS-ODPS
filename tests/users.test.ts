@@ -1,0 +1,131 @@
+import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
+import request from 'supertest';
+import express from 'express';
+import session from 'express-session';
+import { UserStore } from '../app/services/UserStore';
+import { createUsersRouter } from '../app/routes/users';
+
+let dbPath: string;
+let userStore: UserStore;
+let app: express.Express;
+
+beforeEach(() => {
+  dbPath = path.join(os.tmpdir(), `hass-odps-users-test-${Date.now()}.sqlite`);
+  userStore = new UserStore(dbPath);
+
+  app = express();
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+  app.use(session({ secret: 'test-secret', resave: false, saveUninitialized: false }));
+  // Minimal login endpoint for test session setup
+  app.post('/login', (req, res) => {
+    (req.session as { authenticated?: boolean }).authenticated = true;
+    res.status(200).send('ok');
+  });
+  app.use('/api/users', createUsersRouter(userStore));
+});
+
+afterEach(() => {
+  userStore.close();
+  fs.unlinkSync(dbPath);
+});
+
+async function authenticatedAgent() {
+  const agent = request.agent(app);
+  await agent.post('/login');
+  return agent;
+}
+
+describe('GET /api/users', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app).get('/api/users');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns empty array when no users', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/users');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns users with progress counts', async () => {
+    userStore.createUser('alice', 'pass');
+    userStore.saveProgress('alice', {
+      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+    });
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/users');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].username).toBe('alice');
+    expect(res.body[0].progressCount).toBe(1);
+  });
+});
+
+describe('GET /api/users/:username/progress', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app).get('/api/users/alice/progress');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns 404 for unknown user', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/users/nobody/progress');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns empty array for user with no progress', async () => {
+    userStore.createUser('alice', 'pass');
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/users/alice/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns progress records for a user', async () => {
+    userStore.createUser('alice', 'pass');
+    userStore.saveProgress('alice', {
+      document: 'dune.epub', progress: '/p[5]', percentage: 0.42, device: 'Kobo', device_id: 'd1',
+    });
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/users/alice/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].document).toBe('dune.epub');
+    expect(res.body[0].percentage).toBeCloseTo(0.42);
+  });
+});
+
+describe('DELETE /api/users/:username', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app).delete('/api/users/alice');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns 404 for unknown user', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.delete('/api/users/nobody');
+    expect(res.status).toBe(404);
+  });
+
+  it('deletes the user and returns 204', async () => {
+    userStore.createUser('alice', 'pass');
+    const agent = await authenticatedAgent();
+    const res = await agent.delete('/api/users/alice');
+    expect(res.status).toBe(204);
+    expect(userStore.userExists('alice')).toBe(false);
+  });
+
+  it('cascades to delete progress records', async () => {
+    userStore.createUser('alice', 'pass');
+    userStore.saveProgress('alice', {
+      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+    });
+    const agent = await authenticatedAgent();
+    await agent.delete('/api/users/alice');
+    expect(userStore.getUserProgress('alice')).toEqual([]);
+  });
+});
