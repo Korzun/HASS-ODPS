@@ -55,10 +55,10 @@ export class BookStore {
     return this.listBooks().find(b => b.id === id) ?? null;
   }
 
-  deleteBook(id: string): boolean {
+  deleteBook(id: string): Book | null {
     const book = this.getBookById(id);
-    if (!book) return false;
+    if (!book) return null;
     fs.unlinkSync(book.path);
-    return true;
+    return book;
   }
 }

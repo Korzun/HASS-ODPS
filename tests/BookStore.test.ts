@@ -64,15 +64,15 @@ describe('BookStore.getBookById', () => {
 });
 
 describe('BookStore.deleteBook', () => {
-  it('deletes the file and returns true', () => {
+  it('deletes the file and returns the deleted book', () => {
     const bookPath = path.join(booksDir, 'book.epub');
     fs.writeFileSync(bookPath, 'x');
     const [book] = store.listBooks();
-    expect(store.deleteBook(book.id)).toBe(true);
+    expect(store.deleteBook(book.id)).not.toBeNull();
     expect(fs.existsSync(bookPath)).toBe(false);
   });
 
-  it('returns false for unknown id', () => {
-    expect(store.deleteBook('deadbeefdeadbeef')).toBe(false);
+  it('returns null for unknown id', () => {
+    expect(store.deleteBook('deadbeefdeadbeef')).toBeNull();
   });
 });

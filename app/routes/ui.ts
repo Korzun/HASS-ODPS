@@ -115,14 +115,13 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
   });
 
   router.delete('/api/books/:id', sessionAuth, (req: Request, res: Response) => {
-    const book = bookStore.getBookById(req.params.id);
-    if (!book) {
+    const deleted = bookStore.deleteBook(req.params.id);
+    if (!deleted) {
       log.warn(`Delete attempted for unknown book ID: ${req.params.id}`);
       res.status(404).json({ error: 'Book not found' });
       return;
     }
-    bookStore.deleteBook(req.params.id);
-    log.info(`Book deleted: "${book.filename}"`);
+    log.info(`Book deleted: "${deleted.filename}"`);
     res.status(204).send();
   });
 
