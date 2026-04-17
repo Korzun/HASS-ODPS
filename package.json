@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc && cp -r app/public dist/public",
+    "build": "tsc && node -e \"const fs=require('fs');if(fs.existsSync('app/public'))fs.cpSync('app/public','dist/public',{recursive:true})\"",
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
+    "better-sqlite3": "^12.9.0",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "mime-types": "^2.1.35",
