@@ -76,7 +76,7 @@ jobs:
         with:
           args: >-
             --all
-            --target /data
+            --target /github/workspace
             --docker-hub ghcr.io/${{ github.repository_owner }}
             --addon
 
