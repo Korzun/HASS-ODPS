@@ -85,3 +85,99 @@ describe('UserStore.saveProgress + getProgress', () => {
     expect(store.getProgress('alice', 'unknown')).toBeNull();
   });
 });
+
+describe('UserStore.userExists', () => {
+  it('returns false for unknown user', () => {
+    expect(store.userExists('nobody')).toBe(false);
+  });
+
+  it('returns true for a registered user', () => {
+    store.createUser('alice', 'secret');
+    expect(store.userExists('alice')).toBe(true);
+  });
+});
+
+describe('UserStore.listUsers', () => {
+  it('returns empty array when no users', () => {
+    expect(store.listUsers()).toEqual([]);
+  });
+
+  it('returns users sorted by username with progress count', () => {
+    store.createUser('zara', 'pass');
+    store.createUser('alice', 'pass');
+    store.saveProgress('alice', {
+      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+    });
+    store.saveProgress('alice', {
+      document: 'doc2', progress: '/p[1]', percentage: 0.2, device: 'Kobo', device_id: 'd1',
+    });
+    const users = store.listUsers();
+    expect(users).toHaveLength(2);
+    expect(users[0].username).toBe('alice');
+    expect(users[0].progressCount).toBe(2);
+    expect(users[1].username).toBe('zara');
+    expect(users[1].progressCount).toBe(0);
+  });
+});
+
+describe('UserStore.getUserProgress', () => {
+  beforeEach(() => store.createUser('alice', 'pass'));
+
+  it('returns empty array when user has no progress', () => {
+    expect(store.getUserProgress('alice')).toEqual([]);
+  });
+
+  it('returns all progress records ordered by timestamp descending', () => {
+    store.saveProgress('alice', {
+      document: 'doc1', progress: '/p[1]', percentage: 0.3, device: 'Kobo', device_id: 'd1', timestamp: 100,
+    });
+    store.saveProgress('alice', {
+      document: 'doc2', progress: '/p[2]', percentage: 0.8, device: 'Kobo', device_id: 'd1', timestamp: 200,
+    });
+    const records = store.getUserProgress('alice');
+    expect(records).toHaveLength(2);
+    expect(records[0].document).toBe('doc2'); // most recent first
+    expect(records[1].document).toBe('doc1');
+  });
+
+  it('only returns records for the specified user', () => {
+    store.createUser('bob', 'pass');
+    store.saveProgress('alice', {
+      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+    });
+    store.saveProgress('bob', {
+      document: 'doc2', progress: '/p[1]', percentage: 0.3, device: 'Kobo', device_id: 'd2',
+    });
+    expect(store.getUserProgress('alice')).toHaveLength(1);
+    expect(store.getUserProgress('alice')[0].document).toBe('doc1');
+  });
+});
+
+describe('UserStore.deleteUser', () => {
+  beforeEach(() => {
+    store.createUser('alice', 'pass');
+    store.saveProgress('alice', {
+      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+    });
+  });
+
+  it('returns false for unknown user', () => {
+    expect(store.deleteUser('nobody')).toBe(false);
+  });
+
+  it('returns true and removes the user', () => {
+    expect(store.deleteUser('alice')).toBe(true);
+    expect(store.userExists('alice')).toBe(false);
+  });
+
+  it('cascades to delete all progress records', () => {
+    store.deleteUser('alice');
+    expect(store.getUserProgress('alice')).toEqual([]);
+  });
+
+  it('does not affect other users', () => {
+    store.createUser('bob', 'pass');
+    store.deleteUser('alice');
+    expect(store.userExists('bob')).toBe(true);
+  });
+});

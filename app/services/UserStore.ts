@@ -79,6 +79,38 @@ export class UserStore {
     return { ...p, timestamp };
   }
 
+  userExists(username: string): boolean {
+    const row = this.db.prepare('SELECT 1 FROM users WHERE username = ?').get(username);
+    return row !== undefined;
+  }
+
+  listUsers(): { username: string; progressCount: number }[] {
+    return this.db.prepare(`
+      SELECT u.username, COUNT(p.document) AS progressCount
+      FROM users u
+      LEFT JOIN progress p ON p.username = u.username
+      GROUP BY u.username
+      ORDER BY u.username ASC
+    `).all() as { username: string; progressCount: number }[];
+  }
+
+  getUserProgress(username: string): Progress[] {
+    return this.db.prepare(`
+      SELECT document, progress, percentage, device, device_id, timestamp
+      FROM progress
+      WHERE username = ?
+      ORDER BY timestamp DESC
+    `).all(username) as Progress[];
+  }
+
+  deleteUser(username: string): boolean {
+    const result = (this.db.transaction(() => {
+      this.db.prepare('DELETE FROM progress WHERE username = ?').run(username);
+      return this.db.prepare('DELETE FROM users WHERE username = ?').run(username);
+    }))();
+    return result.changes > 0;
+  }
+
   close(): void {
     this.db.close();
   }
