@@ -20,7 +20,7 @@ export function createKosyncRouter(userStore: UserStore): Router {
     const created = userStore.createUser(username, password);
     if (created) {
       log.info(`User "${username}" registered`);
-      res.status(200).json({ username });
+      res.status(201).json({ username });
     } else {
       log.warn(`Registration rejected — username "${username}" already exists`);
       res.status(402).json({ username: null });

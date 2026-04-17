@@ -36,9 +36,9 @@ function registerBody(username: string, password: string) {
 }
 
 describe('POST /kosync/users/create', () => {
-  it('returns 200 and username on success', async () => {
+  it('returns 201 and username on success', async () => {
     const res = await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(res.body).toEqual({ username: 'alice' });
   });
 
