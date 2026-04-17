@@ -59,7 +59,26 @@ jobs:
     needs: version
     runs-on: ubuntu-latest
     steps:
-      - run: echo "placeholder"
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: home-assistant/builder@2024.03.5
+        with:
+          args: >-
+            --all
+            --target /github/workspace
+            --docker-hub ghcr.io/${{ github.repository_owner }}
+            --addon
 
   release:
     name: Create GitHub Release
