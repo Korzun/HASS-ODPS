@@ -4,7 +4,9 @@ import { loadConfig } from './config';
 import { UserStore } from './services/UserStore';
 import { BookStore } from './services/BookStore';
 import { createApp } from './app';
+import { logger } from './logger';
 
+const log = logger('Server');
 const config = loadConfig();
 
 fs.mkdirSync(config.booksDir, { recursive: true });
@@ -16,8 +18,8 @@ const bookStore = new BookStore(config.booksDir);
 const app = createApp(config, userStore, bookStore);
 
 app.listen(config.port, () => {
-  console.log(`HASS-ODPS running on port ${config.port}`);
-  console.log(`  Web UI:  http://localhost:${config.port}/`);
-  console.log(`  OPDS:    http://localhost:${config.port}/opds/`);
-  console.log(`  KOSync:  http://localhost:${config.port}/kosync/`);
+  log.info(`HASS-ODPS starting — port: ${config.port}, booksDir: ${config.booksDir}, dataDir: ${config.dataDir}`);
+  log.info(`Web UI:  http://localhost:${config.port}/`);
+  log.info(`OPDS:    http://localhost:${config.port}/opds/`);
+  log.info(`KOSync:  http://localhost:${config.port}/kosync/`);
 });

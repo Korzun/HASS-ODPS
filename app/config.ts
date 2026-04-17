@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppConfig } from './types';
+import { logger } from './logger';
+
+const log = logger('Config');
 
 interface Options {
   username: string;
@@ -21,7 +24,7 @@ export function loadConfig(): AppConfig {
         password: parsed.password ?? options.password,
       };
     } catch {
-      console.warn(`Warning: could not parse ${optionsPath}, using defaults`);
+      log.warn(`Could not parse ${optionsPath}, using defaults`);
     }
   }
 
