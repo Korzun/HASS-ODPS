@@ -30,16 +30,21 @@ function authHeaders(username: string, password: string) {
   };
 }
 
+// KoReader sends MD5(password) in the registration body, not the raw password.
+function registerBody(username: string, password: string) {
+  return { username, password: UserStore.hashPassword(password) };
+}
+
 describe('POST /kosync/users/create', () => {
   it('returns 200 and username on success', async () => {
-    const res = await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
+    const res = await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ username: 'alice' });
   });
 
   it('returns 402 on duplicate username', async () => {
-    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
-    const res = await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'other' });
+    await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
+    const res = await request(app).post('/kosync/users/create').send(registerBody('alice', 'other'));
     expect(res.status).toBe(402);
     expect(res.body).toEqual({ username: null });
   });
@@ -52,7 +57,7 @@ describe('POST /kosync/users/create', () => {
 
 describe('GET /kosync/users/auth', () => {
   beforeEach(async () => {
-    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
+    await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
   });
 
   it('returns 200 with correct credentials', async () => {
@@ -78,7 +83,7 @@ describe('GET /kosync/users/auth', () => {
 
 describe('PUT /kosync/syncs/progress', () => {
   beforeEach(async () => {
-    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
+    await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
   });
 
   it('saves progress and returns document + timestamp', async () => {
@@ -108,7 +113,7 @@ describe('PUT /kosync/syncs/progress', () => {
 
 describe('GET /kosync/syncs/progress/:document', () => {
   beforeEach(async () => {
-    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
+    await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
     await request(app)
       .put('/kosync/syncs/progress')
       .set(authHeaders('alice', 'secret'))

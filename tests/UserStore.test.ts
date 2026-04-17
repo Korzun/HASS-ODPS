@@ -28,7 +28,8 @@ describe('UserStore.createUser', () => {
 });
 
 describe('UserStore.authenticate', () => {
-  beforeEach(() => store.createUser('alice', 'secret'));
+  // KoReader sends MD5(password) in registration; createUser stores it as-is.
+  beforeEach(() => store.createUser('alice', UserStore.hashPassword('secret')));
 
   it('returns true with correct MD5 key', () => {
     const key = UserStore.hashPassword('secret');

@@ -33,8 +33,7 @@ export class UserStore {
     return crypto.createHash('md5').update(password).digest('hex');
   }
 
-  createUser(username: string, password: string): boolean {
-    const key = UserStore.hashPassword(password);
+  createUser(username: string, key: string): boolean {
     try {
       this.db.prepare('INSERT INTO users (username, key) VALUES (?, ?)').run(username, key);
       return true;
