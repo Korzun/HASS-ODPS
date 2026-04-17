@@ -30,29 +30,29 @@ function authHeaders(username: string, password: string) {
   };
 }
 
-describe('GET /kosync/users/create', () => {
-  it('returns 201 and username on success', async () => {
-    const res = await request(app).get('/kosync/users/create?username=alice&password=secret');
-    expect(res.status).toBe(201);
+describe('POST /kosync/users/create', () => {
+  it('returns 200 and username on success', async () => {
+    const res = await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
+    expect(res.status).toBe(200);
     expect(res.body).toEqual({ username: 'alice' });
   });
 
   it('returns 402 on duplicate username', async () => {
-    await request(app).get('/kosync/users/create?username=alice&password=secret');
-    const res = await request(app).get('/kosync/users/create?username=alice&password=other');
+    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
+    const res = await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'other' });
     expect(res.status).toBe(402);
     expect(res.body).toEqual({ username: null });
   });
 
   it('returns 400 when username or password missing', async () => {
-    const res = await request(app).get('/kosync/users/create?username=alice');
+    const res = await request(app).post('/kosync/users/create').send({ username: 'alice' });
     expect(res.status).toBe(400);
   });
 });
 
 describe('GET /kosync/users/auth', () => {
   beforeEach(async () => {
-    await request(app).get('/kosync/users/create?username=alice&password=secret');
+    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
   });
 
   it('returns 200 with correct credentials', async () => {
@@ -78,7 +78,7 @@ describe('GET /kosync/users/auth', () => {
 
 describe('PUT /kosync/syncs/progress', () => {
   beforeEach(async () => {
-    await request(app).get('/kosync/users/create?username=alice&password=secret');
+    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
   });
 
   it('saves progress and returns document + timestamp', async () => {
@@ -108,7 +108,7 @@ describe('PUT /kosync/syncs/progress', () => {
 
 describe('GET /kosync/syncs/progress/:document', () => {
   beforeEach(async () => {
-    await request(app).get('/kosync/users/create?username=alice&password=secret');
+    await request(app).post('/kosync/users/create').send({ username: 'alice', password: 'secret' });
     await request(app)
       .put('/kosync/syncs/progress')
       .set(authHeaders('alice', 'secret'))

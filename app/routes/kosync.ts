@@ -9,9 +9,9 @@ const log = logger('KOSync');
 export function createKosyncRouter(userStore: UserStore): Router {
   const router = Router();
 
-  // Registration: GET /kosync/users/create?username=x&password=y
-  router.get('/users/create', (req: Request, res: Response) => {
-    const { username, password } = req.query as { username?: string; password?: string };
+  // Registration: POST /kosync/users/create  body: { username, password }
+  router.post('/users/create', (req: Request, res: Response) => {
+    const { username, password } = req.body as { username?: string; password?: string };
     if (!username || !password) {
       log.warn('Registration rejected — missing username or password');
       res.status(400).json({ username: null });
@@ -20,7 +20,7 @@ export function createKosyncRouter(userStore: UserStore): Router {
     const created = userStore.createUser(username, password);
     if (created) {
       log.info(`User "${username}" registered`);
-      res.status(201).json({ username });
+      res.status(200).json({ username });
     } else {
       log.warn(`Registration rejected — username "${username}" already exists`);
       res.status(402).json({ username: null });
