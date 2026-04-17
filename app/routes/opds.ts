@@ -1,7 +1,11 @@
+// app/routes/opds.ts
 import { Router, Request, Response } from 'express';
 import { BookStore } from '../services/BookStore';
 import { AppConfig, Book } from '../types';
 import { basicAuth } from '../middleware/auth';
+import { logger } from '../logger';
+
+const log = logger('OPDS');
 
 function escapeXml(s: string): string {
   return s
@@ -9,6 +13,11 @@ function escapeXml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function decodeBasicUser(authHeader: string): string {
+  const decoded = Buffer.from(authHeader.slice(6), 'base64').toString();
+  return decoded.slice(0, decoded.indexOf(':'));
 }
 
 function rootFeed(baseUrl: string): string {
@@ -62,23 +71,29 @@ export function createOpdsRouter(bookStore: BookStore, config: AppConfig): Route
   const auth = basicAuth(config);
 
   router.get('/', auth, (req: Request, res: Response) => {
+    log.debug('Root catalog served');
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     res.set('Content-Type', 'application/atom+xml;charset=utf-8');
     res.send(rootFeed(baseUrl));
   });
 
   router.get('/books', auth, (req: Request, res: Response) => {
+    const books = bookStore.listBooks();
+    log.debug(`Books feed served (${books.length} books)`);
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     res.set('Content-Type', 'application/atom+xml;charset=utf-8');
-    res.send(booksFeed(bookStore.listBooks(), baseUrl));
+    res.send(booksFeed(books, baseUrl));
   });
 
   router.get('/books/:id/download', auth, (req: Request, res: Response) => {
     const book = bookStore.getBookById(req.params.id);
     if (!book) {
+      log.warn(`Download requested for unknown book ID: ${req.params.id}`);
       res.status(404).send('Not found');
       return;
     }
+    const username = decodeBasicUser(req.headers.authorization!);
+    log.info(`User "${username}" downloaded "${book.filename}"`);
     res.set('Content-Type', book.mimeType);
     res.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(book.filename)}`);
     res.sendFile(book.path);
