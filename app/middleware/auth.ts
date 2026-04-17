@@ -1,12 +1,17 @@
+// app/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
 import { AppConfig } from '../types';
 import { UserStore } from '../services/UserStore';
+import { logger } from '../logger';
+
+const log = logger('Auth');
 
 /** HTTP Basic Auth — validates against admin config credentials. Used for OPDS. */
 export function basicAuth(config: AppConfig) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const header = req.headers.authorization;
     if (!header?.startsWith('Basic ')) {
+      log.warn('Basic auth failed — missing or malformed Authorization header');
       res.set('WWW-Authenticate', 'Basic realm="HASS-ODPS"');
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -18,6 +23,7 @@ export function basicAuth(config: AppConfig) {
     if (user === config.username && pass === config.password) {
       next();
     } else {
+      log.warn(`Basic auth failed for user "${user}"`);
       res.set('WWW-Authenticate', 'Basic realm="HASS-ODPS"');
       res.status(401).json({ error: 'Unauthorized' });
     }
@@ -30,10 +36,12 @@ export function kosyncAuth(userStore: UserStore) {
     const username = req.headers['x-auth-user'];
     const key = req.headers['x-auth-key'];
     if (typeof username !== 'string' || typeof key !== 'string') {
+      log.warn('KOSync auth failed — missing x-auth-user or x-auth-key headers');
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
     if (!userStore.authenticate(username, key)) {
+      log.warn(`KOSync auth failed for user "${username}"`);
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
@@ -47,6 +55,7 @@ export function sessionAuth(req: Request, res: Response, next: NextFunction): vo
   if (req.session.authenticated) {
     next();
   } else {
+    log.debug('Session auth rejected — redirecting to /login');
     res.redirect('/login');
   }
 }
