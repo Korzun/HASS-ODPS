@@ -1,0 +1,23 @@
+name: "HASS-ODPS Book Server"
+description: "OPDS 1.2 book catalog, KOSync progress sync, and web library manager for KoReader"
+version: "1.0.0"
+slug: "hass-odps"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: "Book server — OPDS, KOSync, Web UI"
+map:
+  - media:rw
+  - data:rw
+options:
+  username: admin
+  password: changeme
+schema:
+  username: str
+  password: str
