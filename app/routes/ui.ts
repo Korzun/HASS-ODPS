@@ -1,0 +1,115 @@
+import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import * as path from 'path';
+import { BookStore } from '../services/BookStore';
+import { AppConfig } from '../types';
+import { sessionAuth } from '../middleware/auth';
+
+const ALLOWED_EXTENSIONS = new Set(['.epub', '.pdf', '.mobi', '.cbz', '.cbr']);
+
+function loginPage(error?: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HASS-ODPS Login</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f3f4f6}
+    form{background:#fff;padding:2rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);width:320px}
+    h1{margin:0 0 1.5rem;font-size:1.25rem;color:#111}
+    label{display:block;margin-bottom:.25rem;font-size:.875rem;color:#374151}
+    input{width:100%;padding:.5rem .75rem;margin-bottom:1rem;border:1px solid #d1d5db;border-radius:4px;font-size:1rem}
+    button{width:100%;padding:.625rem;background:#2563eb;color:#fff;border:none;border-radius:4px;font-size:1rem;cursor:pointer}
+    button:hover{background:#1d4ed8}
+    .error{color:#dc2626;font-size:.875rem;margin-bottom:1rem}
+  </style>
+</head>
+<body>
+  <form method="POST" action="/login">
+    <h1>📚 HASS-ODPS</h1>
+    ${error ? `<p class="error">${error}</p>` : ''}
+    <label for="u">Username</label>
+    <input id="u" name="username" type="text" required autofocus>
+    <label for="p">Password</label>
+    <input id="p" name="password" type="password" required>
+    <button type="submit">Sign In</button>
+  </form>
+</body>
+</html>`;
+}
+
+export function createUiRouter(bookStore: BookStore, config: AppConfig): Router {
+  const router = Router();
+
+  const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, bookStore.getBooksDir()),
+    filename: (_req, file, cb) => cb(null, file.originalname),
+  });
+
+  const upload = multer({
+    storage,
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, ALLOWED_EXTENSIONS.has(ext));
+    },
+  });
+
+  // ── Auth ──────────────────────────────────────────────
+
+  router.get('/login', (req: Request, res: Response) => {
+    if (req.session.authenticated) { res.redirect('/'); return; }
+    res.send(loginPage());
+  });
+
+  router.post('/login', (req: Request, res: Response) => {
+    const { username, password } = req.body as { username?: string; password?: string };
+    if (username === config.username && password === config.password) {
+      req.session.authenticated = true;
+      res.redirect('/');
+    } else {
+      res.status(401).send(loginPage('Invalid credentials'));
+    }
+  });
+
+  router.post('/logout', (req: Request, res: Response) => {
+    req.session.destroy(() => res.redirect('/login'));
+  });
+
+  // ── Protected ─────────────────────────────────────────
+
+  router.get('/', sessionAuth, (_req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+  });
+
+  router.get('/api/books', sessionAuth, (_req: Request, res: Response) => {
+    res.json(
+      bookStore.listBooks().map(b => ({
+        id: b.id,
+        title: b.title,
+        filename: b.filename,
+        ext: b.ext,
+        size: b.size,
+        mimeType: b.mimeType,
+      }))
+    );
+  });
+
+  router.post('/api/books/upload', sessionAuth, upload.array('files'), (req: Request, res: Response) => {
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (!files?.length) {
+      res.status(400).json({ error: 'No valid files uploaded. Supported: epub, pdf, mobi, cbz, cbr' });
+      return;
+    }
+    res.json({ uploaded: files.map(f => f.originalname) });
+  });
+
+  router.delete('/api/books/:id', sessionAuth, (req: Request, res: Response) => {
+    const deleted = bookStore.deleteBook(req.params.id);
+    if (!deleted) { res.status(404).json({ error: 'Book not found' }); return; }
+    res.status(204).send();
+  });
+
+  return router;
+}
