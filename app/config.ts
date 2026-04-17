@@ -14,7 +14,15 @@ export function loadConfig(): AppConfig {
   let options: Options = { username: 'admin', password: 'changeme' };
 
   if (fs.existsSync(optionsPath)) {
-    options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8')) as Options;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(optionsPath, 'utf-8')) as Partial<Options>;
+      options = {
+        username: parsed.username ?? options.username,
+        password: parsed.password ?? options.password,
+      };
+    } catch {
+      console.warn(`Warning: could not parse ${optionsPath}, using defaults`);
+    }
   }
 
   return {
