@@ -39,17 +39,18 @@ jobs:
       - name: Install yq
         uses: mikefarah/yq@v4.44.1
 
-      - name: Patch config.yaml
+      - name: Patch config.yaml and package.json
         env:
           VERSION: ${{ steps.resolve.outputs.version }}
         run: |
           yq e '.version = env(VERSION)' -i config.yaml
+          npm version --no-git-tag-version --allow-same-version "$VERSION"
 
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add config.yaml
+          git add config.yaml package.json
           git diff --cached --quiet && echo "No change" && exit 0
           git commit -m "chore: bump version to ${{ steps.resolve.outputs.version }} [skip ci]"
           git push origin main
