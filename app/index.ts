@@ -6,6 +6,9 @@ import { BookStore } from './services/BookStore';
 import { createApp } from './app';
 import { logger } from './logger';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version } = require('../package.json') as { version: string };
+
 const log = logger('Server');
 const config = loadConfig();
 
@@ -17,8 +20,15 @@ const bookStore = new BookStore(config.booksDir);
 
 const app = createApp(config, userStore, bookStore);
 
+const shutdown = (): void => {
+  log.info('Server shutting down');
+  process.exit(0);
+};
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
 app.listen(config.port, () => {
-  log.info(`HASS-ODPS starting — port: ${config.port}, booksDir: ${config.booksDir}, dataDir: ${config.dataDir}`);
+  log.info(`HASS-ODPS v${version} starting — port: ${config.port}, booksDir: ${config.booksDir}, dataDir: ${config.dataDir}`);
   log.info(`Web UI:  http://localhost:${config.port}/`);
   log.info(`OPDS:    http://localhost:${config.port}/opds/`);
   log.info(`KOSync:  http://localhost:${config.port}/kosync/`);
