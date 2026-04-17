@@ -4,6 +4,9 @@ import * as path from 'path';
 import { BookStore } from '../services/BookStore';
 import { AppConfig } from '../types';
 import { sessionAuth } from '../middleware/auth';
+import { logger } from '../logger';
+
+const log = logger('UI');
 
 const ALLOWED_EXTENSIONS = new Set(['.epub', '.pdf', '.mobi', '.cbz', '.cbr']);
 
@@ -67,13 +70,16 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
     const { username, password } = req.body as { username?: string; password?: string };
     if (username === config.username && password === config.password) {
       req.session.authenticated = true;
+      log.info(`User "${username}" logged in`);
       res.redirect('/');
     } else {
+      log.warn(`Login failed for username "${username ?? ''}"`);
       res.status(401).send(loginPage('Invalid credentials'));
     }
   });
 
   router.post('/logout', (req: Request, res: Response) => {
+    log.info('User logged out');
     req.session.destroy(() => res.redirect('/login'));
   });
 
@@ -99,15 +105,24 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
   router.post('/api/books/upload', sessionAuth, upload.array('files'), (req: Request, res: Response) => {
     const files = req.files as Express.Multer.File[] | undefined;
     if (!files?.length) {
+      log.warn('Upload rejected — no valid files (supported: epub, pdf, mobi, cbz, cbr)');
       res.status(400).json({ error: 'No valid files uploaded. Supported: epub, pdf, mobi, cbz, cbr' });
       return;
     }
-    res.json({ uploaded: files.map(f => f.originalname) });
+    const names = files.map(f => f.originalname);
+    log.info(`Books uploaded: ${names.join(', ')}`);
+    res.json({ uploaded: names });
   });
 
   router.delete('/api/books/:id', sessionAuth, (req: Request, res: Response) => {
-    const deleted = bookStore.deleteBook(req.params.id);
-    if (!deleted) { res.status(404).json({ error: 'Book not found' }); return; }
+    const book = bookStore.getBookById(req.params.id);
+    if (!book) {
+      log.warn(`Delete attempted for unknown book ID: ${req.params.id}`);
+      res.status(404).json({ error: 'Book not found' });
+      return;
+    }
+    bookStore.deleteBook(req.params.id);
+    log.info(`Book deleted: "${book.filename}"`);
     res.status(204).send();
   });
 
