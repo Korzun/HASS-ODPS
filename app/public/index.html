@@ -12,6 +12,12 @@
     .signout{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:4px;padding:.375rem .75rem;cursor:pointer;font-size:.875rem}
     .signout:hover{background:rgba(255,255,255,.1)}
     main{max-width:800px;margin:2rem auto;padding:0 1rem}
+    /* Tab bar */
+    #tab-bar{display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:1.5rem}
+    .tab{background:transparent;border:none;padding:.625rem 1.25rem;cursor:pointer;font-size:.9rem;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit}
+    .tab.active{color:#1e40af;border-bottom-color:#1e40af;font-weight:500}
+    .tab:hover:not(.active){color:#374151}
+    /* Library */
     #drop-zone{border:2px dashed #93c5fd;border-radius:8px;padding:2rem;text-align:center;cursor:pointer;background:#eff6ff;margin-bottom:2rem;transition:background .15s}
     #drop-zone.over{background:#dbeafe;border-color:#3b82f6}
     #drop-zone p{color:#1d4ed8;margin-bottom:.5rem}
@@ -28,6 +34,22 @@
     .delete-btn{background:transparent;border:none;cursor:pointer;color:#9ca3af;font-size:1.1rem;padding:.25rem .5rem;border-radius:4px;transition:color .15s}
     .delete-btn:hover{color:#dc2626}
     #empty-msg{color:#6b7280;text-align:center;padding:2rem}
+    /* Users */
+    #user-list{list-style:none}
+    #users-empty{color:#6b7280;text-align:center;padding:2rem}
+    .user-row{background:#fff;border-radius:6px;margin-bottom:.5rem;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+    .user-header{display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;cursor:pointer;user-select:none}
+    .user-header:hover{background:#f9fafb}
+    .user-chevron{font-size:.7rem;color:#9ca3af;width:12px;flex-shrink:0}
+    .user-name{flex:1;font-weight:500}
+    .user-meta{font-size:.75rem;color:#6b7280}
+    .progress-list{list-style:none;background:#f8fafc;border-top:1px solid #e5e7eb}
+    .progress-item{display:grid;grid-template-columns:1fr auto;gap:.25rem .75rem;padding:.5rem 1rem .5rem 2.25rem;border-bottom:1px solid #eef2f7}
+    .progress-item:last-child{border-bottom:none}
+    .prog-doc{font-size:.8rem;color:#374151;grid-column:1;word-break:break-all}
+    .prog-pct{font-size:.8rem;color:#16a34a;font-weight:500;grid-column:2;text-align:right;white-space:nowrap}
+    .prog-meta{font-size:.7rem;color:#9ca3af;grid-column:1/3}
+    .progress-empty{padding:.5rem 1rem .5rem 2.25rem;font-size:.8rem;color:#9ca3af;display:block}
   </style>
 </head>
 <body>
@@ -39,18 +61,46 @@
   </header>
 
   <main>
-    <div id="drop-zone">
-      <input type="file" id="file-input" accept=".epub,.pdf,.mobi,.cbz,.cbr" multiple>
-      <p>Drop books here or <label for="file-input" style="text-decoration:underline;cursor:pointer">click to upload</label></p>
-      <small>Supported formats: epub, pdf, mobi, cbz, cbr</small>
-      <div id="upload-status"></div>
+    <nav id="tab-bar">
+      <button class="tab active" data-tab="library">Library</button>
+      <button class="tab" data-tab="users">Users</button>
+    </nav>
+
+    <div id="library-section">
+      <div id="drop-zone">
+        <input type="file" id="file-input" accept=".epub,.pdf,.mobi,.cbz,.cbr" multiple>
+        <p>Drop books here or <label for="file-input" style="text-decoration:underline;cursor:pointer">click to upload</label></p>
+        <small>Supported formats: epub, pdf, mobi, cbz, cbr</small>
+        <div id="upload-status"></div>
+      </div>
+      <ul id="book-list"></ul>
+      <p id="empty-msg" style="display:none">No books yet. Upload some above.</p>
     </div>
 
-    <ul id="book-list"></ul>
-    <p id="empty-msg" style="display:none">No books yet. Upload some above.</p>
+    <div id="users-section" style="display:none">
+      <ul id="user-list"></ul>
+      <p id="users-empty" style="display:none">No KOSync users registered yet.</p>
+    </div>
   </main>
 
   <script>
+    // ── Tabs ──────────────────────────────────────────────
+    const librarySection = document.getElementById('library-section');
+    const usersSection = document.getElementById('users-section');
+    let usersLoaded = false;
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const name = tab.dataset.tab;
+        librarySection.style.display = name === 'library' ? '' : 'none';
+        usersSection.style.display = name === 'users' ? '' : 'none';
+        if (name === 'users' && !usersLoaded) loadUsers();
+      });
+    });
+
+    // ── Library ───────────────────────────────────────────
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const bookList = document.getElementById('book-list');
@@ -119,7 +169,6 @@
       }
     }
 
-    // Drag-and-drop
     dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
     dropZone.addEventListener('drop', e => {
@@ -127,11 +176,100 @@
       dropZone.classList.remove('over');
       uploadFiles(e.dataTransfer.files);
     });
-
     fileInput.addEventListener('change', () => {
       uploadFiles(fileInput.files);
       fileInput.value = '';
     });
+
+    // ── Users ─────────────────────────────────────────────
+    const userList = document.getElementById('user-list');
+    const usersEmpty = document.getElementById('users-empty');
+    const expandedData = {};
+
+    function relativeTime(timestamp) {
+      const diff = Math.floor(Date.now() / 1000) - timestamp;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/users');
+      const users = await res.json();
+      usersLoaded = true;
+      renderUsers(users);
+    }
+
+    function renderUsers(users) {
+      userList.innerHTML = '';
+      if (users.length === 0) {
+        usersEmpty.style.display = '';
+        return;
+      }
+      usersEmpty.style.display = 'none';
+      users.forEach(u => {
+        const li = document.createElement('li');
+        li.className = 'user-row';
+        li.innerHTML = `
+          <div class="user-header">
+            <span class="user-chevron">▶</span>
+            <span class="user-name">${u.username}</span>
+            <span class="user-meta">${u.progressCount} synced</span>
+            <button class="delete-btn" title="Delete user">🗑</button>
+          </div>
+          <ul class="progress-list" style="display:none"></ul>
+        `;
+        li.querySelector('.user-header').addEventListener('click', e => {
+          if (e.target.closest('.delete-btn')) return;
+          toggleUser(u.username, li);
+        });
+        li.querySelector('.delete-btn').addEventListener('click', () => deleteUser(u.username, li));
+        userList.appendChild(li);
+      });
+    }
+
+    async function toggleUser(username, li) {
+      const progressList = li.querySelector('.progress-list');
+      const chevron = li.querySelector('.user-chevron');
+      if (progressList.style.display !== 'none') {
+        progressList.style.display = 'none';
+        chevron.textContent = '▶';
+        return;
+      }
+      if (!expandedData[username]) {
+        const res = await fetch(`/api/users/${encodeURIComponent(username)}/progress`);
+        expandedData[username] = await res.json();
+      }
+      progressList.innerHTML = '';
+      if (expandedData[username].length === 0) {
+        progressList.innerHTML = '<li class="progress-empty">No progress records.</li>';
+      } else {
+        expandedData[username].forEach(p => {
+          const item = document.createElement('li');
+          item.className = 'progress-item';
+          item.innerHTML = `
+            <span class="prog-doc">${p.document}</span>
+            <span class="prog-pct">${Math.round(p.percentage * 100)}%</span>
+            <span class="prog-meta">${p.device} · ${relativeTime(p.timestamp)}</span>
+          `;
+          progressList.appendChild(item);
+        });
+      }
+      progressList.style.display = '';
+      chevron.textContent = '▼';
+    }
+
+    async function deleteUser(username, li) {
+      if (!confirm(`Delete user "${username}" and all their reading progress?`)) return;
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+      if (res.status === 204) {
+        li.remove();
+        if (!userList.querySelector('.user-row')) usersEmpty.style.display = '';
+      } else {
+        alert('Failed to delete user.');
+      }
+    }
 
     loadBooks();
   </script>
