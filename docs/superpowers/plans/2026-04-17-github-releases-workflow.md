@@ -186,7 +186,7 @@ Replace the `build` job's `steps:` block with:
         with:
           args: >-
             --all
-            --target /github/workspace
+            --target /data
             --docker-hub ghcr.io/${{ github.repository_owner }}
             --addon
 ```
@@ -329,7 +329,7 @@ jobs:
         with:
           args: >-
             --all
-            --target /github/workspace
+            --target /data
             --docker-hub ghcr.io/${{ github.repository_owner }}
             --addon
 
