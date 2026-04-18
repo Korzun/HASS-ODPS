@@ -156,4 +156,30 @@ describe('parseEpub', () => {
     fs.writeFileSync(filePath, Buffer.from('not a zip file'));
     expect(() => parseEpub(filePath)).toThrow();
   });
+
+  it('parses title as string when dc:title elements have xml attributes', () => {
+    // EPUB3 books often have multiple <dc:title id="..."> elements.
+    // fast-xml-parser returns each attributed element as an object like
+    // { "@_id": "t1", "#text": "Death's End" } — the title must still be a string.
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title id="t1">Death's End</dc:title>
+    <dc:title id="t2">死亡终结</dc:title>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, "deaths-end.epub");
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(typeof meta.title).toBe('string');
+    expect(meta.title).toBe("Death's End");
+  });
 });

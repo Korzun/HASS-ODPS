@@ -53,7 +53,7 @@ export function parseEpub(filePath: string): EpubMeta {
 
   // Step 3: extract metadata
   const rawTitle = metadata['dc:title'];
-  const title = (typeof rawTitle === 'string' ? rawTitle : Array.isArray(rawTitle) ? rawTitle[0] : '') || path.basename(filePath, path.extname(filePath));
+  const title = (typeof rawTitle === 'string' ? rawTitle : Array.isArray(rawTitle) ? (typeof rawTitle[0] === 'string' ? rawTitle[0] : rawTitle[0]?.['#text'] ?? '') : '') || path.basename(filePath, path.extname(filePath));
 
   const rawCreator = metadata['dc:creator'];
   const author = typeof rawCreator === 'string' ? rawCreator : Array.isArray(rawCreator) ? (typeof rawCreator[0] === 'string' ? rawCreator[0] : rawCreator[0]?.['#text'] ?? '') : '';
