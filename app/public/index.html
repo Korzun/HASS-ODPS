@@ -27,10 +27,12 @@
     .status-ok{color:#16a34a}
     .status-err{color:#dc2626}
     #book-list{list-style:none}
-    #book-list li{background:#fff;border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.07)}
-    .book-info{flex:1}
-    .book-title{font-weight:500;margin-bottom:.125rem}
-    .book-meta{font-size:.75rem;color:#6b7280}
+    #book-list li{background:#fff;border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+    .book-cover{flex-shrink:0}
+    .book-info{flex:1;min-width:0}
+    .book-title{font-weight:500;margin-bottom:.125rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .book-meta{font-size:.75rem;color:#6b7280;margin-bottom:.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .book-format{font-size:.75rem;color:#9ca3af}
     .delete-btn{background:transparent;border:none;cursor:pointer;color:#9ca3af;font-size:1.1rem;padding:.25rem .5rem;border-radius:4px;transition:color .15s}
     .delete-btn:hover{color:#dc2626}
     #empty-msg{color:#6b7280;text-align:center;padding:2rem}
@@ -68,9 +70,9 @@
   <main>
     <div id="library-section">
       <div id="drop-zone">
-        <input type="file" id="file-input" accept=".epub,.pdf,.mobi,.cbz,.cbr" multiple>
+        <input type="file" id="file-input" accept=".epub" multiple>
         <p>Drop books here or <label for="file-input" style="text-decoration:underline;cursor:pointer">click to upload</label></p>
-        <small>Supported formats: epub, pdf, mobi, cbz, cbr</small>
+        <small>Supported format: epub</small>
         <div id="upload-status"></div>
       </div>
       <ul id="book-list"></ul>
@@ -134,10 +136,21 @@
           emptyMsg.style.display = 'none';
           books.forEach(book => {
             const li = document.createElement('li');
+            const coverHtml = book.hasCover
+              ? `<img src="/api/books/${esc(book.id)}/cover" alt="${esc(book.title)}" style="width:48px;height:64px;object-fit:cover;border-radius:2px;display:block;">`
+              : `<div style="width:48px;height:64px;background:#e0e0e0;border-radius:2px;"></div>`;
+            const metaParts = [];
+            if (book.author) metaParts.push(esc(book.author));
+            if (book.series) metaParts.push(esc(book.series) + (book.seriesIndex != null ? ` #${esc(String(book.seriesIndex))}` : ''));
+            const metaHtml = metaParts.length
+              ? `<div class="book-meta">${metaParts.join(' · ')}</div>`
+              : '';
             li.innerHTML = `
+              <div class="book-cover">${coverHtml}</div>
               <div class="book-info">
                 <div class="book-title">${esc(book.title)}</div>
-                <div class="book-meta">${book.ext.slice(1).toUpperCase()} · ${formatSize(book.size)}</div>
+                ${metaHtml}
+                <div class="book-format">EPUB · ${formatSize(book.size)}</div>
               </div>
               <button class="delete-btn" type="button" title="Delete">🗑</button>
             `;
