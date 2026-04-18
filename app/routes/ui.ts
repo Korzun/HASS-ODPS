@@ -148,5 +148,11 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
     res.status(204).send();
   });
 
+  router.post('/api/books/scan', sessionAuth, (_req: Request, res: Response) => {
+    const result = bookStore.scan();
+    log.info(`Scan: ${result.imported.length} imported, ${result.removed.length} removed`);
+    res.json(result);
+  });
+
   return router;
 }

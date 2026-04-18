@@ -316,3 +316,48 @@ describe('DELETE /api/books/:id', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('POST /api/books/scan', () => {
+  it('returns 302 without session', async () => {
+    const res = await request(app).post('/api/books/scan');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns { imported: [], removed: [] } when nothing to scan', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.post('/api/books/scan');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ imported: [], removed: [] });
+  });
+
+  it('imports an epub file found on disk but not in DB', async () => {
+    // Write a real EPUB to booksDir without going through the upload route
+    const epubBuf = makeEpub({ title: 'Found Book', author: 'Found Author' });
+    fs.writeFileSync(path.join(booksDir, 'found.epub'), epubBuf);
+
+    const agent = await authenticatedAgent();
+    const res = await agent.post('/api/books/scan');
+    expect(res.status).toBe(200);
+    expect(res.body.imported).toContain('found.epub');
+    expect(res.body.removed).toEqual([]);
+
+    // Verify it's now in the library
+    const listRes = await agent.get('/api/books');
+    expect(listRes.body).toHaveLength(1);
+    expect(listRes.body[0].title).toBe('Found Book');
+  });
+
+  it('reports removed for a DB entry whose file is gone', async () => {
+    // Add a book to the DB pointing at a file that does not exist
+    const fakePath = path.join(booksDir, 'deleted.epub');
+    bookStore.addBook('stale001', 'deleted.epub', fakePath, 100, new Date(), {
+      ...FAKE_META, title: 'Stale Book',
+    });
+
+    const agent = await authenticatedAgent();
+    const res = await agent.post('/api/books/scan');
+    expect(res.status).toBe(200);
+    expect(res.body.removed).toContain('deleted.epub');
+    expect(res.body.imported).toEqual([]);
+  });
+});
