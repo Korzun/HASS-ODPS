@@ -26,12 +26,28 @@ export function partialMD5(filePath: string): string {
   return crypto.createHash('md5').update(Buffer.concat(chunks)).digest('hex');
 }
 
+type MetaLike = string | { [key: string]: string | undefined };
+
+function pickLang(items: MetaLike[]): string {
+  const candidates = items.map(item =>
+    typeof item === 'string'
+      ? { text: item, lang: '' }
+      : { text: item['#text'] ?? '', lang: item['@_xml:lang'] ?? '' }
+  );
+  return (
+    candidates.find(c => c.lang.toLowerCase().startsWith('en'))?.text ??
+    candidates.find(c => c.lang === '')?.text ??
+    candidates[0]?.text ??
+    ''
+  );
+}
+
 export function parseEpub(filePath: string): EpubMeta {
   const zip = new AdmZip(filePath);
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
-    isArray: (name) => ['item', 'meta'].includes(name),
+    isArray: (name) => ['item', 'meta', 'dc:title', 'dc:creator'].includes(name),
   });
 
   // Step 1: container.xml → OPF path
@@ -52,25 +68,28 @@ export function parseEpub(filePath: string): EpubMeta {
   const manifest: Array<{ '@_id': string; '@_href': string; '@_media-type': string; '@_properties'?: string }> = pkg?.manifest?.item ?? [];
 
   // Step 3: extract metadata
-  const rawTitle = metadata['dc:title'];
-  const title = (typeof rawTitle === 'string' ? rawTitle : Array.isArray(rawTitle) ? (typeof rawTitle[0] === 'string' ? rawTitle[0] : rawTitle[0]?.['#text'] ?? '') : '') || path.basename(filePath, path.extname(filePath));
-
-  const rawCreator = metadata['dc:creator'];
-  const author = typeof rawCreator === 'string' ? rawCreator : Array.isArray(rawCreator) ? (typeof rawCreator[0] === 'string' ? rawCreator[0] : rawCreator[0]?.['#text'] ?? '') : '';
+  const title = pickLang(metadata['dc:title'] ?? []) || path.basename(filePath, path.extname(filePath));
+  const author = pickLang(metadata['dc:creator'] ?? []);
 
   const rawDesc = metadata['dc:description'];
-  const description = typeof rawDesc === 'string' ? rawDesc : '';
+  const description = Array.isArray(rawDesc) ? pickLang(rawDesc) : (typeof rawDesc === 'string' ? rawDesc : '');
 
   const metas: Array<{ '@_name'?: string; '@_content'?: string; '@_property'?: string; '#text'?: string }> = metadata?.meta ?? [];
 
-  let series = '';
-  let seriesIndex = 0;
+  let calibreSeries = '';
+  let calibreSeriesIndex = 0;
+  let groupPosition = 0;
+  const collectionCandidates: MetaLike[] = [];
+
   for (const m of metas) {
-    if (m['@_name'] === 'calibre:series') series = m['@_content'] ?? '';
-    if (m['@_name'] === 'calibre:series_index') seriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
-    if (m['@_property'] === 'belongs-to-collection') series = m['#text'] ?? '';
-    if (m['@_property'] === 'group-position') seriesIndex = parseFloat(m['#text'] ?? '0') || 0;
+    if (m['@_name'] === 'calibre:series')       calibreSeries = m['@_content'] ?? '';
+    if (m['@_name'] === 'calibre:series_index')  calibreSeriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
+    if (m['@_property'] === 'belongs-to-collection') collectionCandidates.push(m);
+    if (m['@_property'] === 'group-position')    groupPosition = parseFloat(m['#text'] ?? '0') || 0;
   }
+
+  const series = calibreSeries || pickLang(collectionCandidates);
+  const seriesIndex = calibreSeriesIndex || groupPosition;
 
   // Step 4: cover image
   let coverData: Buffer | null = null;
