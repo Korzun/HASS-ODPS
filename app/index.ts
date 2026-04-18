@@ -26,8 +26,8 @@ const app = createApp(config, userStore, bookStore);
 try {
   const scanResult = bookStore.scan();
   log.info(`Startup scan: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`);
-} catch (err: any) {
-  log.error(`Startup scan failed: ${String(err.message)}`);
+} catch (err: unknown) {
+  log.error(`Startup scan failed: ${err instanceof Error ? err.message : String(err)}`);
 }
 
 const shutdown = (): void => {

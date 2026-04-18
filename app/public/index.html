@@ -69,6 +69,10 @@
 
   <main>
     <div id="library-section">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+        <button id="scan-btn" type="button" style="background:#1e40af;color:#fff;border:none;border-radius:4px;padding:.5rem 1rem;font-size:.875rem;cursor:pointer;font-family:inherit">Scan Library</button>
+        <span id="scan-status" style="font-size:.875rem;min-height:1.25rem;display:inline-block"></span>
+      </div>
       <div id="drop-zone">
         <input type="file" id="file-input" accept=".epub" multiple>
         <p>Drop books here or <label for="file-input" style="text-decoration:underline;cursor:pointer">click to upload</label></p>
@@ -304,6 +308,46 @@
     }
 
     loadBooks();
+
+    // ── Scan ─────────────────────────────────────────────
+    const scanBtn = document.getElementById('scan-btn');
+    const scanStatus = document.getElementById('scan-status');
+
+    function setUploadEnabled(enabled) {
+      dropZone.style.opacity = enabled ? '' : '0.5';
+      dropZone.style.pointerEvents = enabled ? '' : 'none';
+      fileInput.disabled = !enabled;
+    }
+
+    scanBtn.addEventListener('click', async () => {
+      scanBtn.disabled = true;
+      scanBtn.textContent = 'Scanning…';
+      scanStatus.textContent = '';
+      scanStatus.className = '';
+      setUploadEnabled(false);
+      try {
+        const res = await fetch('/api/books/scan', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          const total = data.imported.length + data.removed.length;
+          scanStatus.textContent = total === 0
+            ? '✓ Library already up to date'
+            : `✓ Scan complete: ${data.imported.length} imported, ${data.removed.length} removed`;
+          scanStatus.className = 'status-ok';
+          await loadBooks();
+        } else {
+          scanStatus.textContent = '✗ Scan failed';
+          scanStatus.className = 'status-err';
+        }
+      } catch {
+        scanStatus.textContent = '✗ Scan failed';
+        scanStatus.className = 'status-err';
+      } finally {
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Scan Library';
+        setUploadEnabled(true);
+      }
+    });
   </script>
 </body>
 </html>
