@@ -289,4 +289,62 @@ describe('parseEpub', () => {
     const meta = parseEpub(filePath);
     expect(meta.author).toBe('刘慈欣');
   });
+
+  it('picks english series from multilingual belongs-to-collection', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+    <meta id="collection-en" property="belongs-to-collection" xml:lang="en">Remembrance of Earth's Past</meta>
+    <meta id="collection-zh" property="belongs-to-collection" xml:lang="zh-Hans">地球往事</meta>
+    <meta property="collection-type">series</meta>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-series-en.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.series).toBe("Remembrance of Earth's Past");
+  });
+
+  it('falls back to only available series when no english belongs-to-collection exists', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+    <meta id="collection-zh" property="belongs-to-collection" xml:lang="zh-Hans">地球往事</meta>
+    <meta property="collection-type">series</meta>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-series-zh-only.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.series).toBe('地球往事');
+  });
+
+  it('prefers calibre:series over multilingual belongs-to-collection', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+    <meta name="calibre:series" content="Three Body"/>
+    <meta name="calibre:series_index" content="1"/>
+    <meta id="collection-en" property="belongs-to-collection" xml:lang="en">Remembrance of Earth's Past</meta>
+    <meta id="collection-zh" property="belongs-to-collection" xml:lang="zh-Hans">地球往事</meta>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-series-calibre-wins.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.series).toBe('Three Body');
+    expect(meta.seriesIndex).toBe(1);
+  });
 });
