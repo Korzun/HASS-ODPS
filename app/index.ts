@@ -22,6 +22,14 @@ const bookStore = new BookStore(config.booksDir, db);
 
 const app = createApp(config, userStore, bookStore);
 
+// Startup scan: import untracked EPUBs, clean up stale DB entries
+try {
+  const scanResult = bookStore.scan();
+  log.info(`Startup scan: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`);
+} catch (err: any) {
+  log.error(`Startup scan failed: ${String(err.message)}`);
+}
+
 const shutdown = (): void => {
   log.info('Server shutting down');
   db.close();
