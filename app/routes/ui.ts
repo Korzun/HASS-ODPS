@@ -50,7 +50,7 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
 
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, bookStore.getBooksDir()),
-    filename: (_req, file, cb) => cb(null, file.originalname),
+    filename: (_req, file, cb) => cb(null, path.basename(file.originalname)),
   });
 
   const upload = multer({
