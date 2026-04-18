@@ -5,6 +5,7 @@ import request from 'supertest';
 import express from 'express';
 import session from 'express-session';
 import Database from 'better-sqlite3';
+import AdmZip from 'adm-zip';
 import { BookStore } from '../app/services/BookStore';
 import { createUiRouter } from '../app/routes/ui';
 import { AppConfig, EpubMeta } from '../app/types';
@@ -31,6 +32,58 @@ const FAKE_META: EpubMeta = {
   coverData: null,
   coverMime: null,
 };
+
+// Helper: build a minimal EPUB zip as a Buffer
+function makeEpub(opts: {
+  title?: string;
+  author?: string;
+  description?: string;
+  series?: string;
+  seriesIndex?: number;
+  coverData?: Buffer;
+  coverMime?: string;
+} = {}): Buffer {
+  const zip = new AdmZip();
+
+  const containerXml = `<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`;
+  zip.addFile('META-INF/container.xml', Buffer.from(containerXml));
+
+  const coverItem = opts.coverData
+    ? `<item id="cover-img" href="cover.jpg" media-type="${opts.coverMime ?? 'image/jpeg'}"/>`
+    : '';
+  const coverMeta = opts.coverData ? `<meta name="cover" content="cover-img"/>` : '';
+  const seriesMeta = opts.series
+    ? `<meta name="calibre:series" content="${opts.series}"/><meta name="calibre:series_index" content="${opts.seriesIndex ?? 1}"/>`
+    : '';
+
+  const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    ${opts.title !== undefined ? `<dc:title>${opts.title}</dc:title>` : ''}
+    ${opts.author !== undefined ? `<dc:creator>${opts.author}</dc:creator>` : ''}
+    ${opts.description !== undefined ? `<dc:description>${opts.description}</dc:description>` : ''}
+    ${coverMeta}
+    ${seriesMeta}
+  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    ${coverItem}
+  </manifest>
+  <spine toc="ncx"/>
+</package>`;
+  zip.addFile('OEBPS/content.opf', Buffer.from(opf));
+
+  if (opts.coverData) {
+    zip.addFile('OEBPS/cover.jpg', opts.coverData);
+  }
+
+  return zip.toBuffer();
+}
 
 // Returns a supertest agent that has a valid session cookie
 async function authenticatedAgent() {
@@ -108,17 +161,48 @@ describe('GET /api/books', () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body[0].filename).toBe('book.epub');
   });
+
+  it('returns enriched book data with author, series, hasCover', async () => {
+    const meta: EpubMeta = {
+      ...FAKE_META,
+      title: 'Enriched Book',
+      author: 'Jane Doe',
+      series: 'MySeries',
+      seriesIndex: 2,
+      coverData: null,
+      coverMime: null,
+    };
+    bookStore.addBook('enriched1', 'enriched.epub', path.join(booksDir, 'enriched.epub'), 200, new Date(), meta);
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/books');
+    expect(res.status).toBe(200);
+    const book = res.body[0];
+    expect(book.author).toBe('Jane Doe');
+    expect(book.series).toBe('MySeries');
+    expect(book.seriesIndex).toBe(2);
+    expect(book.hasCover).toBe(false);
+    expect(book.path).toBeUndefined();
+    expect(book.description).toBeUndefined();
+  });
 });
 
 describe('POST /api/books/upload', () => {
-  it('uploads a valid book file', async () => {
+  it('rejects .pdf files with 400 and "Supported: epub"', async () => {
     const agent = await authenticatedAgent();
     const res = await agent
       .post('/api/books/upload')
-      .attach('files', Buffer.from('epub-content'), 'uploaded.epub');
-    expect(res.status).toBe(200);
-    expect(res.body.uploaded).toContain('uploaded.epub');
-    expect(fs.existsSync(path.join(booksDir, 'uploaded.epub'))).toBe(true);
+      .attach('files', Buffer.from('pdf-content'), 'notes.pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Supported: epub/);
+  });
+
+  it('rejects .mobi files with 400 and "Supported: epub"', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/books/upload')
+      .attach('files', Buffer.from('mobi-content'), 'book.mobi');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Supported: epub/);
   });
 
   it('rejects unsupported file types', async () => {
@@ -127,6 +211,89 @@ describe('POST /api/books/upload', () => {
       .post('/api/books/upload')
       .attach('files', Buffer.from('text'), 'notes.txt');
     expect(res.status).toBe(400);
+  });
+
+  it('rejects invalid EPUB content with 400', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/books/upload')
+      .attach('files', Buffer.from('not-an-epub'), 'bad.epub');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Failed to parse EPUB/);
+  });
+
+  it('accepts a valid .epub, parses metadata, and stores it', async () => {
+    const epubBuf = makeEpub({
+      title: 'Parsed Title',
+      author: 'Parsed Author',
+      series: 'Parsed Series',
+      seriesIndex: 3,
+    });
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/books/upload')
+      .attach('files', epubBuf, 'parsed.epub');
+    expect(res.status).toBe(200);
+    expect(res.body.uploaded).toContain('parsed.epub');
+    expect(fs.existsSync(path.join(booksDir, 'parsed.epub'))).toBe(true);
+
+    // Verify metadata was stored
+    const books = bookStore.listBooks();
+    expect(books).toHaveLength(1);
+    expect(books[0].title).toBe('Parsed Title');
+    expect(books[0].author).toBe('Parsed Author');
+    expect(books[0].series).toBe('Parsed Series');
+    expect(books[0].seriesIndex).toBe(3);
+  });
+
+  it('accepts a valid .epub with cover', async () => {
+    const coverBuf = Buffer.from('fake-jpeg-data');
+    const epubBuf = makeEpub({
+      title: 'Cover Book',
+      author: 'Cover Author',
+      coverData: coverBuf,
+      coverMime: 'image/jpeg',
+    });
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/books/upload')
+      .attach('files', epubBuf, 'cover.epub');
+    expect(res.status).toBe(200);
+
+    const books = bookStore.listBooks();
+    expect(books[0].hasCover).toBe(true);
+  });
+});
+
+describe('GET /api/books/:id/cover', () => {
+  it('returns 200 with cover image for a book with cover', async () => {
+    const coverBuf = Buffer.from('fake-jpeg-bytes');
+    const meta: EpubMeta = {
+      ...FAKE_META,
+      coverData: coverBuf,
+      coverMime: 'image/jpeg',
+    };
+    bookStore.addBook('coverId1', 'cover-book.epub', path.join(booksDir, 'cover-book.epub'), 100, new Date(), meta);
+
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/books/coverId1/cover');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/image\/jpeg/);
+    expect(Buffer.from(res.body).toString()).toBe('fake-jpeg-bytes');
+  });
+
+  it('returns 404 for a book without cover', async () => {
+    bookStore.addBook('noCoverId', 'no-cover.epub', path.join(booksDir, 'no-cover.epub'), 100, new Date(), FAKE_META);
+
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/books/noCoverId/cover');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 for an unknown book id', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/books/unknownId/cover');
+    expect(res.status).toBe(404);
   });
 });
 

@@ -1,14 +1,16 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import * as path from 'path';
+import * as fs from 'fs';
 import { BookStore } from '../services/BookStore';
-import { AppConfig } from '../types';
+import { AppConfig, EpubMeta } from '../types';
 import { sessionAuth } from '../middleware/auth';
 import { logger } from '../logger';
+import { parseEpub, partialMD5 } from '../services/EpubParser';
 
 const log = logger('UI');
 
-const ALLOWED_EXTENSIONS = new Set(['.epub', '.pdf', '.mobi', '.cbz', '.cbr']);
+const ALLOWED_EXTENSIONS = new Set(['.epub']);
 
 function loginPage(error?: string): string {
   return `<!DOCTYPE html>
@@ -91,27 +93,48 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
 
   router.get('/api/books', sessionAuth, (_req: Request, res: Response) => {
     res.json(
-      bookStore.listBooks().map(b => ({
-        id: b.id,
-        title: b.title,
-        filename: b.filename,
-        ext: (b as any).ext ?? '.epub',
-        size: b.size,
-        mimeType: (b as any).mimeType ?? 'application/epub+zip',
-      }))
+      bookStore.listBooks().map(b => {
+        const { path: _path, description: _description, ...rest } = b as any;
+        return rest;
+      })
     );
   });
 
-  router.post('/api/books/upload', sessionAuth, upload.array('files'), (req: Request, res: Response) => {
+  router.post('/api/books/upload', sessionAuth, upload.array('files'), async (req: Request, res: Response) => {
     const files = req.files as Express.Multer.File[] | undefined;
     if (!files?.length) {
-      log.warn('Upload rejected — no valid files (supported: epub, pdf, mobi, cbz, cbr)');
-      res.status(400).json({ error: 'No valid files uploaded. Supported: epub, pdf, mobi, cbz, cbr' });
+      log.warn('Upload rejected — no valid files (supported: epub)');
+      res.status(400).json({ error: 'No valid files uploaded. Supported: epub' });
       return;
     }
-    const names = files.map(f => f.originalname);
-    log.info(`Books uploaded: ${names.join(', ')}`);
-    res.json({ uploaded: names });
+    const uploaded: string[] = [];
+    for (const file of files) {
+      const savedPath = file.path;
+      let meta: EpubMeta;
+      let id: string;
+      try {
+        meta = parseEpub(savedPath);
+        id = partialMD5(savedPath);
+      } catch (err: any) {
+        fs.unlinkSync(savedPath);
+        res.status(400).json({ error: `Failed to parse EPUB: ${err.message}` });
+        return;
+      }
+      bookStore.addBook(id, file.originalname, savedPath, file.size, new Date(), meta);
+      uploaded.push(file.originalname);
+    }
+    log.info(`Books uploaded: ${uploaded.join(', ')}`);
+    res.json({ uploaded });
+  });
+
+  router.get('/api/books/:id/cover', sessionAuth, (req: Request, res: Response) => {
+    const cover = bookStore.getCover(req.params.id);
+    if (!cover) {
+      res.status(404).send('Not found');
+      return;
+    }
+    res.set('Content-Type', cover.mime);
+    res.send(cover.data);
   });
 
   router.delete('/api/books/:id', sessionAuth, (req: Request, res: Response) => {
