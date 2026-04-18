@@ -1,6 +1,6 @@
 {
   "name": "hass-odps",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "scripts": {
     "build": "tsc && node -e \"const fs=require('fs');if(fs.existsSync('app/public'))fs.cpSync('app/public','dist/public',{recursive:true})\"",
