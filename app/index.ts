@@ -18,7 +18,7 @@ fs.mkdirSync(config.dataDir, { recursive: true });
 
 const db = new Database(path.join(config.dataDir, 'db.sqlite'));
 const userStore = new UserStore(db);
-const bookStore = new BookStore(config.booksDir);
+const bookStore = new BookStore(config.booksDir, db);
 
 const app = createApp(config, userStore, bookStore);
 
