@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { UserStore } from '../app/services/UserStore';
+import { UserStore } from './user-store';
 
 let db: InstanceType<typeof Database>;
 let store: UserStore;

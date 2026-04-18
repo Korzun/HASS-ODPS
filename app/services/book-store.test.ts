@@ -3,8 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import Database from 'better-sqlite3';
-import { BookStore, ScanImporter } from '../app/services/BookStore';
-import { EpubMeta } from '../app/types';
+import { BookStore, ScanImporter } from './book-store';
+import { EpubMeta } from '../types';
 
 const FAKE_META: EpubMeta = {
   title: 'Test Book',
