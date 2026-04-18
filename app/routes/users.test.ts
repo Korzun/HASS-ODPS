@@ -3,8 +3,8 @@ import request from 'supertest';
 import express from 'express';
 import session from 'express-session';
 import Database from 'better-sqlite3';
-import { UserStore } from '../app/services/UserStore';
-import { createUsersRouter } from '../app/routes/users';
+import { UserStore } from '../services/user-store';
+import { createUsersRouter } from './users';
 
 let db: InstanceType<typeof Database>;
 let userStore: UserStore;

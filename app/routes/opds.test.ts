@@ -4,10 +4,10 @@ import * as fs from 'fs';
 import request from 'supertest';
 import express from 'express';
 import Database from 'better-sqlite3';
-import { BookStore } from '../app/services/BookStore';
-import { UserStore } from '../app/services/UserStore';
-import { createOpdsRouter } from '../app/routes/opds';
-import { EpubMeta } from '../app/types';
+import { BookStore } from '../services/book-store';
+import { UserStore } from '../services/user-store';
+import { createOpdsRouter } from './opds';
+import { EpubMeta } from '../types';
 
 const FAKE_META: EpubMeta = {
   title: 'My Book',

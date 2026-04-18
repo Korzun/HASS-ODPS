@@ -1,4 +1,4 @@
-import { logger } from '../app/logger';
+import { logger } from './logger';
 
 let stdoutSpy: jest.SpyInstance;
 let stderrSpy: jest.SpyInstance;

@@ -1,8 +1,8 @@
 import Database from 'better-sqlite3';
 import request from 'supertest';
 import express from 'express';
-import { UserStore } from '../app/services/UserStore';
-import { createKosyncRouter } from '../app/routes/kosync';
+import { UserStore } from '../services/user-store';
+import { createKosyncRouter } from './kosync';
 
 let db: InstanceType<typeof Database>;
 let userStore: UserStore;

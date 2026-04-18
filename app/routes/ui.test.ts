@@ -6,9 +6,9 @@ import express from 'express';
 import session from 'express-session';
 import Database from 'better-sqlite3';
 import AdmZip from 'adm-zip';
-import { BookStore } from '../app/services/BookStore';
-import { createUiRouter } from '../app/routes/ui';
-import { AppConfig, EpubMeta } from '../app/types';
+import { BookStore } from '../services/book-store';
+import { createUiRouter } from './ui';
+import { AppConfig, EpubMeta } from '../types';
 
 let booksDir: string;
 let db: InstanceType<typeof Database>;
