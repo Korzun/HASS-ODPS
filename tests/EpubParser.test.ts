@@ -182,4 +182,139 @@ describe('parseEpub', () => {
     expect(typeof meta.title).toBe('string');
     expect(meta.title).toBe("Death's End");
   });
+
+  it('picks english title when non-english variant appears first', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title xml:lang="zh">死亡终结</dc:title>
+    <dc:title xml:lang="en">Death's End</dc:title>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-title-en-last.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.title).toBe("Death's End");
+  });
+
+  it('falls back to no-lang title when english is absent', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Untranslated Title</dc:title>
+    <dc:title xml:lang="zh">中文标题</dc:title>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-title-nolang.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.title).toBe('Untranslated Title');
+  });
+
+  it('falls back to first title when no english or no-lang variant exists', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title xml:lang="de">Der Dunkle Wald</dc:title>
+    <dc:title xml:lang="zh">黑暗森林</dc:title>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-title-allforeignt.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.title).toBe('Der Dunkle Wald');
+  });
+
+  it('picks english author when non-english variant appears first', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+    <dc:creator xml:lang="zh">刘慈欣</dc:creator>
+    <dc:creator xml:lang="en">Liu Cixin</dc:creator>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-author-en-last.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.author).toBe('Liu Cixin');
+  });
+
+  it('falls back to no-lang author when english is absent', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+    <dc:creator>Liu Cixin</dc:creator>
+    <dc:creator xml:lang="zh">刘慈欣</dc:creator>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-author-nolang.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.author).toBe('Liu Cixin');
+  });
+
+  it('falls back to first author when no english or no-lang variant exists', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Test</dc:title>
+    <dc:creator xml:lang="zh">刘慈欣</dc:creator>
+    <dc:creator xml:lang="ja">劉慈欣</dc:creator>
+  </metadata>
+  <manifest/><spine/>
+</package>`));
+    const filePath = path.join(tmpDir, 'lang-author-allforeignt.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+    const meta = parseEpub(filePath);
+    expect(meta.author).toBe('刘慈欣');
+  });
 });
