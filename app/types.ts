@@ -1,22 +1,35 @@
 export interface Book {
-  id: string;           // SHA-256 of relativePath, first 16 hex chars
-  filename: string;     // e.g. "My Book.epub"
-  path: string;         // absolute path
-  relativePath: string; // relative to booksDir, e.g. "My Book.epub"
-  title: string;        // filename without extension
-  size: number;         // bytes
-  ext: string;          // e.g. ".epub"
-  mimeType: string;     // e.g. "application/epub+zip"
+  id: string;           // 32-char partial MD5 (KoReader binary algorithm) — matches KOSync progress.document
+  filename: string;
+  path: string;
+  title: string;
+  author: string;
+  description: string;
+  series: string;
+  seriesIndex: number;  // REAL — supports fractional entries like 2.5
+  hasCover: boolean;    // true when cover blob is present in SQLite
+  size: number;
   mtime: Date;
+  addedAt: Date;
+}
+
+export interface EpubMeta {
+  title: string;
+  author: string;
+  description: string;
+  series: string;
+  seriesIndex: number;
+  coverData: Buffer | null;
+  coverMime: string | null;
 }
 
 export interface Progress {
-  document: string;     // document hash sent by KoReader
-  progress: string;     // e.g. "/body/DocFragment[23]"
-  percentage: number;   // 0.0–1.0
+  document: string;
+  progress: string;
+  percentage: number;
   device: string;
   device_id: string;
-  timestamp: number;    // Unix seconds
+  timestamp: number;
 }
 
 export interface AppConfig {
