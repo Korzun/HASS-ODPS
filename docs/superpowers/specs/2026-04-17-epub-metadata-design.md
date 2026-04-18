@@ -20,7 +20,7 @@ Extend HASS-ODPS to:
 
 ```typescript
 export interface Book {
-  id: string;           // SHA-256 of filename, first 16 hex chars
+  id: string;           // partial MD5 of file content (KoReader binary algorithm) — 32 hex chars
   filename: string;
   path: string;
   title: string;        // from EPUB OPF, fallback to filename stem
@@ -35,11 +35,24 @@ export interface Book {
 }
 ```
 
+### Book ID algorithm
+
+Book IDs use **KoReader's partial MD5 binary method** so that `books.id` matches the `document` field in the `progress` table, enabling direct join queries between library and reading progress.
+
+```typescript
+// Reads 1024-byte chunks at offsets: 1024 << (2*i) for i = -1..10
+// (256, 1024, 4096, 16384, 65536, 262144, ...) stopping when offset >= fileSize
+// Returns 32-char hex MD5 digest — identical to KoReader's getFileDigest()
+export function partialMD5(filePath: string): string
+```
+
+This is computed at upload time from the saved file and stored as the primary key. `BookStore.bookId()` is replaced by `EpubParser.partialMD5()` (or a shared utility).
+
 ### SQLite `books` table (new)
 
 ```sql
 CREATE TABLE IF NOT EXISTS books (
-  id            TEXT    PRIMARY KEY,
+  id            TEXT    PRIMARY KEY,  -- 32-char partial MD5, matches KOSync progress.document
   filename      TEXT    NOT NULL UNIQUE,
   path          TEXT    NOT NULL,
   title         TEXT    NOT NULL,
@@ -131,9 +144,10 @@ If any step fails, `parseEpub` throws with a descriptive message. Callers handle
 ```
 POST /api/books/upload
   → multer saves .epub to booksDir
-  → EpubParser.parseEpub(savedPath)
+  → EpubParser.parseEpub(savedPath)        — parse metadata + cover
       → on error: delete saved file, return 400
-  → bookStore.addBook(filename, path, size, mtime, meta)
+  → EpubParser.partialMD5(savedPath)       — compute KoReader-compatible ID
+  → bookStore.addBook(id, filename, path, size, mtime, meta)
       → on UNIQUE conflict (same filename): overwrite row (upsert)
   → return 200 { uploaded: [filename] }
 ```
@@ -219,6 +233,7 @@ const bookStore = new BookStore(config.booksDir, db);
 
 - File extensions `.pdf`, `.mobi`, `.cbz`, `.cbr` are removed from `SUPPORTED` and `ALLOWED_EXTENSIONS`
 - `BookStore` no longer has a `SUPPORTED` map — mime type is always `application/epub+zip`
+- `BookStore.bookId(relativePath)` static method removed — replaced by `EpubParser.partialMD5(filePath)`
 - Tests that write non-epub files to the books dir are updated to use `.epub`
 
 ---
