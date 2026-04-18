@@ -43,17 +43,23 @@ function rootFeed(baseUrl: string): string {
 function booksFeed(books: Book[], baseUrl: string): string {
   const now = new Date().toISOString();
   const entries = books
-    .map(
-      b => `  <entry>
+    .map(b => {
+      const coverLink = b.hasCover
+        ? `    <link rel="http://opds-spec.org/image"\n          href="${baseUrl}/opds/books/${b.id}/cover"\n          type="image/jpeg"/>`
+        : '';
+      return `  <entry>
     <title>${escapeXml(b.title)}</title>
     <id>urn:hass-odps:book:${b.id}</id>
     <updated>${b.mtime.toISOString()}</updated>
+    <author><name>${escapeXml(b.author)}</name></author>
+    <summary>${escapeXml(b.description)}</summary>
     <link rel="http://opds-spec.org/acquisition"
           href="${baseUrl}/opds/books/${b.id}/download"
-          type="${(b as any).mimeType ?? 'application/epub+zip'}"
+          type="application/epub+zip"
           title="${escapeXml(b.filename)}"/>
-  </entry>`
-    )
+${coverLink}
+  </entry>`;
+    })
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -95,9 +101,19 @@ export function createOpdsRouter(bookStore: BookStore, userStore: UserStore): Ro
     }
     const username = decodeBasicUser(req.headers.authorization!);
     log.info(`User "${username}" downloaded "${book.filename}"`);
-    res.set('Content-Type', (book as any).mimeType ?? 'application/epub+zip');
+    res.set('Content-Type', 'application/epub+zip');
     res.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(book.filename)}`);
     res.sendFile(book.path);
+  });
+
+  router.get('/books/:id/cover', auth, (req: Request, res: Response) => {
+    const cover = bookStore.getCover(req.params.id);
+    if (!cover) {
+      res.status(404).send('Not found');
+      return;
+    }
+    res.set('Content-Type', cover.mime);
+    res.send(cover.data);
   });
 
   return router;
