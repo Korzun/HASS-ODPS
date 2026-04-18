@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import Database from 'better-sqlite3';
 import { loadConfig } from './config';
 import { UserStore } from './services/UserStore';
 import { BookStore } from './services/BookStore';
@@ -15,7 +16,8 @@ const config = loadConfig();
 fs.mkdirSync(config.booksDir, { recursive: true });
 fs.mkdirSync(config.dataDir, { recursive: true });
 
-const userStore = new UserStore(path.join(config.dataDir, 'db.sqlite'));
+const db = new Database(path.join(config.dataDir, 'db.sqlite'));
+const userStore = new UserStore(db);
 const bookStore = new BookStore(config.booksDir);
 
 const app = createApp(config, userStore, bookStore);

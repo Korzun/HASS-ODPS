@@ -1,19 +1,18 @@
-import * as os from 'os';
 import * as path from 'path';
-import * as fs from 'fs';
 import request from 'supertest';
 import express from 'express';
 import session from 'express-session';
+import Database from 'better-sqlite3';
 import { UserStore } from '../app/services/UserStore';
 import { createUsersRouter } from '../app/routes/users';
 
-let dbPath: string;
+let db: InstanceType<typeof Database>;
 let userStore: UserStore;
 let app: express.Express;
 
 beforeEach(() => {
-  dbPath = path.join(os.tmpdir(), `hass-odps-users-test-${Date.now()}.sqlite`);
-  userStore = new UserStore(dbPath);
+  db = new Database(':memory:');
+  userStore = new UserStore(db);
 
   app = express();
   app.use(express.json());
@@ -28,8 +27,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  userStore.close();
-  fs.unlinkSync(dbPath);
+  db.close();
 });
 
 async function authenticatedAgent() {

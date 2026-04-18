@@ -3,12 +3,13 @@ import * as path from 'path';
 import * as fs from 'fs';
 import request from 'supertest';
 import express from 'express';
+import Database from 'better-sqlite3';
 import { BookStore } from '../app/services/BookStore';
 import { UserStore } from '../app/services/UserStore';
 import { createOpdsRouter } from '../app/routes/opds';
 
 let booksDir: string;
-let dbPath: string;
+let db: InstanceType<typeof Database>;
 let bookStore: BookStore;
 let userStore: UserStore;
 let app: express.Express;
@@ -21,9 +22,9 @@ function basicAuth(username: string, password: string) {
 
 beforeEach(() => {
   booksDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hass-odps-opds-'));
-  dbPath = path.join(os.tmpdir(), `hass-odps-opds-test-${Date.now()}.sqlite`);
+  db = new Database(':memory:');
   bookStore = new BookStore(booksDir);
-  userStore = new UserStore(dbPath);
+  userStore = new UserStore(db);
   // Register a test user the same way KOSync registration does: store MD5(password).
   userStore.createUser('alice', UserStore.hashPassword('secret'));
   app = express();
@@ -31,8 +32,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  userStore.close();
-  fs.unlinkSync(dbPath);
+  db.close();
   fs.rmSync(booksDir, { recursive: true });
 });
 

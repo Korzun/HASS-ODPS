@@ -1,12 +1,12 @@
-import Database, { Database as DB } from 'better-sqlite3';
+import { Database as DB } from 'better-sqlite3';
 import * as crypto from 'crypto';
 import { Progress } from '../types';
 
 export class UserStore {
   private db: DB;
 
-  constructor(dbPath: string) {
-    this.db = new Database(dbPath);
+  constructor(db: DB) {
+    this.db = db;
     this.migrate();
   }
 
@@ -110,7 +110,4 @@ export class UserStore {
     return result.changes > 0;
   }
 
-  close(): void {
-    this.db.close();
-  }
 }
