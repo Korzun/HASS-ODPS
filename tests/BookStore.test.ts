@@ -62,6 +62,12 @@ describe('addBook and listBooks', () => {
     const books = bookStore.listBooks();
     expect(books[0].hasCover).toBe(false);
   });
+
+  it('uses filename stem as title fallback when title is empty', () => {
+    bookStore.addBook('id-empty', 'my-book.epub', '/books/my-book.epub', 100, new Date(), { ...FAKE_META, title: '' });
+    const book = bookStore.getBookById('id-empty');
+    expect(book!.title).toBe('my-book');
+  });
 });
 
 describe('getBookById', () => {

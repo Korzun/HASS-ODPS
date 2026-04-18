@@ -1,6 +1,22 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import Database, { Database as DB } from 'better-sqlite3';
 import { Book, EpubMeta } from '../types';
+
+interface BookRow {
+  id: string;
+  filename: string;
+  path: string;
+  title: string;
+  author: string;
+  description: string;
+  series: string;
+  series_index: number;
+  has_cover: number;
+  size: number;
+  mtime: number;
+  added_at: number;
+}
 
 export class BookStore {
   private readonly db: DB;
@@ -58,11 +74,12 @@ export class BookStore {
         size = excluded.size,
         mtime = excluded.mtime
     `);
+    const title = meta.title.trim() || path.basename(filename, path.extname(filename));
     stmt.run(
       id,
       filename,
       filePath,
-      meta.title,
+      title,
       meta.author,
       meta.description,
       meta.series,
@@ -80,7 +97,7 @@ export class BookStore {
       SELECT id, filename, path, title, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books ORDER BY title
-    `).all() as any[];
+    `).all() as BookRow[];
     return rows.map(r => this.rowToBook(r));
   }
 
@@ -89,7 +106,7 @@ export class BookStore {
       SELECT id, filename, path, title, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books WHERE id = ?
-    `).get(id) as any;
+    `).get(id) as BookRow | undefined;
     return row ? this.rowToBook(row) : null;
   }
 
@@ -102,25 +119,25 @@ export class BookStore {
   }
 
   getCover(id: string): { data: Buffer; mime: string } | null {
-    const row = this.db.prepare('SELECT cover_data, cover_mime FROM books WHERE id = ?').get(id) as any;
+    const row = this.db.prepare('SELECT cover_data, cover_mime FROM books WHERE id = ?').get(id) as { cover_data: Buffer | null; cover_mime: string | null } | undefined;
     if (!row || !row.cover_data) return null;
     return { data: row.cover_data as Buffer, mime: row.cover_mime as string };
   }
 
-  private rowToBook(r: any): Book {
+  private rowToBook(r: BookRow): Book {
     return {
-      id: r.id as string,
-      filename: r.filename as string,
-      path: r.path as string,
-      title: r.title as string,
-      author: r.author as string,
-      description: r.description as string,
-      series: r.series as string,
-      seriesIndex: r.series_index as number,
+      id: r.id,
+      filename: r.filename,
+      path: r.path,
+      title: r.title,
+      author: r.author,
+      description: r.description,
+      series: r.series,
+      seriesIndex: r.series_index,
       hasCover: Boolean(r.has_cover),
-      size: r.size as number,
-      mtime: new Date(r.mtime as number),
-      addedAt: new Date(r.added_at as number),
+      size: r.size,
+      mtime: new Date(r.mtime),
+      addedAt: new Date(r.added_at),
     };
   }
 }
