@@ -1,64 +1,126 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import { Book } from '../types';
-
-const SUPPORTED: Record<string, string> = {
-  '.epub': 'application/epub+zip',
-  '.pdf': 'application/pdf',
-  '.mobi': 'application/x-mobipocket-ebook',
-  '.cbz': 'application/x-cbz',
-  '.cbr': 'application/x-cbr',
-};
+import Database, { Database as DB } from 'better-sqlite3';
+import { Book, EpubMeta } from '../types';
 
 export class BookStore {
-  constructor(private readonly booksDir: string) {}
+  private readonly db: DB;
+
+  constructor(private readonly booksDir: string, db: DB) {
+    this.db = db;
+    this.migrate();
+  }
 
   getBooksDir(): string {
     return this.booksDir;
   }
 
-  static bookId(relativePath: string): string {
-    return crypto.createHash('sha256').update(relativePath).digest('hex').slice(0, 16);
+  private migrate(): void {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS books (
+        id            TEXT    PRIMARY KEY,
+        filename      TEXT    NOT NULL UNIQUE,
+        path          TEXT    NOT NULL,
+        title         TEXT    NOT NULL,
+        author        TEXT    NOT NULL DEFAULT '',
+        description   TEXT    NOT NULL DEFAULT '',
+        series        TEXT    NOT NULL DEFAULT '',
+        series_index  REAL    NOT NULL DEFAULT 0,
+        cover_data    BLOB,
+        cover_mime    TEXT,
+        size          INTEGER NOT NULL,
+        mtime         INTEGER NOT NULL,
+        added_at      INTEGER NOT NULL
+      )
+    `);
+  }
+
+  addBook(
+    id: string,
+    filename: string,
+    filePath: string,
+    size: number,
+    mtime: Date,
+    meta: EpubMeta
+  ): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO books (id, filename, path, title, author, description, series, series_index, cover_data, cover_mime, size, mtime, added_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(filename) DO UPDATE SET
+        id = excluded.id,
+        path = excluded.path,
+        title = excluded.title,
+        author = excluded.author,
+        description = excluded.description,
+        series = excluded.series,
+        series_index = excluded.series_index,
+        cover_data = excluded.cover_data,
+        cover_mime = excluded.cover_mime,
+        size = excluded.size,
+        mtime = excluded.mtime
+    `);
+    stmt.run(
+      id,
+      filename,
+      filePath,
+      meta.title,
+      meta.author,
+      meta.description,
+      meta.series,
+      meta.seriesIndex,
+      meta.coverData,
+      meta.coverMime,
+      size,
+      mtime.getTime(),
+      Date.now()
+    );
   }
 
   listBooks(): Book[] {
-    if (!fs.existsSync(this.booksDir)) return [];
-
-    return fs
-      .readdirSync(this.booksDir)
-      .filter(filename => {
-        const ext = path.extname(filename).toLowerCase();
-        return ext in SUPPORTED;
-      })
-      .map(filename => {
-        const ext = path.extname(filename).toLowerCase();
-        const absolutePath = path.join(this.booksDir, filename);
-        const stat = fs.statSync(absolutePath);
-        return {
-          id: BookStore.bookId(filename),
-          filename,
-          path: absolutePath,
-          relativePath: filename,
-          title: path.basename(filename, ext),
-          size: stat.size,
-          ext,
-          mimeType: SUPPORTED[ext],
-          mtime: stat.mtime,
-        } satisfies Book;
-      })
-      .filter(b => fs.statSync(b.path).isFile())
-      .sort((a, b) => a.title.localeCompare(b.title));
+    const rows = this.db.prepare(`
+      SELECT id, filename, path, title, author, description, series, series_index,
+             cover_data IS NOT NULL AS has_cover, size, mtime, added_at
+      FROM books ORDER BY title
+    `).all() as any[];
+    return rows.map(r => this.rowToBook(r));
   }
 
   getBookById(id: string): Book | null {
-    return this.listBooks().find(b => b.id === id) ?? null;
+    const row = this.db.prepare(`
+      SELECT id, filename, path, title, author, description, series, series_index,
+             cover_data IS NOT NULL AS has_cover, size, mtime, added_at
+      FROM books WHERE id = ?
+    `).get(id) as any;
+    return row ? this.rowToBook(row) : null;
   }
 
   deleteBook(id: string): Book | null {
     const book = this.getBookById(id);
     if (!book) return null;
-    fs.unlinkSync(book.path);
+    try { fs.unlinkSync(book.path); } catch { /* file already gone */ }
+    this.db.prepare('DELETE FROM books WHERE id = ?').run(id);
     return book;
+  }
+
+  getCover(id: string): { data: Buffer; mime: string } | null {
+    const row = this.db.prepare('SELECT cover_data, cover_mime FROM books WHERE id = ?').get(id) as any;
+    if (!row || !row.cover_data) return null;
+    return { data: row.cover_data as Buffer, mime: row.cover_mime as string };
+  }
+
+  private rowToBook(r: any): Book {
+    return {
+      id: r.id as string,
+      filename: r.filename as string,
+      path: r.path as string,
+      title: r.title as string,
+      author: r.author as string,
+      description: r.description as string,
+      series: r.series as string,
+      seriesIndex: r.series_index as number,
+      hasCover: Boolean(r.has_cover),
+      size: r.size as number,
+      mtime: new Date(r.mtime as number),
+      addedAt: new Date(r.added_at as number),
+    };
   }
 }

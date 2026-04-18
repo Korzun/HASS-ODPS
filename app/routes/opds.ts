@@ -50,7 +50,7 @@ function booksFeed(books: Book[], baseUrl: string): string {
     <updated>${b.mtime.toISOString()}</updated>
     <link rel="http://opds-spec.org/acquisition"
           href="${baseUrl}/opds/books/${b.id}/download"
-          type="${b.mimeType}"
+          type="${(b as any).mimeType ?? 'application/epub+zip'}"
           title="${escapeXml(b.filename)}"/>
   </entry>`
     )
@@ -95,7 +95,7 @@ export function createOpdsRouter(bookStore: BookStore, userStore: UserStore): Ro
     }
     const username = decodeBasicUser(req.headers.authorization!);
     log.info(`User "${username}" downloaded "${book.filename}"`);
-    res.set('Content-Type', book.mimeType);
+    res.set('Content-Type', (book as any).mimeType ?? 'application/epub+zip');
     res.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(book.filename)}`);
     res.sendFile(book.path);
   });

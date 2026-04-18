@@ -4,11 +4,13 @@ import * as fs from 'fs';
 import request from 'supertest';
 import express from 'express';
 import session from 'express-session';
+import Database from 'better-sqlite3';
 import { BookStore } from '../app/services/BookStore';
 import { createUiRouter } from '../app/routes/ui';
-import { AppConfig } from '../app/types';
+import { AppConfig, EpubMeta } from '../app/types';
 
 let booksDir: string;
+let db: InstanceType<typeof Database>;
 let bookStore: BookStore;
 let app: express.Express;
 
@@ -18,6 +20,16 @@ const config: AppConfig = {
   booksDir: '',
   dataDir: '/tmp',
   port: 3000,
+};
+
+const FAKE_META: EpubMeta = {
+  title: 'Test Book',
+  author: 'Test Author',
+  description: '',
+  series: '',
+  seriesIndex: 0,
+  coverData: null,
+  coverMime: null,
 };
 
 // Returns a supertest agent that has a valid session cookie
@@ -32,7 +44,8 @@ async function authenticatedAgent() {
 
 beforeEach(() => {
   booksDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hass-odps-ui-'));
-  bookStore = new BookStore(booksDir);
+  db = new Database(':memory:');
+  bookStore = new BookStore(booksDir, db);
 
   app = express();
   app.use(express.json());
@@ -44,6 +57,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  db.close();
   fs.rmSync(booksDir, { recursive: true });
 });
 
@@ -87,7 +101,7 @@ describe('GET /api/books', () => {
   });
 
   it('returns JSON array of books', async () => {
-    fs.writeFileSync(path.join(booksDir, 'book.epub'), 'x');
+    bookStore.addBook('book1', 'book.epub', path.join(booksDir, 'book.epub'), 100, new Date(), { ...FAKE_META, title: 'book' });
     const agent = await authenticatedAgent();
     const res = await agent.get('/api/books');
     expect(res.status).toBe(200);
@@ -120,6 +134,7 @@ describe('DELETE /api/books/:id', () => {
   it('deletes a book and returns 204', async () => {
     const bookPath = path.join(booksDir, 'book.epub');
     fs.writeFileSync(bookPath, 'x');
+    bookStore.addBook('book1', 'book.epub', bookPath, 1, new Date(), FAKE_META);
     const [book] = bookStore.listBooks();
 
     const agent = await authenticatedAgent();

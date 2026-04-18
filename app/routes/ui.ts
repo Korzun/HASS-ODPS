@@ -95,9 +95,9 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
         id: b.id,
         title: b.title,
         filename: b.filename,
-        ext: b.ext,
+        ext: (b as any).ext ?? '.epub',
         size: b.size,
-        mimeType: b.mimeType,
+        mimeType: (b as any).mimeType ?? 'application/epub+zip',
       }))
     );
   });

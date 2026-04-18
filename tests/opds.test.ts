@@ -7,6 +7,17 @@ import Database from 'better-sqlite3';
 import { BookStore } from '../app/services/BookStore';
 import { UserStore } from '../app/services/UserStore';
 import { createOpdsRouter } from '../app/routes/opds';
+import { EpubMeta } from '../app/types';
+
+const FAKE_META: EpubMeta = {
+  title: 'My Book',
+  author: 'Test Author',
+  description: '',
+  series: '',
+  seriesIndex: 0,
+  coverData: null,
+  coverMime: null,
+};
 
 let booksDir: string;
 let db: InstanceType<typeof Database>;
@@ -23,7 +34,7 @@ function basicAuth(username: string, password: string) {
 beforeEach(() => {
   booksDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hass-odps-opds-'));
   db = new Database(':memory:');
-  bookStore = new BookStore(booksDir);
+  bookStore = new BookStore(booksDir, db);
   userStore = new UserStore(db);
   // Register a test user the same way KOSync registration does: store MD5(password).
   userStore.createUser('alice', UserStore.hashPassword('secret'));
@@ -73,14 +84,14 @@ describe('GET /opds/books', () => {
   });
 
   it('includes an entry for each book', async () => {
-    fs.writeFileSync(path.join(booksDir, 'My Book.epub'), 'x');
+    bookStore.addBook('book1', 'My Book.epub', path.join(booksDir, 'My Book.epub'), 100, new Date(), { ...FAKE_META, title: 'My Book' });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('My Book');
     expect(res.text).toContain('opds-spec.org/acquisition');
   });
 
   it('escapes special characters in titles', async () => {
-    fs.writeFileSync(path.join(booksDir, 'A & B <Test>.epub'), 'x');
+    bookStore.addBook('book2', 'A & B <Test>.epub', path.join(booksDir, 'A & B <Test>.epub'), 100, new Date(), { ...FAKE_META, title: 'A & B <Test>' });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('A &amp; B &lt;Test&gt;');
     expect(res.text).not.toContain('<Test>');
@@ -96,10 +107,11 @@ describe('GET /opds/books/:id/download', () => {
   });
 
   it('returns the file with correct content type', async () => {
-    fs.writeFileSync(path.join(booksDir, 'book.epub'), 'epub-content');
-    const [book] = bookStore.listBooks();
+    const bookPath = path.join(booksDir, 'book.epub');
+    fs.writeFileSync(bookPath, 'epub-content');
+    bookStore.addBook('bookdl', 'book.epub', bookPath, 12, new Date(), FAKE_META);
     const res = await request(app)
-      .get(`/opds/books/${book.id}/download`)
+      .get('/opds/books/bookdl/download')
       .set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/epub/);
