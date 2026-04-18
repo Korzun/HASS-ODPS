@@ -76,14 +76,20 @@ export function parseEpub(filePath: string): EpubMeta {
 
   const metas: Array<{ '@_name'?: string; '@_content'?: string; '@_property'?: string; '#text'?: string }> = metadata?.meta ?? [];
 
-  let series = '';
-  let seriesIndex = 0;
+  let calibreSeries = '';
+  let calibreSeriesIndex = 0;
+  let groupPosition = 0;
+  const collectionCandidates: MetaLike[] = [];
+
   for (const m of metas) {
-    if (m['@_name'] === 'calibre:series') series = m['@_content'] ?? '';
-    if (m['@_name'] === 'calibre:series_index') seriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
-    if (m['@_property'] === 'belongs-to-collection') series = m['#text'] ?? '';
-    if (m['@_property'] === 'group-position') seriesIndex = parseFloat(m['#text'] ?? '0') || 0;
+    if (m['@_name'] === 'calibre:series')       calibreSeries = m['@_content'] ?? '';
+    if (m['@_name'] === 'calibre:series_index')  calibreSeriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
+    if (m['@_property'] === 'belongs-to-collection') collectionCandidates.push(m);
+    if (m['@_property'] === 'group-position')    groupPosition = parseFloat(m['#text'] ?? '0') || 0;
   }
+
+  const series = calibreSeries || pickLang(collectionCandidates);
+  const seriesIndex = calibreSeriesIndex || groupPosition;
 
   // Step 4: cover image
   let coverData: Buffer | null = null;
