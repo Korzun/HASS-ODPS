@@ -1,26 +1,23 @@
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
+import Database from 'better-sqlite3';
 import request from 'supertest';
 import express from 'express';
 import { UserStore } from '../app/services/UserStore';
 import { createKosyncRouter } from '../app/routes/kosync';
 
-let dbPath: string;
+let db: InstanceType<typeof Database>;
 let userStore: UserStore;
 let app: express.Express;
 
 beforeEach(() => {
-  dbPath = path.join(os.tmpdir(), `kosync-test-${Date.now()}.sqlite`);
-  userStore = new UserStore(dbPath);
+  db = new Database(':memory:');
+  userStore = new UserStore(db);
   app = express();
   app.use(express.json());
   app.use('/kosync', createKosyncRouter(userStore));
 });
 
 afterEach(() => {
-  userStore.close();
-  fs.unlinkSync(dbPath);
+  db.close();
 });
 
 function authHeaders(username: string, password: string) {

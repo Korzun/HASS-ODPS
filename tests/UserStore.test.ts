@@ -1,19 +1,16 @@
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
+import Database from 'better-sqlite3';
 import { UserStore } from '../app/services/UserStore';
 
+let db: InstanceType<typeof Database>;
 let store: UserStore;
-let dbPath: string;
 
 beforeEach(() => {
-  dbPath = path.join(os.tmpdir(), `hass-odps-test-${Date.now()}.sqlite`);
-  store = new UserStore(dbPath);
+  db = new Database(':memory:');
+  store = new UserStore(db);
 });
 
 afterEach(() => {
-  store.close();
-  fs.unlinkSync(dbPath);
+  db.close();
 });
 
 describe('UserStore.createUser', () => {
