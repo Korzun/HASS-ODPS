@@ -2,11 +2,11 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
-import { BookStore } from '../services/BookStore';
+import { BookStore } from '../services/book-store';
 import { AppConfig, EpubMeta } from '../types';
 import { sessionAuth } from '../middleware/auth';
 import { logger } from '../logger';
-import { parseEpub, partialMD5 } from '../services/EpubParser';
+import { parseEpub, partialMD5 } from '../services/epub-parser';
 
 const log = logger('UI');
 

@@ -1,6 +1,6 @@
 // app/routes/users.ts
 import { Router, Request, Response } from 'express';
-import { UserStore } from '../services/UserStore';
+import { UserStore } from '../services/user-store';
 import { sessionAuth } from '../middleware/auth';
 import { logger } from '../logger';
 

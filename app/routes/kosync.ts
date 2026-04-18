@@ -1,6 +1,6 @@
 // app/routes/kosync.ts
 import { Router, Request, Response } from 'express';
-import { UserStore } from '../services/UserStore';
+import { UserStore } from '../services/user-store';
 import { kosyncAuth } from '../middleware/auth';
 import { logger } from '../logger';
 

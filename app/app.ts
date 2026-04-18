@@ -1,8 +1,8 @@
 import express from 'express';
 import session from 'express-session';
 import { AppConfig } from './types';
-import { BookStore } from './services/BookStore';
-import { UserStore } from './services/UserStore';
+import { BookStore } from './services/book-store';
+import { UserStore } from './services/user-store';
 import { createOpdsRouter } from './routes/opds';
 import { createKosyncRouter } from './routes/kosync';
 import { createUsersRouter } from './routes/users';

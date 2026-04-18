@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Database from 'better-sqlite3';
 import { loadConfig } from './config';
-import { UserStore } from './services/UserStore';
-import { BookStore } from './services/BookStore';
+import { UserStore } from './services/user-store';
+import { BookStore } from './services/book-store';
 import { createApp } from './app';
 import { logger } from './logger';
 

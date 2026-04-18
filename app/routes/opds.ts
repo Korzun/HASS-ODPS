@@ -1,7 +1,7 @@
 // app/routes/opds.ts
 import { Router, Request, Response } from 'express';
-import { BookStore } from '../services/BookStore';
-import { UserStore } from '../services/UserStore';
+import { BookStore } from '../services/book-store';
+import { UserStore } from '../services/user-store';
 import { Book } from '../types';
 import { opdsAuth } from '../middleware/auth';
 import { logger } from '../logger';

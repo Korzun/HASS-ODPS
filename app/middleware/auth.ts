@@ -1,6 +1,6 @@
 // app/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
-import { UserStore } from '../services/UserStore';
+import { UserStore } from '../services/user-store';
 import { logger } from '../logger';
 
 const log = logger('Auth');
