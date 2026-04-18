@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import Database from 'better-sqlite3';
-import { BookStore } from '../app/services/BookStore';
+import { BookStore, ScanImporter } from '../app/services/BookStore';
 import { EpubMeta } from '../app/types';
 
 const FAKE_META: EpubMeta = {
@@ -113,5 +114,91 @@ describe('getCover', () => {
 
   it('returns null for unknown id', () => {
     expect(bookStore.getCover('unknown')).toBeNull();
+  });
+});
+
+// ── scan() ───────────────────────────────────────────────────────────────────
+
+function makeMockImporter(): ScanImporter {
+  return {
+    parseEpub: (_filePath: string): EpubMeta => ({
+      title: 'Mock Title',
+      author: 'Mock Author',
+      description: '',
+      series: '',
+      seriesIndex: 0,
+      coverData: null,
+      coverMime: null,
+    }),
+    partialMD5: (filePath: string): string =>
+      crypto.createHash('md5').update(filePath).digest('hex'),
+  };
+}
+
+describe('BookStore.scan()', () => {
+  it('returns empty lists when booksDir is empty and DB is empty', () => {
+    const result = bookStore.scan(makeMockImporter());
+    expect(result).toEqual({ imported: [], removed: [] });
+  });
+
+  it('imports an epub found on disk but not in DB', () => {
+    const filePath = path.join(booksDir, 'new-book.epub');
+    fs.writeFileSync(filePath, 'fake-epub-content');
+    const result = bookStore.scan(makeMockImporter());
+    expect(result.imported).toEqual(['new-book.epub']);
+    expect(result.removed).toEqual([]);
+    const books = bookStore.listBooks();
+    expect(books).toHaveLength(1);
+    expect(books[0].filename).toBe('new-book.epub');
+    expect(books[0].title).toBe('Mock Title');
+  });
+
+  it('does not re-import a book already in the DB', () => {
+    const filePath = path.join(booksDir, 'existing.epub');
+    fs.writeFileSync(filePath, 'fake-epub-content');
+    bookStore.scan(makeMockImporter()); // first scan imports it
+    const result = bookStore.scan(makeMockImporter()); // second scan is a no-op
+    expect(result.imported).toEqual([]);
+    expect(result.removed).toEqual([]);
+    expect(bookStore.listBooks()).toHaveLength(1);
+  });
+
+  it('removes a stale DB entry whose file no longer exists on disk', () => {
+    const fakePath = path.join(booksDir, 'ghost.epub');
+    // Add directly to DB without creating the file
+    bookStore.addBook('ghostid001', 'ghost.epub', fakePath, 100, new Date(), {
+      title: 'Ghost Book', author: '', description: '', series: '',
+      seriesIndex: 0, coverData: null, coverMime: null,
+    });
+    expect(bookStore.listBooks()).toHaveLength(1);
+    const result = bookStore.scan(makeMockImporter());
+    expect(result.removed).toEqual(['ghost.epub']);
+    expect(result.imported).toEqual([]);
+    expect(bookStore.listBooks()).toHaveLength(0);
+  });
+
+  it('skips a file that fails to parse and continues scanning others', () => {
+    fs.writeFileSync(path.join(booksDir, 'bad.epub'), 'bad');
+    fs.writeFileSync(path.join(booksDir, 'good.epub'), 'good');
+    const errorImporter: ScanImporter = {
+      parseEpub: (filePath: string): EpubMeta => {
+        if (filePath.includes('bad')) throw new Error('parse failed');
+        return { title: 'Good', author: '', description: '', series: '',
+          seriesIndex: 0, coverData: null, coverMime: null };
+      },
+      partialMD5: (filePath: string): string =>
+        crypto.createHash('md5').update(filePath).digest('hex'),
+    };
+    const result = bookStore.scan(errorImporter);
+    expect(result.imported).toHaveLength(1);
+    expect(result.imported).toContain('good.epub');
+    expect(result.removed).toEqual([]);
+  });
+
+  it('ignores non-epub files in booksDir', () => {
+    fs.writeFileSync(path.join(booksDir, 'readme.txt'), 'text');
+    fs.writeFileSync(path.join(booksDir, 'book.epub'), 'epub');
+    const result = bookStore.scan(makeMockImporter());
+    expect(result.imported).toEqual(['book.epub']);
   });
 });
