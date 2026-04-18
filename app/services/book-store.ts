@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Database, { Database as DB } from 'better-sqlite3';
 import { Book, EpubMeta } from '../types';
-import { parseEpub, partialMD5 } from './EpubParser';
+import { parseEpub, partialMD5 } from './epub-parser';
 import { logger } from '../logger';
 
 const log = logger('BookStore');
