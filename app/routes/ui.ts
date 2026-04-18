@@ -94,7 +94,7 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
   router.get('/api/books', sessionAuth, (_req: Request, res: Response) => {
     res.json(
       bookStore.listBooks().map(b => {
-        const { path: _path, description: _description, ...rest } = b as any;
+        const { path: _path, description: _description, ...rest } = b;
         return rest;
       })
     );
