@@ -24,6 +24,7 @@ const app = createApp(config, userStore, bookStore);
 
 const shutdown = (): void => {
   log.info('Server shutting down');
+  db.close();
   process.exit(0);
 };
 process.on('SIGTERM', shutdown);
