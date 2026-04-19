@@ -6,6 +6,8 @@ import Database from 'better-sqlite3';
 import { BookStore, ScanImporter } from './book-store';
 import { EpubMeta } from '../types';
 
+jest.mock('../logger');
+
 const FAKE_META: EpubMeta = {
   title: 'Test Book',
   author: 'Author Name',

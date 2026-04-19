@@ -11,6 +11,8 @@ import { UserStore } from '../services/user-store';
 import { createUiRouter } from './ui';
 import { AppConfig, EpubMeta } from '../types';
 
+jest.mock('../logger');
+
 let booksDir: string;
 let db: InstanceType<typeof Database>;
 let bookStore: BookStore;

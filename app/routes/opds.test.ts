@@ -9,6 +9,8 @@ import { UserStore } from '../services/user-store';
 import { createOpdsRouter } from './opds';
 import { EpubMeta } from '../types';
 
+jest.mock('../logger');
+
 const FAKE_META: EpubMeta = {
   title: 'My Book',
   author: 'Test Author',

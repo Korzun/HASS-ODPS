@@ -4,6 +4,8 @@ import express from 'express';
 import { UserStore } from '../services/user-store';
 import { createKosyncRouter } from './kosync';
 
+jest.mock('../logger');
+
 let db: InstanceType<typeof Database>;
 let userStore: UserStore;
 let app: express.Express;

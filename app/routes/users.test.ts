@@ -5,6 +5,8 @@ import Database from 'better-sqlite3';
 import { UserStore } from '../services/user-store';
 import { createUsersRouter } from './users';
 
+jest.mock('../logger');
+
 let db: InstanceType<typeof Database>;
 let userStore: UserStore;
 let app: express.Express;
