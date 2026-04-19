@@ -14,7 +14,6 @@ Allow regular users (stored in the SQLite `users` table) to log into the web UI.
 | Browse books | yes | yes |
 | Upload books | yes | yes |
 | Download books (OPDS) | yes | yes |
-| Download books (API) | yes | yes (not shown in UI) |
 | Delete books | yes | no |
 | Scan library | yes | no |
 | Users tab | yes | no |
