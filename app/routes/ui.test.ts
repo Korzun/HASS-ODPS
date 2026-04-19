@@ -584,6 +584,7 @@ describe('DELETE /api/my/progress/:document', () => {
     const agent = await adminAgent();
     const res = await agent.delete('/api/my/progress/doc1');
     expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Forbidden' });
   });
 
   it('returns 204 and clears the record for regular user', async () => {
@@ -597,6 +598,7 @@ describe('DELETE /api/my/progress/:document', () => {
     const agent = await userAgent();
     const res = await agent.delete('/api/my/progress/nonexistent');
     expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Progress record not found' });
   });
 });
 
