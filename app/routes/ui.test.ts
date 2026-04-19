@@ -185,6 +185,25 @@ describe('GET /api/books', () => {
     expect(book.path).toBeUndefined();
     expect(book.description).toBeUndefined();
   });
+
+  it('returns fileAs in the books API response', async () => {
+    const meta: EpubMeta = {
+      ...FAKE_META,
+      title: 'Foundation',
+      fileAs: 'Asimov, Isaac',
+      author: 'Isaac Asimov',
+    };
+
+    bookStore.addBook('foundation1', 'foundation.epub', path.join(booksDir, 'foundation.epub'), 200, new Date(), meta);
+
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/api/books');
+
+    expect(res.status).toBe(200);
+    expect(res.body[0].fileAs).toBe('Asimov, Isaac');
+    expect(res.body[0].path).toBeUndefined();
+    expect(res.body[0].description).toBeUndefined();
+  });
 });
 
 describe('POST /api/books/upload', () => {
