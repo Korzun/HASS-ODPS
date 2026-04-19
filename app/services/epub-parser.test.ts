@@ -93,7 +93,7 @@ describe('partialMD5', () => {
     expect(partialMD5(f1)).not.toBe(partialMD5(f2));
   });
 
-  it('works on tiny files (< 256 bytes)', () => {
+  it('works on tiny files (< 1024 bytes)', () => {
     const filePath = path.join(tmpDir, 'tiny.epub');
     fs.writeFileSync(filePath, Buffer.from('tiny'));
     // Should not throw, should return 32-char hex
