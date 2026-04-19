@@ -78,7 +78,7 @@ export function createUiRouter(bookStore: BookStore, userStore: UserStore, confi
     if (username === config.username && password === config.password) {
       req.session.authenticated = true;
       req.session.isAdmin = true;
-      req.session.username = config.username;
+      req.session.username = "Admin";
       log.info(`Admin "${username}" logged in`);
       res.redirect('/');
       return;
