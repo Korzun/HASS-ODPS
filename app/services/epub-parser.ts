@@ -40,7 +40,7 @@ function toLocalizedValue(item: MetaLike): LocalizedValue {
     : {
         text: item['#text'] ?? '',
         lang: item['@_xml:lang'] ?? '',
-        fileAs: (item['@_file-as'] ?? '').trim(),
+        fileAs: (item['@_file-as'] ?? item['@_opf:file-as'] ?? '').trim(),
       };
 }
 
@@ -85,8 +85,9 @@ export function parseEpub(filePath: string): EpubMeta {
 
   // Step 3: extract metadata
   const titleCandidate = pickLocalized(metadata['dc:title'] ?? []);
-  const title = titleCandidate.text || path.basename(filePath, path.extname(filePath));
-  const fileAs = titleCandidate.fileAs;
+  const fallbackTitle = path.basename(filePath, path.extname(filePath));
+  const title = titleCandidate.text || fallbackTitle;
+  const fileAs = titleCandidate.text ? titleCandidate.fileAs : '';
   const author = pickLang(metadata['dc:creator'] ?? []);
 
   const rawDesc = metadata['dc:description'];
