@@ -6,7 +6,7 @@ import { logger } from '../logger';
 
 const log = logger('Users');
 
-export function createUsersRouter(userStore: UserStore): Router {
+export function createUsersRouter(userStore: UserStore, adminUsername: string): Router {
   const router = Router();
   router.use(sessionAuth);
   router.use(adminAuth);
@@ -49,6 +49,11 @@ export function createUsersRouter(userStore: UserStore): Router {
       return;
     }
     const trimmedUsername = username.trim();
+    if (trimmedUsername === adminUsername) {
+      log.warn(`Registration rejected — username "${trimmedUsername}" is reserved`);
+      res.status(409).json({ error: 'Username already exists' });
+      return;
+    }
     const key = UserStore.hashPassword(password);
     const created = userStore.createUser(trimmedUsername, key);
     if (!created) {
