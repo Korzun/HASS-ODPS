@@ -203,6 +203,30 @@ describe('parseEpub', () => {
     expect(meta.title).toBe('I, Robot');
     expect(meta.fileAs).toBe('Asimov, Isaac');
   });
+
+  it('parses file-as from an EPUB 3 <meta refines> element', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title id="t1">Foundation</dc:title>
+    <meta refines="#t1" property="file-as">Asimov, Isaac</meta>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'foundation-refines.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    const meta = parseEpub(filePath);
+
+    expect(meta.title).toBe('Foundation');
+    expect(meta.fileAs).toBe('Asimov, Isaac');
+  });
+
   it('parses cover image', () => {
     const coverBuf = Buffer.from('fake-jpeg-data');
     const filePath = path.join(tmpDir, 'book.epub');

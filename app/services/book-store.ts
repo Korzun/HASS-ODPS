@@ -12,7 +12,7 @@ interface BookRow {
   filename: string;
   path: string;
   title: string;
-  file_as: string | null;
+  file_as: string;
   author: string;
   description: string;
   series: string;
@@ -189,7 +189,7 @@ export class BookStore {
   }
 
   private rowToBook(r: BookRow): Book {
-    const fileAs = r.file_as ?? '';
+    const fileAs = r.file_as;
     return {
       id: r.id,
       filename: r.filename,

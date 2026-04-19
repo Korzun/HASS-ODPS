@@ -32,15 +32,17 @@ interface LocalizedValue {
   text: string;
   lang: string;
   fileAs: string;
+  id: string;
 }
 
 function toLocalizedValue(item: MetaLike): LocalizedValue {
   return typeof item === 'string'
-    ? { text: item, lang: '', fileAs: '' }
+    ? { text: item, lang: '', fileAs: '', id: '' }
     : {
         text: item['#text'] ?? '',
         lang: item['@_xml:lang'] ?? '',
         fileAs: (item['@_file-as'] ?? item['@_opf:file-as'] ?? '').trim(),
+        id: item['@_id'] ?? '',
       };
 }
 
@@ -50,7 +52,7 @@ function pickLocalized(items: MetaLike[]): LocalizedValue {
     candidates.find(c => c.lang.toLowerCase().startsWith('en')) ??
     candidates.find(c => c.lang === '') ??
     candidates[0] ??
-    { text: '', lang: '', fileAs: '' }
+    { text: '', lang: '', fileAs: '', id: '' }
   );
 }
 
@@ -87,13 +89,12 @@ export function parseEpub(filePath: string): EpubMeta {
   const titleCandidate = pickLocalized(metadata['dc:title'] ?? []);
   const fallbackTitle = path.basename(filePath, path.extname(filePath));
   const title = titleCandidate.text || fallbackTitle;
-  const fileAs = titleCandidate.text ? titleCandidate.fileAs : '';
   const author = pickLang(metadata['dc:creator'] ?? []);
 
   const rawDesc = metadata['dc:description'];
   const description = Array.isArray(rawDesc) ? pickLang(rawDesc) : (typeof rawDesc === 'string' ? rawDesc : '');
 
-  const metas: Array<{ '@_name'?: string; '@_content'?: string; '@_property'?: string; '#text'?: string }> = metadata?.meta ?? [];
+  const metas: Array<{ '@_name'?: string; '@_content'?: string; '@_property'?: string; '@_refines'?: string; '#text'?: string }> = metadata?.meta ?? [];
 
   let calibreSeries = '';
   let calibreSeriesIndex = 0;
@@ -109,6 +110,13 @@ export function parseEpub(filePath: string): EpubMeta {
 
   const series = calibreSeries || pickLang(collectionCandidates);
   const seriesIndex = calibreSeriesIndex || groupPosition;
+
+  // file-as: prefer attribute form (EPUB 2 / Calibre), fall back to EPUB 3 <meta refines>
+  const attrFileAs = titleCandidate.text ? titleCandidate.fileAs : '';
+  const refinesMeta = !attrFileAs && titleCandidate.id
+    ? metas.find(m => m['@_property'] === 'file-as' && m['@_refines'] === `#${titleCandidate.id}`)
+    : undefined;
+  const fileAs = attrFileAs || (refinesMeta ? (refinesMeta['#text'] ?? '').trim() : '');
 
   // Step 4: cover image
   let coverData: Buffer | null = null;
