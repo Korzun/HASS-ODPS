@@ -75,9 +75,10 @@ export class BookStore {
       user_version: number;
     };
     if (user_version < 2) {
-      const books = this.db
-        .prepare('SELECT id, path FROM books')
-        .all() as { id: string; path: string }[];
+      const books = this.db.prepare('SELECT id, path FROM books').all() as {
+        id: string;
+        path: string;
+      }[];
       const updateBook = this.db.prepare('UPDATE books SET id = ? WHERE id = ?');
       const progressExists = this.db
         .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")

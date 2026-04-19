@@ -6,8 +6,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { EpubMeta } from '../types';
 
 const PARTIAL_MD5_OFFSETS = [
-  0, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456,
-  1073741824,
+  0, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824,
 ];
 
 export function partialMD5(filePath: string): string {
