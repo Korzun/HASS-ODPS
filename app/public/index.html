@@ -116,13 +116,17 @@
     // ── Tabs ──────────────────────────────────────────────
     const librarySection = document.getElementById('library-section');
     const usersSection = document.getElementById('users-section');
+    const seriesSection = document.getElementById('series-section');
     let usersLoaded = false;
+    let currentSeriesName = null;
 
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         const name = tab.dataset.tab;
+        seriesSection.style.display = 'none';
+        currentSeriesName = null;
         librarySection.style.display = name === 'library' ? '' : 'none';
         usersSection.style.display = name === 'users' ? '' : 'none';
         if (name === 'users' && !usersLoaded) loadUsers();
@@ -151,39 +155,156 @@
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
+    function groupBooks(books) {
+      const seriesMap = new Map();
+      const standalone = [];
+      for (const book of books) {
+        if (book.series) {
+          if (!seriesMap.has(book.series)) seriesMap.set(book.series, []);
+          seriesMap.get(book.series).push(book);
+        } else {
+          standalone.push(book);
+        }
+      }
+      for (const [, bks] of seriesMap) {
+        bks.sort((a, b) => (a.seriesIndex ?? 0) - (b.seriesIndex ?? 0));
+      }
+      const sortedSeries = [...seriesMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+      standalone.sort((a, b) => a.title.localeCompare(b.title));
+      return { series: sortedSeries, standalone };
+    }
+
+    const LIST_STACK_OFFSETS = [
+      { left: 10, top: 5, rotate: '-6deg' },   // back
+      { left: 5,  top: 2, rotate: '-2deg' },   // middle
+      { left: 0,  top: 0, rotate:  '0deg' },   // front
+    ];
+
+    const HERO_STACK_OFFSETS = [
+      { left: 13, top: 6, rotate: '-6deg' },
+      { left: 6,  top: 3, rotate: '-2deg' },
+      { left: 0,  top: 0, rotate:  '0deg' },
+    ];
+
+    // books: array sorted ascending by seriesIndex.
+    // offsets: [{left, top, rotate}] indexed back→front (index 0 = back).
+    // Returns an HTML string for the fanned cover stack container.
+    function buildCoverStack(books, cw, ch, lw, lh, offsets) {
+      // Map books to layers: front book (books[0]) goes to the front position (index 2),
+      // books[1] to middle (index 1), books[2] to back (index 0).
+      const layers = [books[2] || null, books[1] || null, books[0] || null];
+      const layerHtml = offsets.map((pos, i) => {
+        const book = layers[i];
+        const isGhost = !book;
+        const opacity = isGhost ? (i === 0 ? '.3' : '.45') : '1';
+        const style = 'position:absolute'
+          + ';left:' + pos.left + 'px'
+          + ';top:' + pos.top + 'px'
+          + ';width:' + lw + 'px'
+          + ';height:' + lh + 'px'
+          + ';border-radius:2px'
+          + ';transform:rotate(' + pos.rotate + ')'
+          + ';z-index:' + (i + 1)
+          + ';opacity:' + opacity
+          + ';box-shadow:1px 1px 3px rgba(0,0,0,.18)';
+        if (book && book.hasCover) {
+          return '<img src="/api/books/' + esc(book.id) + '/cover" alt="" style="' + style + ';object-fit:cover;display:block">';
+        }
+        return '<div style="' + style + ';background:#d1d5db"></div>';
+      }).join('');
+      return '<div style="position:relative;width:' + cw + 'px;height:' + ch + 'px;flex-shrink:0">' + layerHtml + '</div>';
+    }
+
+    function renderSeriesRow(seriesName, books) {
+      const li = document.createElement('li');
+      li.className = 'series-row';
+      const author = books[0] ? books[0].author : '';
+      const count = books.length;
+      const stackHtml = buildCoverStack(books, 58, 74, 44, 62, LIST_STACK_OFFSETS);
+      li.innerHTML = stackHtml +
+        '<div class="series-info">' +
+          '<div class="series-name">' + esc(seriesName) + '</div>' +
+          '<div class="series-meta">' +
+            (author ? esc(author) + ' · ' : '') +
+            count + ' book' + (count !== 1 ? 's' : '') +
+          '</div>' +
+          '<div class="series-link">View series →</div>' +
+        '</div>';
+      li.addEventListener('click', () => showSeriesPage(seriesName, books));
+      return li;
+    }
+
+    function renderStandaloneSection(books) {
+      const section = document.createElement('div');
+      section.className = 'standalone-section';
+      section.id = 'standalone-section';
+
+      const header = document.createElement('div');
+      header.className = 'standalone-header';
+      header.innerHTML =
+        '<span class="standalone-chevron">▼</span>' +
+        '<span class="standalone-label">Standalone Books</span>' +
+        '<span class="standalone-count">' + books.length + ' book' + (books.length !== 1 ? 's' : '') + '</span>';
+
+      const list = document.createElement('ul');
+      list.style.listStyle = 'none';
+      list.style.padding = '0';
+      list.style.margin = '0';
+
+      books.forEach(book => {
+        const li = document.createElement('li');
+        const coverHtml = book.hasCover
+          ? '<img src="/api/books/' + esc(book.id) + '/cover" alt="' + esc(book.title) + '" style="width:40px;height:56px;object-fit:cover;border-radius:2px;display:block;">'
+          : '<div style="width:40px;height:56px;background:#e0e0e0;border-radius:2px;"></div>';
+        li.innerHTML =
+          '<div style="display:flex;align-items:center;gap:.75rem;background:#fff;border-radius:6px;padding:.6rem .9rem;margin-bottom:.4rem;box-shadow:0 1px 3px rgba(0,0,0,.07)">' +
+            '<div style="flex-shrink:0">' + coverHtml + '</div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div class="book-title">' + esc(book.title) + '</div>' +
+              (book.author ? '<div class="book-meta">' + esc(book.author) + '</div>' : '') +
+              '<div class="book-format">EPUB · ' + formatSize(book.size) + '</div>' +
+            '</div>' +
+            '<button class="delete-btn" type="button" title="Delete">🗑</button>' +
+          '</div>';
+        li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
+        list.appendChild(li);
+      });
+
+      header.addEventListener('click', () => {
+        const isOpen = list.style.display !== 'none';
+        list.style.display = isOpen ? 'none' : '';
+        header.querySelector('.standalone-chevron').textContent = isOpen ? '▶' : '▼';
+      });
+
+      section.appendChild(header);
+      section.appendChild(list);
+      return section;
+    }
+
     async function loadBooks() {
       try {
         const res = await fetch('/api/books');
         if (!res.ok) { emptyMsg.style.display = ''; return; }
         const books = await res.json();
+
         bookList.innerHTML = '';
+        const oldStandalone = document.getElementById('standalone-section');
+        if (oldStandalone) oldStandalone.remove();
+
         if (books.length === 0) {
           emptyMsg.style.display = '';
-        } else {
-          emptyMsg.style.display = 'none';
-          books.forEach(book => {
-            const li = document.createElement('li');
-            const coverHtml = book.hasCover
-              ? `<img src="/api/books/${esc(book.id)}/cover" alt="${esc(book.title)}" style="width:48px;height:64px;object-fit:cover;border-radius:2px;display:block;">`
-              : `<div style="width:48px;height:64px;background:#e0e0e0;border-radius:2px;"></div>`;
-            const metaParts = [];
-            if (book.author) metaParts.push(esc(book.author));
-            if (book.series) metaParts.push(esc(book.series) + (book.seriesIndex != null ? ` #${esc(String(book.seriesIndex))}` : ''));
-            const metaHtml = metaParts.length
-              ? `<div class="book-meta">${metaParts.join(' · ')}</div>`
-              : '';
-            li.innerHTML = `
-              <div class="book-cover">${coverHtml}</div>
-              <div class="book-info">
-                <div class="book-title">${esc(book.title)}</div>
-                ${metaHtml}
-                <div class="book-format">EPUB · ${formatSize(book.size)}</div>
-              </div>
-              <button class="delete-btn" type="button" title="Delete">🗑</button>
-            `;
-            li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
-            bookList.appendChild(li);
-          });
+          return;
+        }
+        emptyMsg.style.display = 'none';
+
+        const { series, standalone } = groupBooks(books);
+
+        series.forEach(([seriesName, seriesBooks]) => {
+          bookList.appendChild(renderSeriesRow(seriesName, seriesBooks));
+        });
+
+        if (standalone.length > 0) {
+          librarySection.appendChild(renderStandaloneSection(standalone));
         }
       } catch {
         emptyMsg.style.display = '';
