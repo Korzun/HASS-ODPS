@@ -106,6 +106,15 @@
     </div>
 
     <div id="users-section" style="display:none">
+      <div id="register-user-form" style="background:#fff;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <div style="font-size:.8rem;font-weight:600;color:#374151;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Register User</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start">
+          <input id="reg-username" type="text" placeholder="Username" autocomplete="off" style="flex:1;min-width:120px;padding:.4rem .6rem;border:1px solid #d1d5db;border-radius:4px;font-size:.875rem;font-family:inherit">
+          <input id="reg-password" type="password" placeholder="Password" autocomplete="new-password" style="flex:1;min-width:120px;padding:.4rem .6rem;border:1px solid #d1d5db;border-radius:4px;font-size:.875rem;font-family:inherit">
+          <button id="reg-btn" type="button" style="background:#1e40af;color:#fff;border:none;border-radius:4px;padding:.4rem .9rem;font-size:.875rem;cursor:pointer;font-family:inherit;white-space:nowrap">Register</button>
+        </div>
+        <div id="reg-status" style="margin-top:.4rem;font-size:.8rem;min-height:1rem"></div>
+      </div>
       <ul id="user-list"></ul>
       <p id="users-empty" style="display:none">No KOSync users registered yet.</p>
     </div>
@@ -532,6 +541,54 @@
         alert('Failed to delete user.');
       }
     }
+
+    // ── Register User ─────────────────────────────────────
+    const regUsername = document.getElementById('reg-username');
+    const regPassword = document.getElementById('reg-password');
+    const regBtn = document.getElementById('reg-btn');
+    const regStatus = document.getElementById('reg-status');
+
+    regBtn.addEventListener('click', async () => {
+      const username = regUsername.value.trim();
+      const password = regPassword.value.trim();
+      regStatus.textContent = '';
+      regStatus.className = '';
+      if (!username || !password) {
+        regStatus.textContent = '✗ Username and password are required';
+        regStatus.className = 'status-err';
+        return;
+      }
+      regBtn.disabled = true;
+      regBtn.textContent = 'Registering…';
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+        if (res.status === 201) {
+          regStatus.textContent = '✓ User registered';
+          regStatus.className = 'status-ok';
+          regUsername.value = '';
+          regPassword.value = '';
+          usersLoaded = false;
+          await loadUsers();
+        } else if (res.status === 409) {
+          regStatus.textContent = '✗ Username already taken';
+          regStatus.className = 'status-err';
+        } else {
+          regStatus.textContent = `✗ ${data.error || 'Registration failed'}`;
+          regStatus.className = 'status-err';
+        }
+      } catch {
+        regStatus.textContent = '✗ Registration failed';
+        regStatus.className = 'status-err';
+      } finally {
+        regBtn.disabled = false;
+        regBtn.textContent = 'Register';
+      }
+    });
 
     loadBooks();
 
