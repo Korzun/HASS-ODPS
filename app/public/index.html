@@ -300,7 +300,8 @@
             '<button class="delete-btn admin-only" type="button" title="Delete">🗑</button>' +
           '</div>';
         li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
-        li.querySelector('.clear-btn').addEventListener('click', () => clearProgress(book.id));
+        const clearBtn = li.querySelector('.clear-btn');
+        if (clearBtn) clearBtn.addEventListener('click', () => clearProgress(book.id));
         list.appendChild(li);
       });
 
