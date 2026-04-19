@@ -548,9 +548,13 @@
     const regBtn = document.getElementById('reg-btn');
     const regStatus = document.getElementById('reg-status');
 
+    [regUsername, regPassword].forEach(el =>
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') regBtn.click(); })
+    );
+
     regBtn.addEventListener('click', async () => {
       const username = regUsername.value.trim();
-      const password = regPassword.value.trim();
+      const password = regPassword.value;
       regStatus.textContent = '';
       regStatus.className = '';
       if (!username || !password) {
@@ -572,7 +576,6 @@
           regStatus.className = 'status-ok';
           regUsername.value = '';
           regPassword.value = '';
-          usersLoaded = false;
           await loadUsers();
         } else if (res.status === 409) {
           regStatus.textContent = '✗ Username already taken';
