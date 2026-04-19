@@ -608,7 +608,7 @@
     async function clearAdminProgress(username, docId, item, userLi) {
       const book = cachedBooks.find(b => b.id === docId);
       const label = book ? book.title : docId;
-      if (!confirm(`Clear progress for "${label}" for user "${username}"?`)) return;
+      if (!confirm(`Clear progress for "${esc(label)}" for user "${esc(username)}"?`)) return;
       const res = await fetch(
         '/api/users/' + encodeURIComponent(username) + '/progress/' + encodeURIComponent(docId),
         { method: 'DELETE' }
