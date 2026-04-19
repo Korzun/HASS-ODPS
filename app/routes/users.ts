@@ -29,18 +29,6 @@ export function createUsersRouter(userStore: UserStore, adminUsername: string): 
     res.json(progress);
   });
 
-  router.delete('/:username', (req: Request, res: Response) => {
-    const { username } = req.params;
-    const deleted = userStore.deleteUser(username);
-    if (!deleted) {
-      log.warn(`Delete attempted for unknown user "${username}"`);
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
-    log.info(`User "${username}" deleted`);
-    res.status(204).send();
-  });
-
   router.delete('/:username/progress/:document', (req: Request, res: Response) => {
     const { username, document } = req.params;
     if (!userStore.userExists(username)) {
@@ -55,6 +43,18 @@ export function createUsersRouter(userStore: UserStore, adminUsername: string): 
       return;
     }
     log.info(`Progress cleared for "${username}" document "${document}"`);
+    res.status(204).send();
+  });
+
+  router.delete('/:username', (req: Request, res: Response) => {
+    const { username } = req.params;
+    const deleted = userStore.deleteUser(username);
+    if (!deleted) {
+      log.warn(`Delete attempted for unknown user "${username}"`);
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    log.info(`User "${username}" deleted`);
     res.status(204).send();
   });
 
