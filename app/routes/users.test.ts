@@ -211,6 +211,43 @@ describe('POST /api/users', () => {
   });
 });
 
+describe('DELETE /api/users/:username/progress/:document', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app).delete('/api/users/alice/progress/doc1');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns 404 when user does not exist', async () => {
+    const agent = await adminAgent();
+    const res = await agent.delete('/api/users/nobody/progress/doc1');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('User not found');
+  });
+
+  it('returns 404 when user exists but has no progress for that document', async () => {
+    userStore.createUser('alice', 'pass');
+    const agent = await adminAgent();
+    const res = await agent.delete('/api/users/alice/progress/nonexistent');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Progress record not found');
+  });
+
+  it('clears the progress record and returns 204', async () => {
+    userStore.createUser('alice', 'pass');
+    userStore.saveProgress('alice', {
+      document: 'dune.epub',
+      progress: '/p[5]',
+      percentage: 0.42,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await adminAgent();
+    const res = await agent.delete('/api/users/alice/progress/dune.epub');
+    expect(res.status).toBe(204);
+    expect(userStore.getProgress('alice', 'dune.epub')).toBeNull();
+  });
+});
+
 describe('RBAC — regular user is forbidden from all /api/users routes', () => {
   it('GET /api/users returns 403 for regular user', async () => {
     const agent = await userAgent();
@@ -235,6 +272,13 @@ describe('RBAC — regular user is forbidden from all /api/users routes', () => 
     userStore.createUser('alice', 'pass');
     const agent = await userAgent();
     const res = await agent.get('/api/users/alice/progress');
+    expect(res.status).toBe(403);
+  });
+
+  it('DELETE /api/users/:username/progress/:document returns 403 for regular user', async () => {
+    userStore.createUser('alice', 'pass');
+    const agent = await userAgent();
+    const res = await agent.delete('/api/users/alice/progress/doc1');
     expect(res.status).toBe(403);
   });
 });
