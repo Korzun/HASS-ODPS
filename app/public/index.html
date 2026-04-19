@@ -307,6 +307,9 @@
           librarySection.appendChild(renderStandaloneSection(standalone));
         }
       } catch {
+        bookList.innerHTML = '';
+        const errStandalone = document.getElementById('standalone-section');
+        if (errStandalone) errStandalone.remove();
         emptyMsg.style.display = '';
       }
     }
