@@ -599,18 +599,20 @@
       }
     }
 
-    async function clearAdminProgress(username, document, item, userLi) {
-      if (!confirm(`Clear progress for "${document}" for user "${username}"?`)) return;
+    async function clearAdminProgress(username, docId, item, userLi) {
+      if (!confirm(`Clear progress for "${docId}" for user "${username}"?`)) return;
       const res = await fetch(
-        '/api/users/' + encodeURIComponent(username) + '/progress/' + encodeURIComponent(document),
+        '/api/users/' + encodeURIComponent(username) + '/progress/' + encodeURIComponent(docId),
         { method: 'DELETE' }
       );
       if (res.status === 204) {
         item.remove();
         delete expandedData[username];
-        const remaining = userLi.querySelectorAll('.progress-item').length;
         const metaEl = userLi.querySelector('.user-meta');
-        if (metaEl) metaEl.textContent = remaining + ' synced';
+        if (metaEl) {
+          const current = parseInt(metaEl.textContent, 10);
+          if (!isNaN(current)) metaEl.textContent = (current - 1) + ' synced';
+        }
       } else {
         alert('Failed to clear progress.');
       }
