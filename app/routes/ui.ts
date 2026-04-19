@@ -4,7 +4,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { BookStore } from '../services/book-store';
 import { AppConfig, EpubMeta } from '../types';
-import { sessionAuth } from '../middleware/auth';
+import { UserStore } from '../services/user-store';
+import { sessionAuth, adminAuth } from '../middleware/auth';
 import { logger } from '../logger';
 import { parseEpub, partialMD5 } from '../services/epub-parser';
 
@@ -45,7 +46,7 @@ function loginPage(error?: string): string {
 </html>`;
 }
 
-export function createUiRouter(bookStore: BookStore, config: AppConfig): Router {
+export function createUiRouter(bookStore: BookStore, userStore: UserStore, config: AppConfig): Router {
   const router = Router();
 
   const storage = multer.diskStorage({
@@ -70,19 +71,37 @@ export function createUiRouter(bookStore: BookStore, config: AppConfig): Router 
 
   router.post('/login', (req: Request, res: Response) => {
     const { username, password } = req.body as { username?: string; password?: string };
+    if (typeof username !== 'string' || typeof password !== 'string') {
+      res.status(401).send(loginPage('Invalid credentials'));
+      return;
+    }
     if (username === config.username && password === config.password) {
       req.session.authenticated = true;
+      req.session.isAdmin = true;
+      req.session.username = config.username;
+      log.info(`Admin "${username}" logged in`);
+      res.redirect('/');
+      return;
+    }
+    if (userStore.validateUser(username, password)) {
+      req.session.authenticated = true;
+      req.session.isAdmin = false;
+      req.session.username = username;
       log.info(`User "${username}" logged in`);
       res.redirect('/');
-    } else {
-      log.warn(`Login failed for username "${username ?? ''}"`);
-      res.status(401).send(loginPage('Invalid credentials'));
+      return;
     }
+    log.warn(`Login failed for username "${username ?? ''}"`);
+    res.status(401).send(loginPage('Invalid credentials'));
   });
 
   router.post('/logout', (req: Request, res: Response) => {
     log.info('User logged out');
     req.session.destroy(() => res.redirect('/login'));
+  });
+
+  router.get('/api/me', sessionAuth, (req: Request, res: Response) => {
+    res.json({ username: req.session.username, isAdmin: req.session.isAdmin });
   });
 
   // ── Protected ─────────────────────────────────────────
