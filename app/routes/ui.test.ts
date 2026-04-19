@@ -200,9 +200,12 @@ describe('GET /api/books', () => {
     const res = await agent.get('/api/books');
 
     expect(res.status).toBe(200);
-    expect(res.body[0].fileAs).toBe('Asimov, Isaac');
-    expect(res.body[0].path).toBeUndefined();
-    expect(res.body[0].description).toBeUndefined();
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(1);
+    const [book] = res.body;
+    expect(book.fileAs).toBe('Asimov, Isaac');
+    expect(book.path).toBeUndefined();
+    expect(book.description).toBeUndefined();
   });
 });
 
