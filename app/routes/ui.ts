@@ -111,6 +111,15 @@ export function createUiRouter(
     res.json({ username: req.session.username, isAdmin: req.session.isAdmin });
   });
 
+  router.get('/api/my/progress', sessionAuth, (req: Request, res: Response) => {
+    if (req.session.isAdmin) {
+      res.json([]);
+      return;
+    }
+    const progress = userStore.getUserProgress(req.session.username!);
+    res.json(progress.map(p => ({ document: p.document, percentage: p.percentage })));
+  });
+
   // ── Protected ─────────────────────────────────────────
 
   router.get('/', sessionAuth, (_req: Request, res: Response) => {
