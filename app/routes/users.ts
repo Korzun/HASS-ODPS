@@ -41,6 +41,23 @@ export function createUsersRouter(userStore: UserStore, adminUsername: string): 
     res.status(204).send();
   });
 
+  router.delete('/:username/progress/:document', (req: Request, res: Response) => {
+    const { username, document } = req.params;
+    if (!userStore.userExists(username)) {
+      log.warn(`Progress clear attempted for unknown user "${username}"`);
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    const cleared = userStore.clearProgress(username, document);
+    if (!cleared) {
+      log.warn(`Progress clear: no record for "${username}" document "${document}"`);
+      res.status(404).json({ error: 'Progress record not found' });
+      return;
+    }
+    log.info(`Progress cleared for "${username}" document "${document}"`);
+    res.status(204).send();
+  });
+
   router.post('/', (req: Request, res: Response) => {
     const { username, password } = req.body as { username?: string; password?: string };
     if (
