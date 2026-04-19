@@ -117,7 +117,7 @@ export function createUiRouter(
       return;
     }
     const progress = userStore.getUserProgress(req.session.username!);
-    res.json(progress.map(p => ({ document: p.document, percentage: p.percentage })));
+    res.json(progress.map((p) => ({ document: p.document, percentage: p.percentage })));
   });
 
   router.delete('/api/my/progress/:document', sessionAuth, (req: Request, res: Response) => {

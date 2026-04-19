@@ -248,7 +248,7 @@ describe('UserStore.clearProgress', () => {
     expect(store.getProgress('alice', 'doc1')).toBeNull();
   });
 
-  it('does not affect another user\'s progress for the same document', () => {
+  it("does not affect another user's progress for the same document", () => {
     store.saveProgress('alice', {
       document: 'doc1',
       progress: '/p[1]',
