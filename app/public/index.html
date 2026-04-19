@@ -281,6 +281,62 @@
       return section;
     }
 
+    function showLibraryView() {
+      currentSeriesName = null;
+      seriesSection.style.display = 'none';
+      librarySection.style.display = '';
+    }
+
+    function showSeriesPage(seriesName, books) {
+      currentSeriesName = seriesName;
+      const author = books[0] ? books[0].author : '';
+      const count = books.length;
+      const heroStack = buildCoverStack(books, 68, 86, 52, 72, HERO_STACK_OFFSETS);
+
+      seriesSection.innerHTML =
+        '<div class="series-hero">' +
+          heroStack +
+          '<div>' +
+            '<div class="series-hero-badge">Series</div>' +
+            '<div class="series-hero-title">' + esc(seriesName) + '</div>' +
+            '<div class="series-hero-meta">' +
+              (author ? esc(author) + ' · ' : '') +
+              count + ' book' + (count !== 1 ? 's' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<button class="series-back" type="button">← Library</button>' +
+        '<div class="series-order-label">Reading Order</div>' +
+        '<ul id="series-book-list" style="list-style:none;padding:0;margin:0"></ul>';
+
+      const seriesBookList = seriesSection.querySelector('#series-book-list');
+      books.forEach(book => {
+        const li = document.createElement('li');
+        const coverHtml = book.hasCover
+          ? '<img src="/api/books/' + esc(book.id) + '/cover" alt="' + esc(book.title) + '" style="width:32px;height:46px;object-fit:cover;border-radius:2px;display:block;">'
+          : '<div style="width:32px;height:46px;background:#e0e0e0;border-radius:2px;"></div>';
+        li.innerHTML =
+          '<div style="display:flex;align-items:center;gap:.75rem;background:#fff;border-radius:5px;padding:.55rem .75rem;margin-bottom:.35rem;box-shadow:0 1px 3px rgba(0,0,0,.07)">' +
+            '<div style="flex-shrink:0">' + coverHtml + '</div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div class="book-title">' + esc(book.title) + '</div>' +
+              '<div class="book-format">' +
+                (book.seriesIndex != null ? '#' + book.seriesIndex + ' · ' : '') +
+                'EPUB · ' + formatSize(book.size) +
+              '</div>' +
+            '</div>' +
+            '<button class="delete-btn" type="button" title="Delete">🗑</button>' +
+          '</div>';
+        li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
+        seriesBookList.appendChild(li);
+      });
+
+      seriesSection.querySelector('.series-back').addEventListener('click', showLibraryView);
+
+      librarySection.style.display = 'none';
+      seriesSection.style.display = '';
+    }
+
     async function loadBooks() {
       try {
         const res = await fetch('/api/books');
@@ -315,12 +371,34 @@
     }
 
     async function deleteBook(id, title) {
-      if (!confirm(`Delete "${esc(title)}"?`)) return;
+      if (!confirm(`Delete "${title}"?`)) return;
       const res = await fetch(`/api/books/${id}`, { method: 'DELETE' });
       if (res.status === 204) {
-        await loadBooks();
+        if (currentSeriesName !== null) {
+          await refreshSeriesPage();
+        } else {
+          await loadBooks();
+        }
       } else {
         alert('Failed to delete book.');
+      }
+    }
+
+    async function refreshSeriesPage() {
+      try {
+        const res = await fetch('/api/books');
+        if (!res.ok) { await loadBooks(); showLibraryView(); return; }
+        const allBooks = await res.json();
+        const { series } = groupBooks(allBooks);
+        const entry = series.find(([name]) => name === currentSeriesName);
+        if (entry) {
+          showSeriesPage(currentSeriesName, entry[1]);
+        } else {
+          await loadBooks();
+          showLibraryView();
+        }
+      } catch {
+        showLibraryView();
       }
     }
 
