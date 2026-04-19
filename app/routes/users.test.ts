@@ -127,3 +127,60 @@ describe('DELETE /api/users/:username', () => {
     expect(userStore.getUserProgress('alice')).toEqual([]);
   });
 });
+
+describe('POST /api/users', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app)
+      .post('/api/users')
+      .send({ username: 'bob', password: 'pass' });
+    expect(res.status).toBe(302);
+  });
+
+  it('creates a user and returns 201', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/users')
+      .send({ username: 'bob', password: 'secret' });
+    expect(res.status).toBe(201);
+    expect(res.body.username).toBe('bob');
+    expect(userStore.userExists('bob')).toBe(true);
+    expect(userStore.authenticate('bob', UserStore.hashPassword('secret'))).toBe(true);
+  });
+
+  it('returns 409 for duplicate username', async () => {
+    userStore.createUser('bob', UserStore.hashPassword('pass'));
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/users')
+      .send({ username: 'bob', password: 'other' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('Username already exists');
+  });
+
+  it('returns 400 when username is missing', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/users')
+      .send({ password: 'pass' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Username and password are required');
+  });
+
+  it('returns 400 when password is missing', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/users')
+      .send({ username: 'bob' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Username and password are required');
+  });
+
+  it('returns 400 when username is blank', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/users')
+      .send({ username: '   ', password: 'pass' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Username and password are required');
+  });
+});

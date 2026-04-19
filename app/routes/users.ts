@@ -40,5 +40,22 @@ export function createUsersRouter(userStore: UserStore): Router {
     res.status(204).send();
   });
 
+  router.post('/', (req: Request, res: Response) => {
+    const { username, password } = req.body as { username?: string; password?: string };
+    if (!username?.trim() || !password?.trim()) {
+      res.status(400).json({ error: 'Username and password are required' });
+      return;
+    }
+    const key = UserStore.hashPassword(password);
+    const created = userStore.createUser(username.trim(), key);
+    if (!created) {
+      log.warn(`Registration failed — duplicate username "${username.trim()}"`);
+      res.status(409).json({ error: 'Username already exists' });
+      return;
+    }
+    log.info(`User "${username.trim()}" registered by admin`);
+    res.status(201).json({ username: username.trim() });
+  });
+
   return router;
 }
