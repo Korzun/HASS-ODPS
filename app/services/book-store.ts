@@ -12,6 +12,7 @@ interface BookRow {
   filename: string;
   path: string;
   title: string;
+  file_as: string | null;
   author: string;
   description: string;
   series: string;
@@ -48,6 +49,7 @@ export class BookStore {
         filename      TEXT    NOT NULL UNIQUE,
         path          TEXT    NOT NULL,
         title         TEXT    NOT NULL,
+        file_as       TEXT    NOT NULL DEFAULT '',
         author        TEXT    NOT NULL DEFAULT '',
         description   TEXT    NOT NULL DEFAULT '',
         series        TEXT    NOT NULL DEFAULT '',
@@ -59,6 +61,11 @@ export class BookStore {
         added_at      INTEGER NOT NULL
       )
     `);
+
+    const columns = this.db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    if (!columns.some(column => column.name === 'file_as')) {
+      this.db.exec(`ALTER TABLE books ADD COLUMN file_as TEXT NOT NULL DEFAULT ''`);
+    }
   }
 
   addBook(
@@ -70,12 +77,13 @@ export class BookStore {
     meta: EpubMeta
   ): void {
     const stmt = this.db.prepare(`
-      INSERT INTO books (id, filename, path, title, author, description, series, series_index, cover_data, cover_mime, size, mtime, added_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO books (id, filename, path, title, file_as, author, description, series, series_index, cover_data, cover_mime, size, mtime, added_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(filename) DO UPDATE SET
         id = excluded.id,
         path = excluded.path,
         title = excluded.title,
+        file_as = excluded.file_as,
         author = excluded.author,
         description = excluded.description,
         series = excluded.series,
@@ -86,11 +94,13 @@ export class BookStore {
         mtime = excluded.mtime
     `);
     const title = meta.title.trim() || path.basename(filename, path.extname(filename));
+    const fileAs = (meta.fileAs || '').trim();
     stmt.run(
       id,
       filename,
       filePath,
       title,
+      fileAs,
       meta.author,
       meta.description,
       meta.series,
@@ -105,16 +115,17 @@ export class BookStore {
 
   listBooks(): Book[] {
     const rows = this.db.prepare(`
-      SELECT id, filename, path, title, author, description, series, series_index,
+      SELECT id, filename, path, title, file_as, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
-      FROM books ORDER BY title
+      FROM books
+      ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, filename
     `).all() as BookRow[];
     return rows.map(r => this.rowToBook(r));
   }
 
   getBookById(id: string): Book | null {
     const row = this.db.prepare(`
-      SELECT id, filename, path, title, author, description, series, series_index,
+      SELECT id, filename, path, title, file_as, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books WHERE id = ?
     `).get(id) as BookRow | undefined;
@@ -178,11 +189,13 @@ export class BookStore {
   }
 
   private rowToBook(r: BookRow): Book {
+    const fileAs = r.file_as ?? '';
     return {
       id: r.id,
       filename: r.filename,
       path: r.path,
       title: r.title,
+      fileAs,
       author: r.author,
       description: r.description,
       series: r.series,

@@ -12,6 +12,7 @@ const FAKE_META: EpubMeta = {
   description: 'A test description',
   series: 'Test Series',
   seriesIndex: 1,
+  fileAs: '',
   coverData: Buffer.from('fake-cover'),
   coverMime: 'image/jpeg',
 };
@@ -68,6 +69,55 @@ describe('addBook and listBooks', () => {
     bookStore.addBook('id-empty', 'my-book.epub', '/books/my-book.epub', 100, new Date(), { ...FAKE_META, title: '' });
     const book = bookStore.getBookById('id-empty');
     expect(book!.title).toBe('my-book');
+  });
+
+  it('persists fileAs on stored books', () => {
+    bookStore.addBook('abc123', 'test.epub', '/books/test.epub', 1000, new Date(1000), {
+      ...FAKE_META,
+      fileAs: 'Asimov, Isaac',
+    });
+
+    const book = bookStore.getBookById('abc123');
+
+    expect(book!.fileAs).toBe('Asimov, Isaac');
+  });
+
+  it('stores trimmed fileAs even when metadata has extra whitespace', () => {
+    bookStore.addBook('trim1', 'whitespace.epub', '/books/whitespace.epub', 1000, new Date(1000), {
+      ...FAKE_META,
+      fileAs: '  Asimov, Isaac  ',
+    });
+
+    const book = bookStore.getBookById('trim1');
+    expect(book!.fileAs).toBe('Asimov, Isaac');
+  });
+
+  it('sorts by fileAs before title', () => {
+    bookStore.addBook('id1', 'zebra.epub', '/books/zebra.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Zebra Stories',
+      fileAs: 'Apple, A.',
+    });
+    bookStore.addBook('id2', 'apple.epub', '/books/apple.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Apple Stories',
+      fileAs: 'Zulu, Z.',
+    });
+
+    const books = bookStore.listBooks();
+
+    expect(books[0].title).toBe('Zebra Stories');
+    expect(books[1].title).toBe('Apple Stories');
+  });
+
+  it('falls back to title when fileAs is empty', () => {
+    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), { ...FAKE_META, title: 'Bravo', fileAs: '' });
+    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), { ...FAKE_META, title: 'Alpha', fileAs: '' });
+
+    const books = bookStore.listBooks();
+
+    expect(books[0].title).toBe('Alpha');
+    expect(books[1].title).toBe('Bravo');
   });
 });
 
@@ -127,6 +177,7 @@ function makeMockImporter(): ScanImporter {
       description: '',
       series: '',
       seriesIndex: 0,
+      fileAs: '',
       coverData: null,
       coverMime: null,
     }),
@@ -168,7 +219,7 @@ describe('BookStore.scan()', () => {
     // Add directly to DB without creating the file
     bookStore.addBook('ghostid001', 'ghost.epub', fakePath, 100, new Date(), {
       title: 'Ghost Book', author: '', description: '', series: '',
-      seriesIndex: 0, coverData: null, coverMime: null,
+      seriesIndex: 0, fileAs: '', coverData: null, coverMime: null,
     });
     expect(bookStore.listBooks()).toHaveLength(1);
     const result = bookStore.scan(makeMockImporter());
@@ -184,7 +235,7 @@ describe('BookStore.scan()', () => {
       parseEpub: (filePath: string): EpubMeta => {
         if (filePath.includes('bad')) throw new Error('parse failed');
         return { title: 'Good', author: '', description: '', series: '',
-          seriesIndex: 0, coverData: null, coverMime: null };
+          seriesIndex: 0, fileAs: '', coverData: null, coverMime: null };
       },
       partialMD5: (filePath: string): string =>
         crypto.createHash('md5').update(filePath).digest('hex'),
@@ -200,5 +251,36 @@ describe('BookStore.scan()', () => {
     fs.writeFileSync(path.join(booksDir, 'book.epub'), 'epub');
     const result = bookStore.scan(makeMockImporter());
     expect(result.imported).toEqual(['book.epub']);
+  });
+});
+
+describe('migrations', () => {
+  it('adds the file_as column when opening an existing books table', () => {
+    const preexistingDb = new Database(':memory:');
+    preexistingDb.exec(`
+      CREATE TABLE books (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL UNIQUE,
+        path TEXT NOT NULL,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        series TEXT NOT NULL DEFAULT '',
+        series_index REAL NOT NULL DEFAULT 0,
+        cover_data BLOB,
+        cover_mime TEXT,
+        size INTEGER NOT NULL,
+        mtime INTEGER NOT NULL,
+        added_at INTEGER NOT NULL
+      )
+    `);
+
+    const migratedStore = new BookStore(booksDir, preexistingDb);
+    const columns = preexistingDb.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+
+    expect(columns.some(column => column.name === 'file_as')).toBe(true);
+    expect(migratedStore.listBooks()).toEqual([]);
+
+    preexistingDb.close();
   });
 });

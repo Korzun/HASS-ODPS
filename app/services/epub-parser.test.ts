@@ -140,6 +140,7 @@ describe('parseEpub', () => {
     expect(meta.seriesIndex).toBe(0);
     expect(meta.coverData).toBeNull();
     expect(meta.coverMime).toBeNull();
+    expect(meta.fileAs).toBe('');
   });
 
   it('falls back to filename stem when title absent', () => {
@@ -181,6 +182,27 @@ describe('parseEpub', () => {
     expect(meta.fileAs).toBe('');
   });
 
+  it('parses file-as from an opf namespace attribute', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title id="t1" opf:file-as="Asimov, Isaac">I, Robot</dc:title>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'irobot-opf.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    const meta = parseEpub(filePath);
+
+    expect(meta.title).toBe('I, Robot');
+    expect(meta.fileAs).toBe('Asimov, Isaac');
+  });
   it('parses cover image', () => {
     const coverBuf = Buffer.from('fake-jpeg-data');
     const filePath = path.join(tmpDir, 'book.epub');
