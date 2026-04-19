@@ -120,6 +120,19 @@ export function createUiRouter(
     res.json(progress.map(p => ({ document: p.document, percentage: p.percentage })));
   });
 
+  router.delete('/api/my/progress/:document', sessionAuth, (req: Request, res: Response) => {
+    if (req.session.isAdmin) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    const cleared = userStore.clearProgress(req.session.username!, req.params.document);
+    if (!cleared) {
+      res.status(404).json({ error: 'Progress record not found' });
+      return;
+    }
+    res.status(204).send();
+  });
+
   // ── Protected ─────────────────────────────────────────
 
   router.get('/', sessionAuth, (_req: Request, res: Response) => {
