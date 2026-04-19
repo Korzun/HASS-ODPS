@@ -46,11 +46,11 @@
     .user-name{flex:1;font-weight:500}
     .user-meta{font-size:.75rem;color:#6b7280}
     .progress-list{list-style:none;background:#f8fafc;border-top:1px solid #e5e7eb}
-    .progress-item{display:grid;grid-template-columns:1fr auto;gap:.25rem .75rem;padding:.5rem 1rem .5rem 2.25rem;border-bottom:1px solid #eef2f7}
+    .progress-item{display:grid;grid-template-columns:1fr auto auto;gap:.25rem .75rem;padding:.5rem 1rem .5rem 2.25rem;border-bottom:1px solid #eef2f7}
     .progress-item:last-child{border-bottom:none}
     .prog-doc{font-size:.8rem;color:#374151;grid-column:1;word-break:break-all}
     .prog-pct{font-size:.8rem;color:#16a34a;font-weight:500;grid-column:2;text-align:right;white-space:nowrap}
-    .prog-meta{font-size:.7rem;color:#9ca3af;grid-column:1/3}
+    .prog-meta{font-size:.7rem;color:#9ca3af;grid-column:1/4}
     .progress-empty{padding:.5rem 1rem .5rem 2.25rem;font-size:.8rem;color:#9ca3af;display:block}
     /* Series groups */
     .series-row{background:#fff;border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;border:1px solid transparent}
@@ -577,8 +577,10 @@
           item.innerHTML = `
             <span class="prog-doc">${esc(p.document)}</span>
             <span class="prog-pct">${Math.round(p.percentage * 100)}%</span>
+            <button class="delete-btn" type="button" title="Clear progress" style="grid-column:3;align-self:start">🗑</button>
             <span class="prog-meta">${esc(p.device)} · ${relativeTime(p.timestamp)}</span>
           `;
+          item.querySelector('.delete-btn').addEventListener('click', () => clearAdminProgress(username, p.document, item, li));
           progressList.appendChild(item);
         });
       }
@@ -594,6 +596,23 @@
         if (!userList.querySelector('.user-row')) usersEmpty.style.display = '';
       } else {
         alert('Failed to delete user.');
+      }
+    }
+
+    async function clearAdminProgress(username, document, item, userLi) {
+      if (!confirm(`Clear progress for "${document}" for user "${username}"?`)) return;
+      const res = await fetch(
+        '/api/users/' + encodeURIComponent(username) + '/progress/' + encodeURIComponent(document),
+        { method: 'DELETE' }
+      );
+      if (res.status === 204) {
+        item.remove();
+        delete expandedData[username];
+        const remaining = userLi.querySelectorAll('.progress-item').length;
+        const metaEl = userLi.querySelector('.user-meta');
+        if (metaEl) metaEl.textContent = remaining + ' synced';
+      } else {
+        alert('Failed to clear progress.');
       }
     }
 
