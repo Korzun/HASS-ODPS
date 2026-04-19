@@ -183,4 +183,13 @@ describe('POST /api/users', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username and password are required');
   });
+
+  it('returns 400 when password is blank', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent
+      .post('/api/users')
+      .send({ username: 'bob', password: '   ' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Username and password are required');
+  });
 });
