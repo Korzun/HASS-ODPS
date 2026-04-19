@@ -384,3 +384,18 @@ describe('POST /api/books/scan', () => {
     expect(res.body.imported).toEqual([]);
   });
 });
+
+describe('GET / HTML structure', () => {
+  it('contains series-section element', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/');
+    expect(res.text).toContain('id="series-section"');
+  });
+
+  it('contains series UI CSS classes', async () => {
+    const agent = await authenticatedAgent();
+    const res = await agent.get('/');
+    expect(res.text).toContain('.series-row');
+    expect(res.text).toContain('.series-hero');
+  });
+});

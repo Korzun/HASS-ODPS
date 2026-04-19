@@ -52,6 +52,27 @@
     .prog-pct{font-size:.8rem;color:#16a34a;font-weight:500;grid-column:2;text-align:right;white-space:nowrap}
     .prog-meta{font-size:.7rem;color:#9ca3af;grid-column:1/3}
     .progress-empty{padding:.5rem 1rem .5rem 2.25rem;font-size:.8rem;color:#9ca3af;display:block}
+    /* Series groups */
+    .series-row{background:#fff;border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;border:1px solid transparent}
+    .series-row:hover{border-color:#bfdbfe}
+    .series-info{flex:1;min-width:0}
+    .series-name{font-weight:600;font-size:.92rem;color:#111;margin-bottom:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .series-meta{font-size:.75rem;color:#6b7280;margin-bottom:.1rem}
+    .series-link{font-size:.7rem;color:#1e40af;font-weight:500}
+    /* Standalone section */
+    .standalone-section{margin-top:1.25rem}
+    .standalone-header{display:flex;align-items:center;gap:.5rem;padding:.5rem .25rem;cursor:pointer;user-select:none;margin-bottom:.4rem}
+    .standalone-chevron{font-size:.65rem;color:#9ca3af;width:12px;flex-shrink:0}
+    .standalone-label{font-size:.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em}
+    .standalone-count{font-size:.7rem;color:#9ca3af;margin-left:.25rem}
+    /* Series page */
+    .series-hero{background:#1e40af;padding:1rem 1.5rem;display:flex;align-items:flex-end;gap:1rem;border-radius:6px;margin-bottom:.75rem}
+    .series-hero-badge{font-size:.65rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.25rem}
+    .series-hero-title{font-size:1.1rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:.2rem}
+    .series-hero-meta{font-size:.75rem;color:rgba(255,255,255,.75)}
+    .series-back{background:none;border:none;color:#1e40af;font-size:.8rem;font-weight:500;cursor:pointer;padding:0;font-family:inherit;display:inline-block;margin:.75rem 0}
+    .series-back:hover{text-decoration:underline}
+    .series-order-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;margin-bottom:.45rem}
   </style>
 </head>
 <body>
@@ -87,6 +108,8 @@
       <ul id="user-list"></ul>
       <p id="users-empty" style="display:none">No KOSync users registered yet.</p>
     </div>
+
+    <div id="series-section" style="display:none"></div>
   </main>
 
   <script>
