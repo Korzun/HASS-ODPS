@@ -548,7 +548,7 @@ describe('GET /api/my/progress', () => {
     expect(res.body[0].progress).toBeUndefined();
   });
 
-  it('does not return another user\'s progress', async () => {
+  it("does not return another user's progress", async () => {
     userStore.createUser('bob', UserStore.hashPassword('bobpass'));
     userStore.saveProgress('bob', {
       document: 'doc2',
