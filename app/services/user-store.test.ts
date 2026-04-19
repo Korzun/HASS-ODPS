@@ -225,3 +225,45 @@ describe('UserStore.validateUser', () => {
     expect(store.validateUser('nobody', 'secret')).toBe(false);
   });
 });
+
+describe('UserStore.clearProgress', () => {
+  beforeEach(() => {
+    store.createUser('alice', 'pass');
+    store.createUser('bob', 'pass');
+  });
+
+  it('returns false when no record exists', () => {
+    expect(store.clearProgress('alice', 'doc1')).toBe(false);
+  });
+
+  it('deletes an existing record and returns true', () => {
+    store.saveProgress('alice', {
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    expect(store.clearProgress('alice', 'doc1')).toBe(true);
+    expect(store.getProgress('alice', 'doc1')).toBeNull();
+  });
+
+  it('does not affect another user\'s progress for the same document', () => {
+    store.saveProgress('alice', {
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    store.saveProgress('bob', {
+      document: 'doc1',
+      progress: '/p[2]',
+      percentage: 0.7,
+      device: 'Kobo',
+      device_id: 'd2',
+    });
+    store.clearProgress('alice', 'doc1');
+    expect(store.getProgress('bob', 'doc1')).not.toBeNull();
+  });
+});
