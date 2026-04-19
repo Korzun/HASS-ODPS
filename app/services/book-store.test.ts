@@ -70,6 +70,45 @@ describe('addBook and listBooks', () => {
     const book = bookStore.getBookById('id-empty');
     expect(book!.title).toBe('my-book');
   });
+
+  it('persists fileAs on stored books', () => {
+    bookStore.addBook('abc123', 'test.epub', '/books/test.epub', 1000, new Date(1000), {
+      ...FAKE_META,
+      fileAs: 'Asimov, Isaac',
+    });
+
+    const book = bookStore.getBookById('abc123');
+
+    expect(book!.fileAs).toBe('Asimov, Isaac');
+  });
+
+  it('sorts by fileAs before title', () => {
+    bookStore.addBook('id1', 'zebra.epub', '/books/zebra.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Zebra Stories',
+      fileAs: 'Apple, A.',
+    });
+    bookStore.addBook('id2', 'apple.epub', '/books/apple.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Apple Stories',
+      fileAs: 'Zulu, Z.',
+    });
+
+    const books = bookStore.listBooks();
+
+    expect(books[0].title).toBe('Zebra Stories');
+    expect(books[1].title).toBe('Apple Stories');
+  });
+
+  it('falls back to title when fileAs is empty', () => {
+    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), { ...FAKE_META, title: 'Bravo', fileAs: '' });
+    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), { ...FAKE_META, title: 'Alpha', fileAs: '' });
+
+    const books = bookStore.listBooks();
+
+    expect(books[0].title).toBe('Alpha');
+    expect(books[1].title).toBe('Bravo');
+  });
 });
 
 describe('getBookById', () => {
@@ -202,5 +241,36 @@ describe('BookStore.scan()', () => {
     fs.writeFileSync(path.join(booksDir, 'book.epub'), 'epub');
     const result = bookStore.scan(makeMockImporter());
     expect(result.imported).toEqual(['book.epub']);
+  });
+});
+
+describe('migrations', () => {
+  it('adds the file_as column when opening an existing books table', () => {
+    const preexistingDb = new Database(':memory:');
+    preexistingDb.exec(`
+      CREATE TABLE books (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL UNIQUE,
+        path TEXT NOT NULL,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        series TEXT NOT NULL DEFAULT '',
+        series_index REAL NOT NULL DEFAULT 0,
+        cover_data BLOB,
+        cover_mime TEXT,
+        size INTEGER NOT NULL,
+        mtime INTEGER NOT NULL,
+        added_at INTEGER NOT NULL
+      )
+    `);
+
+    const migratedStore = new BookStore(booksDir, preexistingDb);
+    const columns = preexistingDb.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+
+    expect(columns.some(column => column.name === 'file_as')).toBe(true);
+    expect(migratedStore.listBooks()).toEqual([]);
+
+    preexistingDb.close();
   });
 });
