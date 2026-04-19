@@ -436,6 +436,38 @@ describe('POST /api/books/scan', () => {
   });
 });
 
+describe('DELETE /api/books/:id (admin-only)', () => {
+  beforeEach(() => {
+    bookStore.addBook('b1', 'book.epub', path.join(booksDir, 'book.epub'), 100, new Date(), FAKE_META);
+  });
+
+  it('returns 204 for admin', async () => {
+    const agent = await adminAgent();
+    const res = await agent.delete('/api/books/b1');
+    expect(res.status).toBe(204);
+  });
+
+  it('returns 403 for regular user', async () => {
+    const agent = await userAgent();
+    const res = await agent.delete('/api/books/b1');
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /api/books/scan (admin-only)', () => {
+  it('returns 200 for admin', async () => {
+    const agent = await adminAgent();
+    const res = await agent.post('/api/books/scan');
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 403 for regular user', async () => {
+    const agent = await userAgent();
+    const res = await agent.post('/api/books/scan');
+    expect(res.status).toBe(403);
+  });
+});
+
 describe('GET / HTML structure', () => {
   it('contains series-section element', async () => {
     const agent = await adminAgent();

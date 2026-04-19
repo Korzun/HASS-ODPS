@@ -1,7 +1,7 @@
 // app/routes/users.ts
 import { Router, Request, Response } from 'express';
 import { UserStore } from '../services/user-store';
-import { sessionAuth } from '../middleware/auth';
+import { sessionAuth, adminAuth } from '../middleware/auth';
 import { logger } from '../logger';
 
 const log = logger('Users');
@@ -9,6 +9,7 @@ const log = logger('Users');
 export function createUsersRouter(userStore: UserStore): Router {
   const router = Router();
   router.use(sessionAuth);
+  router.use(adminAuth);
 
   router.get('/', (_req: Request, res: Response) => {
     const users = userStore.listUsers();
