@@ -542,8 +542,25 @@ describe('GET /api/my/progress', () => {
     });
     const agent = await userAgent();
     const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
     expect(res.body[0].device).toBeUndefined();
     expect(res.body[0].progress).toBeUndefined();
+  });
+
+  it('does not return another user\'s progress', async () => {
+    userStore.createUser('bob', UserStore.hashPassword('bobpass'));
+    userStore.saveProgress('bob', {
+      document: 'doc2',
+      progress: '/p[1]',
+      percentage: 0.9,
+      device: 'Kobo',
+      device_id: 'd2',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(0);
   });
 });
 
