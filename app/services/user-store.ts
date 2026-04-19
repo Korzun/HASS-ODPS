@@ -116,6 +116,13 @@ export class UserStore {
       .all(username) as Progress[];
   }
 
+  clearProgress(username: string, document: string): boolean {
+    const result = this.db
+      .prepare('DELETE FROM progress WHERE username = ? AND document = ?')
+      .run(username, document);
+    return result.changes > 0;
+  }
+
   deleteUser(username: string): boolean {
     const result = this.db.transaction(() => {
       this.db.prepare('DELETE FROM progress WHERE username = ?').run(username);
