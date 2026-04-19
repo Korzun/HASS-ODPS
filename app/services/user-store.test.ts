@@ -179,3 +179,19 @@ describe('UserStore.deleteUser', () => {
     expect(store.userExists('bob')).toBe(true);
   });
 });
+
+describe('UserStore.validateUser', () => {
+  beforeEach(() => store.createUser('alice', UserStore.hashPassword('secret')));
+
+  it('returns true with correct plaintext password', () => {
+    expect(store.validateUser('alice', 'secret')).toBe(true);
+  });
+
+  it('returns false with wrong password', () => {
+    expect(store.validateUser('alice', 'wrongpass')).toBe(false);
+  });
+
+  it('returns false for unknown user', () => {
+    expect(store.validateUser('nobody', 'secret')).toBe(false);
+  });
+});
