@@ -48,8 +48,7 @@ export function createUsersRouter(userStore: UserStore): Router {
       return;
     }
     const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-    const key = UserStore.hashPassword(trimmedPassword);
+    const key = UserStore.hashPassword(password);
     const created = userStore.createUser(trimmedUsername, key);
     if (!created) {
       log.warn(`Registration failed — duplicate username "${trimmedUsername}"`);
