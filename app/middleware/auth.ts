@@ -62,3 +62,12 @@ export function sessionAuth(req: Request, res: Response, next: NextFunction): vo
     res.redirect('/login');
   }
 }
+
+/** Admin-only gate — must run after sessionAuth. Returns 403 for non-admin sessions. */
+export function adminAuth(req: Request, res: Response, next: NextFunction): void {
+  if (!req.session.isAdmin) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  next();
+}
