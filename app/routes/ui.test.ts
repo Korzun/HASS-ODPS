@@ -503,6 +503,50 @@ describe('POST /api/books/scan (admin-only)', () => {
   });
 });
 
+describe('GET /api/my/progress', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app).get('/api/my/progress');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns [] for admin', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns own progress records for regular user', async () => {
+    userStore.saveProgress('alice', {
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.72,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].document).toBe('doc1');
+    expect(res.body[0].percentage).toBeCloseTo(0.72);
+  });
+
+  it('does not expose device or progress fields', async () => {
+    userStore.saveProgress('alice', {
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.body[0].device).toBeUndefined();
+    expect(res.body[0].progress).toBeUndefined();
+  });
+});
+
 describe('GET / HTML structure', () => {
   it('contains series-section element', async () => {
     const agent = await adminAgent();
