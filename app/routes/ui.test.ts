@@ -564,6 +564,42 @@ describe('GET /api/my/progress', () => {
   });
 });
 
+describe('DELETE /api/my/progress/:document', () => {
+  beforeEach(() => {
+    userStore.saveProgress('alice', {
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+  });
+
+  it('redirects to /login without session', async () => {
+    const res = await request(app).delete('/api/my/progress/doc1');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns 403 for admin', async () => {
+    const agent = await adminAgent();
+    const res = await agent.delete('/api/my/progress/doc1');
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 204 and clears the record for regular user', async () => {
+    const agent = await userAgent();
+    const res = await agent.delete('/api/my/progress/doc1');
+    expect(res.status).toBe(204);
+    expect(userStore.getProgress('alice', 'doc1')).toBeNull();
+  });
+
+  it('returns 404 when no record exists', async () => {
+    const agent = await userAgent();
+    const res = await agent.delete('/api/my/progress/nonexistent');
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('GET / HTML structure', () => {
   it('contains series-section element', async () => {
     const agent = await adminAgent();
