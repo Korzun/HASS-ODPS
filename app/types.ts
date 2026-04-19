@@ -3,6 +3,7 @@ export interface Book {
   filename: string;
   path: string;
   title: string;
+  fileAs: string;
   author: string;
   description: string;
   series: string;
@@ -15,6 +16,7 @@ export interface Book {
 
 export interface EpubMeta {
   title: string;
+  fileAs: string;
   author: string;
   description: string;
   series: string;

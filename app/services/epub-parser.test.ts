@@ -149,6 +149,38 @@ describe('parseEpub', () => {
     expect(meta.title).toBe('my-book');
   });
 
+  it('parses title-level file-as from an attributed dc:title', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title id="t1" file-as="Asimov, Isaac">I, Robot</dc:title>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'irobot.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    const meta = parseEpub(filePath);
+
+    expect(meta.title).toBe('I, Robot');
+    expect(meta.fileAs).toBe('Asimov, Isaac');
+  });
+
+  it('returns an empty fileAs when the chosen title has no file-as attribute', () => {
+    const filePath = path.join(tmpDir, 'plain-title.epub');
+    fs.writeFileSync(filePath, makeEpub({ title: 'Plain Title' }));
+
+    const meta = parseEpub(filePath);
+
+    expect(meta.title).toBe('Plain Title');
+    expect(meta.fileAs).toBe('');
+  });
+
   it('parses cover image', () => {
     const coverBuf = Buffer.from('fake-jpeg-data');
     const filePath = path.join(tmpDir, 'book.epub');

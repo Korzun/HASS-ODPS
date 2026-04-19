@@ -28,18 +28,34 @@ export function partialMD5(filePath: string): string {
 
 type MetaLike = string | { [key: string]: string | undefined };
 
-function pickLang(items: MetaLike[]): string {
-  const candidates = items.map(item =>
-    typeof item === 'string'
-      ? { text: item, lang: '' }
-      : { text: item['#text'] ?? '', lang: item['@_xml:lang'] ?? '' }
-  );
+interface LocalizedValue {
+  text: string;
+  lang: string;
+  fileAs: string;
+}
+
+function toLocalizedValue(item: MetaLike): LocalizedValue {
+  return typeof item === 'string'
+    ? { text: item, lang: '', fileAs: '' }
+    : {
+        text: item['#text'] ?? '',
+        lang: item['@_xml:lang'] ?? '',
+        fileAs: (item['@_file-as'] ?? '').trim(),
+      };
+}
+
+function pickLocalized(items: MetaLike[]): LocalizedValue {
+  const candidates = items.map(toLocalizedValue);
   return (
-    candidates.find(c => c.lang.toLowerCase().startsWith('en'))?.text ??
-    candidates.find(c => c.lang === '')?.text ??
-    candidates[0]?.text ??
-    ''
+    candidates.find(c => c.lang.toLowerCase().startsWith('en')) ??
+    candidates.find(c => c.lang === '') ??
+    candidates[0] ??
+    { text: '', lang: '', fileAs: '' }
   );
+}
+
+function pickLang(items: MetaLike[]): string {
+  return pickLocalized(items).text;
 }
 
 export function parseEpub(filePath: string): EpubMeta {
@@ -68,7 +84,9 @@ export function parseEpub(filePath: string): EpubMeta {
   const manifest: Array<{ '@_id': string; '@_href': string; '@_media-type': string; '@_properties'?: string }> = pkg?.manifest?.item ?? [];
 
   // Step 3: extract metadata
-  const title = pickLang(metadata['dc:title'] ?? []) || path.basename(filePath, path.extname(filePath));
+  const titleCandidate = pickLocalized(metadata['dc:title'] ?? []);
+  const title = titleCandidate.text || path.basename(filePath, path.extname(filePath));
+  const fileAs = titleCandidate.fileAs;
   const author = pickLang(metadata['dc:creator'] ?? []);
 
   const rawDesc = metadata['dc:description'];
@@ -125,5 +143,5 @@ export function parseEpub(filePath: string): EpubMeta {
     }
   }
 
-  return { title, author, description, series, seriesIndex, coverData, coverMime };
+  return { title, fileAs, author, description, series, seriesIndex, coverData, coverMime };
 }

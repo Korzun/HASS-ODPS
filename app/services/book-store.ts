@@ -183,6 +183,7 @@ export class BookStore {
       filename: r.filename,
       path: r.path,
       title: r.title,
+      fileAs: '',
       author: r.author,
       description: r.description,
       series: r.series,

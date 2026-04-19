@@ -12,6 +12,7 @@ const FAKE_META: EpubMeta = {
   description: 'A test description',
   series: 'Test Series',
   seriesIndex: 1,
+  fileAs: '',
   coverData: Buffer.from('fake-cover'),
   coverMime: 'image/jpeg',
 };
@@ -127,6 +128,7 @@ function makeMockImporter(): ScanImporter {
       description: '',
       series: '',
       seriesIndex: 0,
+      fileAs: '',
       coverData: null,
       coverMime: null,
     }),
@@ -168,7 +170,7 @@ describe('BookStore.scan()', () => {
     // Add directly to DB without creating the file
     bookStore.addBook('ghostid001', 'ghost.epub', fakePath, 100, new Date(), {
       title: 'Ghost Book', author: '', description: '', series: '',
-      seriesIndex: 0, coverData: null, coverMime: null,
+      seriesIndex: 0, fileAs: '', coverData: null, coverMime: null,
     });
     expect(bookStore.listBooks()).toHaveLength(1);
     const result = bookStore.scan(makeMockImporter());
@@ -184,7 +186,7 @@ describe('BookStore.scan()', () => {
       parseEpub: (filePath: string): EpubMeta => {
         if (filePath.includes('bad')) throw new Error('parse failed');
         return { title: 'Good', author: '', description: '', series: '',
-          seriesIndex: 0, coverData: null, coverMime: null };
+          seriesIndex: 0, fileAs: '', coverData: null, coverMime: null };
       },
       partialMD5: (filePath: string): string =>
         crypto.createHash('md5').update(filePath).digest('hex'),
