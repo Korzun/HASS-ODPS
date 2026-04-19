@@ -28,7 +28,7 @@ export function createApp(
 
   app.use('/opds', createOpdsRouter(bookStore, userStore));
   app.use('/kosync', createKosyncRouter(userStore));
-  app.use('/api/users', createUsersRouter(userStore));
+  app.use('/api/users', createUsersRouter(userStore, config.username));
   app.use('/', createUiRouter(bookStore, userStore, config));
 
   return app;

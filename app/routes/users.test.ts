@@ -21,15 +21,15 @@ beforeEach(() => {
   // Minimal login endpoints for test session setup
   app.post('/login/admin', (req, res) => {
     req.session.authenticated = true;
-    (req.session as any).isAdmin = true;
+    req.session.isAdmin = true;
     res.status(200).send('ok');
   });
   app.post('/login/user', (req, res) => {
     req.session.authenticated = true;
-    (req.session as any).isAdmin = false;
+    req.session.isAdmin = false;
     res.status(200).send('ok');
   });
-  app.use('/api/users', createUsersRouter(userStore));
+  app.use('/api/users', createUsersRouter(userStore, 'admin'));
 });
 
 afterEach(() => {
@@ -203,6 +203,12 @@ describe('POST /api/users', () => {
       .send({ username: 'bob', password: '   ' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username and password are required');
+  });
+
+  it('returns 409 when username matches admin', async () => {
+    const agent = await adminAgent();
+    const res = await agent.post('/api/users').send({ username: 'admin', password: 'anything' });
+    expect(res.status).toBe(409);
   });
 });
 
