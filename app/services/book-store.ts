@@ -69,6 +69,42 @@ export class BookStore {
     if (!columns.some((column) => column.name === 'file_as')) {
       this.db.exec(`ALTER TABLE books ADD COLUMN file_as TEXT NOT NULL DEFAULT ''`);
     }
+
+    // Migration v2: recompute book IDs with corrected partial MD5 (first offset was 256, now 0)
+    const { user_version } = this.db.prepare('PRAGMA user_version').get() as {
+      user_version: number;
+    };
+    if (user_version < 2) {
+      const books = this.db
+        .prepare('SELECT id, path FROM books')
+        .all() as { id: string; path: string }[];
+      const updateBook = this.db.prepare('UPDATE books SET id = ? WHERE id = ?');
+      const progressExists = this.db
+        .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
+        .get();
+      const updateProgress = progressExists
+        ? this.db.prepare('UPDATE progress SET document = ? WHERE document = ?')
+        : null;
+
+      let recomputed = 0;
+      this.db.transaction(() => {
+        for (const book of books) {
+          let newId: string;
+          try {
+            newId = partialMD5(book.path);
+          } catch {
+            continue;
+          }
+          if (newId !== book.id) {
+            updateBook.run(newId, book.id);
+            updateProgress?.run(newId, book.id);
+            recomputed++;
+          }
+        }
+      })();
+      this.db.exec('PRAGMA user_version = 2');
+      if (recomputed > 0) log.info(`Migration v2: recomputed ${recomputed} book ID(s)`);
+    }
   }
 
   addBook(

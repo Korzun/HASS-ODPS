@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import Database from 'better-sqlite3';
 import { BookStore, ScanImporter } from './book-store';
+import { partialMD5 } from './epub-parser';
 import { EpubMeta } from '../types';
 
 jest.mock('../logger');
@@ -312,6 +313,16 @@ describe('BookStore.scan()', () => {
   });
 });
 
+const BOOKS_SCHEMA = `
+  CREATE TABLE books (
+    id TEXT PRIMARY KEY, filename TEXT NOT NULL UNIQUE, path TEXT NOT NULL,
+    title TEXT NOT NULL, file_as TEXT NOT NULL DEFAULT '', author TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '', series TEXT NOT NULL DEFAULT '',
+    series_index REAL NOT NULL DEFAULT 0, cover_data BLOB, cover_mime TEXT,
+    size INTEGER NOT NULL, mtime INTEGER NOT NULL, added_at INTEGER NOT NULL
+  )
+`;
+
 describe('migrations', () => {
   it('adds the file_as column when opening an existing books table', () => {
     const preexistingDb = new Database(':memory:');
@@ -342,5 +353,104 @@ describe('migrations', () => {
     expect(migratedStore.listBooks()).toEqual([]);
 
     preexistingDb.close();
+  });
+
+  it('migration v2: recomputes stale book ID to match corrected partial MD5', () => {
+    const filePath = path.join(booksDir, 'migrate-v2.epub');
+    fs.writeFileSync(filePath, Buffer.alloc(2048, 'x'));
+    const correctId = partialMD5(filePath);
+    const staleId = 'stale-id-from-old-algo';
+
+    const preDb = new Database(':memory:');
+    preDb.exec(BOOKS_SCHEMA);
+    preDb
+      .prepare(
+        'INSERT INTO books (id, filename, path, title, size, mtime, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run(staleId, 'migrate-v2.epub', filePath, 'Test', 2048, 0, 0);
+
+    new BookStore(booksDir, preDb);
+
+    const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
+    expect(row.id).toBe(correctId);
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 2 });
+
+    preDb.close();
+  });
+
+  it('migration v2: also updates matching progress records', () => {
+    const filePath = path.join(booksDir, 'migrate-v2-prog.epub');
+    fs.writeFileSync(filePath, Buffer.alloc(2048, 'y'));
+    const correctId = partialMD5(filePath);
+    const staleId = 'stale-progress-id';
+
+    const preDb = new Database(':memory:');
+    preDb.exec(BOOKS_SCHEMA);
+    preDb.exec(`
+      CREATE TABLE progress (
+        username TEXT NOT NULL, document TEXT NOT NULL, progress TEXT NOT NULL,
+        percentage REAL NOT NULL, device TEXT NOT NULL, device_id TEXT NOT NULL,
+        timestamp INTEGER NOT NULL, PRIMARY KEY (username, document)
+      )
+    `);
+    preDb
+      .prepare(
+        'INSERT INTO books (id, filename, path, title, size, mtime, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run(staleId, 'migrate-v2-prog.epub', filePath, 'Test', 2048, 0, 0);
+    preDb
+      .prepare(
+        'INSERT INTO progress (username, document, progress, percentage, device, device_id, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run('alice', staleId, 'epub://', 0.5, 'Kobo', 'dev1', 1000);
+
+    new BookStore(booksDir, preDb);
+
+    const prog = preDb.prepare('SELECT document FROM progress').get() as { document: string };
+    expect(prog.document).toBe(correctId);
+
+    preDb.close();
+  });
+
+  it('migration v2: skips books whose files are missing', () => {
+    const missingPath = path.join(booksDir, 'gone.epub');
+
+    const preDb = new Database(':memory:');
+    preDb.exec(BOOKS_SCHEMA);
+    preDb
+      .prepare(
+        'INSERT INTO books (id, filename, path, title, size, mtime, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run('some-id', 'gone.epub', missingPath, 'Gone', 100, 0, 0);
+
+    // Should not throw; the book with the missing file keeps its old ID
+    new BookStore(booksDir, preDb);
+
+    const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
+    expect(row.id).toBe('some-id');
+
+    preDb.close();
+  });
+
+  it('migration v2: does not re-run when user_version is already 2', () => {
+    const filePath = path.join(booksDir, 'already-migrated.epub');
+    fs.writeFileSync(filePath, Buffer.alloc(2048, 'z'));
+    const pinnedId = 'pinned-id-should-not-change';
+
+    const preDb = new Database(':memory:');
+    preDb.exec(BOOKS_SCHEMA);
+    preDb.exec('PRAGMA user_version = 2');
+    preDb
+      .prepare(
+        'INSERT INTO books (id, filename, path, title, size, mtime, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run(pinnedId, 'already-migrated.epub', filePath, 'Test', 2048, 0, 0);
+
+    new BookStore(booksDir, preDb);
+
+    const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
+    expect(row.id).toBe(pinnedId);
+
+    preDb.close();
   });
 });
