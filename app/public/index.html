@@ -74,25 +74,29 @@
     .series-back{background:none;border:none;color:#1e40af;font-size:.8rem;font-weight:500;cursor:pointer;padding:0;font-family:inherit;display:inline-block;margin:.75rem 0}
     .series-back:hover{text-decoration:underline}
     .series-order-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;margin-bottom:.45rem}
+    body.user-mode .admin-only{display:none!important}
   </style>
 </head>
 <body>
   <header>
     <h1>📚 HASS-ODPS Library</h1>
-    <form method="POST" action="/logout" style="margin:0">
-      <button class="signout">Sign Out</button>
-    </form>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <span id="current-username" style="font-size:.875rem;opacity:.85"></span>
+      <form method="POST" action="/logout" style="margin:0">
+        <button class="signout">Sign Out</button>
+      </form>
+    </div>
   </header>
 
   <nav id="tab-bar">
     <button class="tab active" data-tab="library">Library</button>
-    <button class="tab" data-tab="users">Users</button>
+    <button class="tab admin-only" data-tab="users">Users</button>
   </nav>
 
   <main>
     <div id="library-section">
       <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
-        <button id="scan-btn" type="button" style="background:#1e40af;color:#fff;border:none;border-radius:4px;padding:.5rem 1rem;font-size:.875rem;cursor:pointer;font-family:inherit">Scan Library</button>
+        <button id="scan-btn" type="button" class="admin-only" style="background:#1e40af;color:#fff;border:none;border-radius:4px;padding:.5rem 1rem;font-size:.875rem;cursor:pointer;font-family:inherit">Scan Library</button>
         <span id="scan-status" style="font-size:.875rem;min-height:1.25rem;display:inline-block"></span>
       </div>
       <div id="drop-zone">
@@ -105,7 +109,7 @@
       <p id="empty-msg" style="display:none">No books yet. Upload some above.</p>
     </div>
 
-    <div id="users-section" style="display:none">
+    <div id="users-section" class="admin-only" style="display:none">
       <div id="register-user-form" style="background:#fff;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.07)">
         <div style="font-size:.8rem;font-weight:600;color:#374151;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Register User</div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start">
@@ -274,7 +278,7 @@
               (book.author ? '<div class="book-meta">' + esc(book.author) + '</div>' : '') +
               '<div class="book-format">EPUB · ' + formatSize(book.size) + '</div>' +
             '</div>' +
-            '<button class="delete-btn" type="button" title="Delete">🗑</button>' +
+            '<button class="delete-btn admin-only" type="button" title="Delete">🗑</button>' +
           '</div>';
         li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
         list.appendChild(li);
@@ -335,7 +339,7 @@
                 'EPUB · ' + formatSize(book.size) +
               '</div>' +
             '</div>' +
-            '<button class="delete-btn" type="button" title="Delete">🗑</button>' +
+            '<button class="delete-btn admin-only" type="button" title="Delete">🗑</button>' +
           '</div>';
         li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
         seriesBookList.appendChild(li);
@@ -593,7 +597,24 @@
       }
     });
 
-    loadBooks();
+    let currentUser = { username: '', isAdmin: false };
+
+    async function init() {
+      try {
+        const res = await fetch('/api/me');
+        if (res.ok) currentUser = await res.json();
+      } catch { /* keep defaults */ }
+
+      document.getElementById('current-username').textContent = currentUser.username;
+
+      if (!currentUser.isAdmin) {
+        document.body.classList.add('user-mode');
+      }
+
+      await loadBooks();
+    }
+
+    init();
 
     // ── Scan ─────────────────────────────────────────────
     const scanBtn = document.getElementById('scan-btn');
