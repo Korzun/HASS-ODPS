@@ -49,6 +49,10 @@ export class UserStore {
     return row?.key === key;
   }
 
+  validateUser(username: string, password: string): boolean {
+    return this.authenticate(username, UserStore.hashPassword(password));
+  }
+
   getProgress(username: string, document: string): Progress | null {
     const row = this.db
       .prepare(
