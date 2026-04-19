@@ -7,6 +7,17 @@ module.exports = tseslint.config(
   {
     files: ['**/*.ts'],
     extends: [tseslint.configs.recommended],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
+    },
   },
   eslintPluginPrettierRecommended,
 );

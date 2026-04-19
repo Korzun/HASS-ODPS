@@ -43,8 +43,12 @@ export function createUsersRouter(userStore: UserStore, adminUsername: string): 
 
   router.post('/', (req: Request, res: Response) => {
     const { username, password } = req.body as { username?: string; password?: string };
-    if (typeof username !== 'string' || typeof password !== 'string' ||
-        !username.trim() || !password.trim()) {
+    if (
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      !username.trim() ||
+      !password.trim()
+    ) {
       res.status(400).json({ error: 'Username and password are required' });
       return;
     }

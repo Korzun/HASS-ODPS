@@ -1,4 +1,3 @@
-import * as path from 'path';
 import request from 'supertest';
 import express from 'express';
 import session from 'express-session';
@@ -64,7 +63,11 @@ describe('GET /api/users', () => {
   it('returns users with progress counts', async () => {
     userStore.createUser('alice', 'pass');
     userStore.saveProgress('alice', {
-      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
     });
     const agent = await adminAgent();
     const res = await agent.get('/api/users');
@@ -98,7 +101,11 @@ describe('GET /api/users/:username/progress', () => {
   it('returns progress records for a user', async () => {
     userStore.createUser('alice', 'pass');
     userStore.saveProgress('alice', {
-      document: 'dune.epub', progress: '/p[5]', percentage: 0.42, device: 'Kobo', device_id: 'd1',
+      document: 'dune.epub',
+      progress: '/p[5]',
+      percentage: 0.42,
+      device: 'Kobo',
+      device_id: 'd1',
     });
     const agent = await adminAgent();
     const res = await agent.get('/api/users/alice/progress');
@@ -132,7 +139,11 @@ describe('DELETE /api/users/:username', () => {
   it('cascades to delete progress records', async () => {
     userStore.createUser('alice', 'pass');
     userStore.saveProgress('alice', {
-      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
     });
     const agent = await adminAgent();
     await agent.delete('/api/users/alice');
@@ -142,17 +153,13 @@ describe('DELETE /api/users/:username', () => {
 
 describe('POST /api/users', () => {
   it('redirects to /login without session', async () => {
-    const res = await request(app)
-      .post('/api/users')
-      .send({ username: 'bob', password: 'pass' });
+    const res = await request(app).post('/api/users').send({ username: 'bob', password: 'pass' });
     expect(res.status).toBe(302);
   });
 
   it('creates a user and returns 201', async () => {
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/users')
-      .send({ username: 'bob', password: 'secret' });
+    const res = await agent.post('/api/users').send({ username: 'bob', password: 'secret' });
     expect(res.status).toBe(201);
     expect(res.body.username).toBe('bob');
     expect(userStore.userExists('bob')).toBe(true);
@@ -162,45 +169,35 @@ describe('POST /api/users', () => {
   it('returns 409 for duplicate username', async () => {
     userStore.createUser('bob', UserStore.hashPassword('pass'));
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/users')
-      .send({ username: 'bob', password: 'other' });
+    const res = await agent.post('/api/users').send({ username: 'bob', password: 'other' });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('Username already exists');
   });
 
   it('returns 400 when username is missing', async () => {
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/users')
-      .send({ password: 'pass' });
+    const res = await agent.post('/api/users').send({ password: 'pass' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username and password are required');
   });
 
   it('returns 400 when password is missing', async () => {
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/users')
-      .send({ username: 'bob' });
+    const res = await agent.post('/api/users').send({ username: 'bob' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username and password are required');
   });
 
   it('returns 400 when username is blank', async () => {
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/users')
-      .send({ username: '   ', password: 'pass' });
+    const res = await agent.post('/api/users').send({ username: '   ', password: 'pass' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username and password are required');
   });
 
   it('returns 400 when password is blank', async () => {
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/users')
-      .send({ username: 'bob', password: '   ' });
+    const res = await agent.post('/api/users').send({ username: 'bob', password: '   ' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username and password are required');
   });

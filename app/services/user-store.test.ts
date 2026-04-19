@@ -104,10 +104,18 @@ describe('UserStore.listUsers', () => {
     store.createUser('zara', 'pass');
     store.createUser('alice', 'pass');
     store.saveProgress('alice', {
-      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
     });
     store.saveProgress('alice', {
-      document: 'doc2', progress: '/p[1]', percentage: 0.2, device: 'Kobo', device_id: 'd1',
+      document: 'doc2',
+      progress: '/p[1]',
+      percentage: 0.2,
+      device: 'Kobo',
+      device_id: 'd1',
     });
     const users = store.listUsers();
     expect(users).toHaveLength(2);
@@ -127,10 +135,20 @@ describe('UserStore.getUserProgress', () => {
 
   it('returns all progress records ordered by timestamp descending', () => {
     store.saveProgress('alice', {
-      document: 'doc1', progress: '/p[1]', percentage: 0.3, device: 'Kobo', device_id: 'd1', timestamp: 100,
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.3,
+      device: 'Kobo',
+      device_id: 'd1',
+      timestamp: 100,
     });
     store.saveProgress('alice', {
-      document: 'doc2', progress: '/p[2]', percentage: 0.8, device: 'Kobo', device_id: 'd1', timestamp: 200,
+      document: 'doc2',
+      progress: '/p[2]',
+      percentage: 0.8,
+      device: 'Kobo',
+      device_id: 'd1',
+      timestamp: 200,
     });
     const records = store.getUserProgress('alice');
     expect(records).toHaveLength(2);
@@ -141,10 +159,18 @@ describe('UserStore.getUserProgress', () => {
   it('only returns records for the specified user', () => {
     store.createUser('bob', 'pass');
     store.saveProgress('alice', {
-      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
     });
     store.saveProgress('bob', {
-      document: 'doc2', progress: '/p[1]', percentage: 0.3, device: 'Kobo', device_id: 'd2',
+      document: 'doc2',
+      progress: '/p[1]',
+      percentage: 0.3,
+      device: 'Kobo',
+      device_id: 'd2',
     });
     expect(store.getUserProgress('alice')).toHaveLength(1);
     expect(store.getUserProgress('alice')[0].document).toBe('doc1');
@@ -155,7 +181,11 @@ describe('UserStore.deleteUser', () => {
   beforeEach(() => {
     store.createUser('alice', 'pass');
     store.saveProgress('alice', {
-      document: 'doc1', progress: '/p[1]', percentage: 0.5, device: 'Kobo', device_id: 'd1',
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
     });
   });
 

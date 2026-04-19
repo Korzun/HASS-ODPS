@@ -5,15 +5,17 @@ import AdmZip from 'adm-zip';
 import { partialMD5, parseEpub } from './epub-parser';
 
 // Helper: build a minimal EPUB zip as a Buffer
-function makeEpub(opts: {
-  title?: string;
-  author?: string;
-  description?: string;
-  series?: string;
-  seriesIndex?: number;
-  coverData?: Buffer;
-  coverMime?: string;
-} = {}): Buffer {
+function makeEpub(
+  opts: {
+    title?: string;
+    author?: string;
+    description?: string;
+    series?: string;
+    seriesIndex?: number;
+    coverData?: Buffer;
+    coverMime?: string;
+  } = {}
+): Buffer {
   const zip = new AdmZip();
 
   const containerXml = `<?xml version="1.0"?>
@@ -230,7 +232,10 @@ describe('parseEpub', () => {
   it('parses cover image', () => {
     const coverBuf = Buffer.from('fake-jpeg-data');
     const filePath = path.join(tmpDir, 'book.epub');
-    fs.writeFileSync(filePath, makeEpub({ title: 'T', coverData: coverBuf, coverMime: 'image/jpeg' }));
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', coverData: coverBuf, coverMime: 'image/jpeg' })
+    );
     const meta = parseEpub(filePath);
     expect(meta.coverData).toEqual(coverBuf);
     expect(meta.coverMime).toBe('image/jpeg');
@@ -248,15 +253,18 @@ describe('parseEpub', () => {
     // { "@_id": "t1", "#text": "Death's End" } — the title must still be a string.
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title id="t1">Death's End</dc:title>
     <dc:title id="t2">死亡终结</dc:title>
   </metadata>
   <manifest/><spine/>
-</package>`));
-    const filePath = path.join(tmpDir, "deaths-end.epub");
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'deaths-end.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
     expect(typeof meta.title).toBe('string');
@@ -266,14 +274,17 @@ describe('parseEpub', () => {
   it('picks english title when non-english variant appears first', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title xml:lang="zh">死亡终结</dc:title>
     <dc:title xml:lang="en">Death's End</dc:title>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-title-en-last.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -283,14 +294,17 @@ describe('parseEpub', () => {
   it('falls back to no-lang title when english is absent', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Untranslated Title</dc:title>
     <dc:title xml:lang="zh">中文标题</dc:title>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-title-nolang.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -300,14 +314,17 @@ describe('parseEpub', () => {
   it('falls back to first title when no english or no-lang variant exists', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title xml:lang="de">Der Dunkle Wald</dc:title>
     <dc:title xml:lang="zh">黑暗森林</dc:title>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-title-allforeign.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -317,7 +334,9 @@ describe('parseEpub', () => {
   it('picks english author when non-english variant appears first', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Test</dc:title>
@@ -325,7 +344,8 @@ describe('parseEpub', () => {
     <dc:creator xml:lang="en">Liu Cixin</dc:creator>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-author-en-last.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -335,7 +355,9 @@ describe('parseEpub', () => {
   it('falls back to no-lang author when english is absent', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Test</dc:title>
@@ -343,7 +365,8 @@ describe('parseEpub', () => {
     <dc:creator xml:lang="zh">刘慈欣</dc:creator>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-author-nolang.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -353,7 +376,9 @@ describe('parseEpub', () => {
   it('falls back to first author when no english or no-lang variant exists', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Test</dc:title>
@@ -361,7 +386,8 @@ describe('parseEpub', () => {
     <dc:creator xml:lang="ja">劉慈欣</dc:creator>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-author-allforeign.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -371,7 +397,9 @@ describe('parseEpub', () => {
   it('picks english series from multilingual belongs-to-collection', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Test</dc:title>
@@ -380,7 +408,8 @@ describe('parseEpub', () => {
     <meta property="collection-type">series</meta>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-series-en.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -390,7 +419,9 @@ describe('parseEpub', () => {
   it('falls back to only available series when no english belongs-to-collection exists', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Test</dc:title>
@@ -398,7 +429,8 @@ describe('parseEpub', () => {
     <meta property="collection-type">series</meta>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-series-zh-only.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);
@@ -408,7 +440,9 @@ describe('parseEpub', () => {
   it('prefers calibre:series over multilingual belongs-to-collection', () => {
     const zip = new AdmZip();
     zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
-    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Test</dc:title>
@@ -418,7 +452,8 @@ describe('parseEpub', () => {
     <meta id="collection-zh" property="belongs-to-collection" xml:lang="zh-Hans">地球往事</meta>
   </metadata>
   <manifest/><spine/>
-</package>`));
+</package>`)
+    );
     const filePath = path.join(tmpDir, 'lang-series-calibre-wins.epub');
     fs.writeFileSync(filePath, zip.toBuffer());
     const meta = parseEpub(filePath);

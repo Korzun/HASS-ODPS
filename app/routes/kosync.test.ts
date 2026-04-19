@@ -34,14 +34,18 @@ function registerBody(username: string, password: string) {
 
 describe('POST /kosync/users/create', () => {
   it('returns 201 and username on success', async () => {
-    const res = await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
+    const res = await request(app)
+      .post('/kosync/users/create')
+      .send(registerBody('alice', 'secret'));
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ username: 'alice' });
   });
 
   it('returns 402 on duplicate username', async () => {
     await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
-    const res = await request(app).post('/kosync/users/create').send(registerBody('alice', 'other'));
+    const res = await request(app)
+      .post('/kosync/users/create')
+      .send(registerBody('alice', 'other'));
     expect(res.status).toBe(402);
     expect(res.body).toEqual({ username: null });
   });
@@ -58,9 +62,7 @@ describe('GET /kosync/users/auth', () => {
   });
 
   it('returns 200 with correct credentials', async () => {
-    const res = await request(app)
-      .get('/kosync/users/auth')
-      .set(authHeaders('alice', 'secret'));
+    const res = await request(app).get('/kosync/users/auth').set(authHeaders('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ authorized: 'OK' });
   });
@@ -111,16 +113,13 @@ describe('PUT /kosync/syncs/progress', () => {
 describe('GET /kosync/syncs/progress/:document', () => {
   beforeEach(async () => {
     await request(app).post('/kosync/users/create').send(registerBody('alice', 'secret'));
-    await request(app)
-      .put('/kosync/syncs/progress')
-      .set(authHeaders('alice', 'secret'))
-      .send({
-        document: 'docHash123',
-        progress: '/body/DocFragment[5]',
-        percentage: 0.42,
-        device: 'Kobo',
-        device_id: 'dev-1',
-      });
+    await request(app).put('/kosync/syncs/progress').set(authHeaders('alice', 'secret')).send({
+      document: 'docHash123',
+      progress: '/body/DocFragment[5]',
+      percentage: 0.42,
+      device: 'Kobo',
+      device_id: 'dev-1',
+    });
   });
 
   it('returns saved progress', async () => {

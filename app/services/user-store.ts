@@ -43,9 +43,9 @@ export class UserStore {
   }
 
   authenticate(username: string, key: string): boolean {
-    const row = this.db
-      .prepare('SELECT key FROM users WHERE username = ?')
-      .get(username) as { key: string } | undefined;
+    const row = this.db.prepare('SELECT key FROM users WHERE username = ?').get(username) as
+      | { key: string }
+      | undefined;
     return row?.key === key;
   }
 
@@ -68,7 +68,8 @@ export class UserStore {
   ): Progress {
     const timestamp = p.timestamp ?? Math.floor(Date.now() / 1000);
     this.db
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO progress (username, document, progress, percentage, device, device_id, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (username, document) DO UPDATE SET
@@ -77,7 +78,8 @@ export class UserStore {
           device     = excluded.device,
           device_id  = excluded.device_id,
           timestamp  = excluded.timestamp
-      `)
+      `
+      )
       .run(username, p.document, p.progress, p.percentage, p.device, p.device_id, timestamp);
     return { ...p, timestamp };
   }
@@ -88,30 +90,37 @@ export class UserStore {
   }
 
   listUsers(): { username: string; progressCount: number }[] {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT u.username, COUNT(p.document) AS progressCount
       FROM users u
       LEFT JOIN progress p ON p.username = u.username
       GROUP BY u.username
       ORDER BY u.username ASC
-    `).all() as { username: string; progressCount: number }[];
+    `
+      )
+      .all() as { username: string; progressCount: number }[];
   }
 
   getUserProgress(username: string): Progress[] {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT document, progress, percentage, device, device_id, timestamp
       FROM progress
       WHERE username = ?
       ORDER BY timestamp DESC
-    `).all(username) as Progress[];
+    `
+      )
+      .all(username) as Progress[];
   }
 
   deleteUser(username: string): boolean {
-    const result = (this.db.transaction(() => {
+    const result = this.db.transaction(() => {
       this.db.prepare('DELETE FROM progress WHERE username = ?').run(username);
       return this.db.prepare('DELETE FROM users WHERE username = ?').run(username);
-    }))();
+    })();
     return result.changes > 0;
   }
-
 }

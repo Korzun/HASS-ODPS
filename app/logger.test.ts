@@ -90,7 +90,9 @@ describe('logger level filtering', () => {
 });
 
 describe('logger output streams', () => {
-  beforeEach(() => { process.env.LOG_LEVEL = 'debug'; });
+  beforeEach(() => {
+    process.env.LOG_LEVEL = 'debug';
+  });
 
   it('writes debug to stdout', () => {
     logger('NS').debug('msg');

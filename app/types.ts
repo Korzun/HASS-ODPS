@@ -1,5 +1,5 @@
 export interface Book {
-  id: string;           // 32-char partial MD5 (KoReader binary algorithm) — matches KOSync progress.document
+  id: string; // 32-char partial MD5 (KoReader binary algorithm) — matches KOSync progress.document
   filename: string;
   path: string;
   title: string;
@@ -7,8 +7,8 @@ export interface Book {
   author: string;
   description: string;
   series: string;
-  seriesIndex: number;  // REAL — supports fractional entries like 2.5
-  hasCover: boolean;    // true when cover blob is present in SQLite
+  seriesIndex: number; // REAL — supports fractional entries like 2.5
+  hasCover: boolean; // true when cover blob is present in SQLite
   size: number;
   mtime: Date;
   addedAt: Date;

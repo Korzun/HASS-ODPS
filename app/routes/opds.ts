@@ -43,7 +43,7 @@ function rootFeed(baseUrl: string): string {
 function booksFeed(books: Book[], baseUrl: string): string {
   const now = new Date().toISOString();
   const entries = books
-    .map(b => {
+    .map((b) => {
       const coverLink = b.hasCover
         ? `    <link rel="http://opds-spec.org/image"\n          href="${baseUrl}/opds/books/${b.id}/cover"\n          type="image/jpeg"/>`
         : '';
@@ -102,7 +102,10 @@ export function createOpdsRouter(bookStore: BookStore, userStore: UserStore): Ro
     const username = decodeBasicUser(req.headers.authorization!);
     log.info(`User "${username}" downloaded "${book.filename}"`);
     res.set('Content-Type', 'application/epub+zip');
-    res.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(book.filename)}`);
+    res.set(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(book.filename)}`
+    );
     res.sendFile(book.path);
   });
 

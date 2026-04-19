@@ -6,9 +6,9 @@ import { UserStore } from './services/user-store';
 import { BookStore } from './services/book-store';
 import { createApp } from './app';
 import { logger } from './logger';
+import packageJson from '../package.json';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { version } = require('../package.json') as { version: string };
+const version: string = packageJson.version;
 
 const log = logger('Server');
 const config = loadConfig();
@@ -25,7 +25,9 @@ const app = createApp(config, userStore, bookStore);
 // Startup scan: import untracked EPUBs, clean up stale DB entries
 try {
   const scanResult = bookStore.scan();
-  log.info(`Startup scan: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`);
+  log.info(
+    `Startup scan: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`
+  );
 } catch (err: unknown) {
   log.error(`Startup scan failed: ${err instanceof Error ? err.message : String(err)}`);
 }
@@ -39,7 +41,9 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 app.listen(config.port, () => {
-  log.info(`HASS-ODPS v${version} starting — port: ${config.port}, booksDir: ${config.booksDir}, dataDir: ${config.dataDir}`);
+  log.info(
+    `HASS-ODPS v${version} starting — port: ${config.port}, booksDir: ${config.booksDir}, dataDir: ${config.dataDir}`
+  );
   log.info(`Web UI:  http://localhost:${config.port}/`);
   log.info(`OPDS:    http://localhost:${config.port}/opds/`);
   log.info(`KOSync:  http://localhost:${config.port}/kosync/`);

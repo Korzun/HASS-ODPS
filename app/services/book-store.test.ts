@@ -45,28 +45,44 @@ describe('addBook and listBooks', () => {
 
   it('upserts on same filename', () => {
     bookStore.addBook('id1', 'dupe.epub', '/books/dupe.epub', 100, new Date(), FAKE_META);
-    bookStore.addBook('id2', 'dupe.epub', '/books/dupe.epub', 200, new Date(), { ...FAKE_META, title: 'Updated' });
+    bookStore.addBook('id2', 'dupe.epub', '/books/dupe.epub', 200, new Date(), {
+      ...FAKE_META,
+      title: 'Updated',
+    });
     const books = bookStore.listBooks();
     expect(books).toHaveLength(1);
     expect(books[0].title).toBe('Updated');
   });
 
   it('sorts by title', () => {
-    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), { ...FAKE_META, title: 'Zebra' });
-    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), { ...FAKE_META, title: 'Apple' });
+    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Zebra',
+    });
+    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Apple',
+    });
     const books = bookStore.listBooks();
     expect(books[0].title).toBe('Apple');
     expect(books[1].title).toBe('Zebra');
   });
 
   it('returns hasCover false when no cover', () => {
-    bookStore.addBook('id1', 'nocover.epub', '/books/nocover.epub', 100, new Date(), { ...FAKE_META, coverData: null, coverMime: null });
+    bookStore.addBook('id1', 'nocover.epub', '/books/nocover.epub', 100, new Date(), {
+      ...FAKE_META,
+      coverData: null,
+      coverMime: null,
+    });
     const books = bookStore.listBooks();
     expect(books[0].hasCover).toBe(false);
   });
 
   it('uses filename stem as title fallback when title is empty', () => {
-    bookStore.addBook('id-empty', 'my-book.epub', '/books/my-book.epub', 100, new Date(), { ...FAKE_META, title: '' });
+    bookStore.addBook('id-empty', 'my-book.epub', '/books/my-book.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: '',
+    });
     const book = bookStore.getBookById('id-empty');
     expect(book!.title).toBe('my-book');
   });
@@ -111,8 +127,16 @@ describe('addBook and listBooks', () => {
   });
 
   it('falls back to title when fileAs is empty', () => {
-    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), { ...FAKE_META, title: 'Bravo', fileAs: '' });
-    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), { ...FAKE_META, title: 'Alpha', fileAs: '' });
+    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Bravo',
+      fileAs: '',
+    });
+    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), {
+      ...FAKE_META,
+      title: 'Alpha',
+      fileAs: '',
+    });
 
     const books = bookStore.listBooks();
 
@@ -136,7 +160,14 @@ describe('getBookById', () => {
 
 describe('deleteBook', () => {
   it('removes book from db and returns it', () => {
-    bookStore.addBook('del1', 'delete-me.epub', '/books/delete-me.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook(
+      'del1',
+      'delete-me.epub',
+      '/books/delete-me.epub',
+      100,
+      new Date(),
+      FAKE_META
+    );
     const deleted = bookStore.deleteBook('del1');
     expect(deleted).not.toBeNull();
     expect(deleted!.id).toBe('del1');
@@ -150,7 +181,14 @@ describe('deleteBook', () => {
 
 describe('getCover', () => {
   it('returns cover data and mime', () => {
-    bookStore.addBook('cov1', 'cover-book.epub', '/books/cover-book.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook(
+      'cov1',
+      'cover-book.epub',
+      '/books/cover-book.epub',
+      100,
+      new Date(),
+      FAKE_META
+    );
     const cover = bookStore.getCover('cov1');
     expect(cover).not.toBeNull();
     expect(cover!.data).toEqual(Buffer.from('fake-cover'));
@@ -158,7 +196,11 @@ describe('getCover', () => {
   });
 
   it('returns null when no cover', () => {
-    bookStore.addBook('nocov', 'no-cover.epub', '/books/no-cover.epub', 100, new Date(), { ...FAKE_META, coverData: null, coverMime: null });
+    bookStore.addBook('nocov', 'no-cover.epub', '/books/no-cover.epub', 100, new Date(), {
+      ...FAKE_META,
+      coverData: null,
+      coverMime: null,
+    });
     expect(bookStore.getCover('nocov')).toBeNull();
   });
 
@@ -218,8 +260,14 @@ describe('BookStore.scan()', () => {
     const fakePath = path.join(booksDir, 'ghost.epub');
     // Add directly to DB without creating the file
     bookStore.addBook('ghostid001', 'ghost.epub', fakePath, 100, new Date(), {
-      title: 'Ghost Book', author: '', description: '', series: '',
-      seriesIndex: 0, fileAs: '', coverData: null, coverMime: null,
+      title: 'Ghost Book',
+      author: '',
+      description: '',
+      series: '',
+      seriesIndex: 0,
+      fileAs: '',
+      coverData: null,
+      coverMime: null,
     });
     expect(bookStore.listBooks()).toHaveLength(1);
     const result = bookStore.scan(makeMockImporter());
@@ -234,8 +282,16 @@ describe('BookStore.scan()', () => {
     const errorImporter: ScanImporter = {
       parseEpub: (filePath: string): EpubMeta => {
         if (filePath.includes('bad')) throw new Error('parse failed');
-        return { title: 'Good', author: '', description: '', series: '',
-          seriesIndex: 0, fileAs: '', coverData: null, coverMime: null };
+        return {
+          title: 'Good',
+          author: '',
+          description: '',
+          series: '',
+          seriesIndex: 0,
+          fileAs: '',
+          coverData: null,
+          coverMime: null,
+        };
       },
       partialMD5: (filePath: string): string =>
         crypto.createHash('md5').update(filePath).digest('hex'),
@@ -276,9 +332,11 @@ describe('migrations', () => {
     `);
 
     const migratedStore = new BookStore(booksDir, preexistingDb);
-    const columns = preexistingDb.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    const columns = preexistingDb.prepare('PRAGMA table_info(books)').all() as Array<{
+      name: string;
+    }>;
 
-    expect(columns.some(column => column.name === 'file_as')).toBe(true);
+    expect(columns.some((column) => column.name === 'file_as')).toBe(true);
     expect(migratedStore.listBooks()).toEqual([]);
 
     preexistingDb.close();

@@ -20,8 +20,8 @@ function emit(level: Level, namespace: string, message: string): void {
 export function logger(namespace: string) {
   return {
     debug: (msg: string) => emit('debug', namespace, msg),
-    info:  (msg: string) => emit('info',  namespace, msg),
-    warn:  (msg: string) => emit('warn',  namespace, msg),
+    info: (msg: string) => emit('info', namespace, msg),
+    warn: (msg: string) => emit('warn', namespace, msg),
     error: (msg: string) => emit('error', namespace, msg),
   };
 }

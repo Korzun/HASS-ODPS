@@ -37,15 +37,17 @@ const FAKE_META: EpubMeta = {
 };
 
 // Helper: build a minimal EPUB zip as a Buffer
-function makeEpub(opts: {
-  title?: string;
-  author?: string;
-  description?: string;
-  series?: string;
-  seriesIndex?: number;
-  coverData?: Buffer;
-  coverMime?: string;
-} = {}): Buffer {
+function makeEpub(
+  opts: {
+    title?: string;
+    author?: string;
+    description?: string;
+    series?: string;
+    seriesIndex?: number;
+    coverData?: Buffer;
+    coverMime?: string;
+  } = {}
+): Buffer {
   const zip = new AdmZip();
 
   const containerXml = `<?xml version="1.0"?>
@@ -117,9 +119,7 @@ beforeEach(() => {
   app = express();
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  app.use(
-    session({ secret: 'test-secret', resave: false, saveUninitialized: false })
-  );
+  app.use(session({ secret: 'test-secret', resave: false, saveUninitialized: false }));
   app.use('/', createUiRouter(bookStore, userStore, { ...config, booksDir }));
 });
 
@@ -206,7 +206,10 @@ describe('GET /api/books', () => {
   });
 
   it('returns JSON array of books', async () => {
-    bookStore.addBook('book1', 'book.epub', path.join(booksDir, 'book.epub'), 100, new Date(), { ...FAKE_META, title: 'book' });
+    bookStore.addBook('book1', 'book.epub', path.join(booksDir, 'book.epub'), 100, new Date(), {
+      ...FAKE_META,
+      title: 'book',
+    });
     const agent = await adminAgent();
     const res = await agent.get('/api/books');
     expect(res.status).toBe(200);
@@ -224,7 +227,14 @@ describe('GET /api/books', () => {
       coverData: null,
       coverMime: null,
     };
-    bookStore.addBook('enriched1', 'enriched.epub', path.join(booksDir, 'enriched.epub'), 200, new Date(), meta);
+    bookStore.addBook(
+      'enriched1',
+      'enriched.epub',
+      path.join(booksDir, 'enriched.epub'),
+      200,
+      new Date(),
+      meta
+    );
     const agent = await adminAgent();
     const res = await agent.get('/api/books');
     expect(res.status).toBe(200);
@@ -245,7 +255,14 @@ describe('GET /api/books', () => {
       author: 'Isaac Asimov',
     };
 
-    bookStore.addBook('foundation1', 'foundation.epub', path.join(booksDir, 'foundation.epub'), 200, new Date(), meta);
+    bookStore.addBook(
+      'foundation1',
+      'foundation.epub',
+      path.join(booksDir, 'foundation.epub'),
+      200,
+      new Date(),
+      meta
+    );
 
     const agent = await adminAgent();
     const res = await agent.get('/api/books');
@@ -304,9 +321,7 @@ describe('POST /api/books/upload', () => {
       seriesIndex: 3,
     });
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/books/upload')
-      .attach('files', epubBuf, 'parsed.epub');
+    const res = await agent.post('/api/books/upload').attach('files', epubBuf, 'parsed.epub');
     expect(res.status).toBe(200);
     expect(res.body.uploaded).toContain('parsed.epub');
     expect(fs.existsSync(path.join(booksDir, 'parsed.epub'))).toBe(true);
@@ -329,9 +344,7 @@ describe('POST /api/books/upload', () => {
       coverMime: 'image/jpeg',
     });
     const agent = await adminAgent();
-    const res = await agent
-      .post('/api/books/upload')
-      .attach('files', epubBuf, 'cover.epub');
+    const res = await agent.post('/api/books/upload').attach('files', epubBuf, 'cover.epub');
     expect(res.status).toBe(200);
 
     const books = bookStore.listBooks();
@@ -347,7 +360,14 @@ describe('GET /api/books/:id/cover', () => {
       coverData: coverBuf,
       coverMime: 'image/jpeg',
     };
-    bookStore.addBook('coverId1', 'cover-book.epub', path.join(booksDir, 'cover-book.epub'), 100, new Date(), meta);
+    bookStore.addBook(
+      'coverId1',
+      'cover-book.epub',
+      path.join(booksDir, 'cover-book.epub'),
+      100,
+      new Date(),
+      meta
+    );
 
     const agent = await adminAgent();
     const res = await agent.get('/api/books/coverId1/cover');
@@ -357,7 +377,14 @@ describe('GET /api/books/:id/cover', () => {
   });
 
   it('returns 404 for a book without cover', async () => {
-    bookStore.addBook('noCoverId', 'no-cover.epub', path.join(booksDir, 'no-cover.epub'), 100, new Date(), FAKE_META);
+    bookStore.addBook(
+      'noCoverId',
+      'no-cover.epub',
+      path.join(booksDir, 'no-cover.epub'),
+      100,
+      new Date(),
+      FAKE_META
+    );
 
     const agent = await adminAgent();
     const res = await agent.get('/api/books/noCoverId/cover');
@@ -425,7 +452,8 @@ describe('POST /api/books/scan', () => {
     // Add a book to the DB pointing at a file that does not exist
     const fakePath = path.join(booksDir, 'deleted.epub');
     bookStore.addBook('stale001', 'deleted.epub', fakePath, 100, new Date(), {
-      ...FAKE_META, title: 'Stale Book',
+      ...FAKE_META,
+      title: 'Stale Book',
     });
 
     const agent = await adminAgent();
@@ -438,7 +466,14 @@ describe('POST /api/books/scan', () => {
 
 describe('DELETE /api/books/:id (admin-only)', () => {
   beforeEach(() => {
-    bookStore.addBook('b1', 'book.epub', path.join(booksDir, 'book.epub'), 100, new Date(), FAKE_META);
+    bookStore.addBook(
+      'b1',
+      'book.epub',
+      path.join(booksDir, 'book.epub'),
+      100,
+      new Date(),
+      FAKE_META
+    );
   });
 
   it('returns 204 for admin', async () => {

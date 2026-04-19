@@ -5,7 +5,10 @@ import AdmZip from 'adm-zip';
 import { XMLParser } from 'fast-xml-parser';
 import { EpubMeta } from '../types';
 
-const PARTIAL_MD5_OFFSETS = [256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824];
+const PARTIAL_MD5_OFFSETS = [
+  256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456,
+  1073741824,
+];
 
 export function partialMD5(filePath: string): string {
   const stat = fs.statSync(filePath);
@@ -49,10 +52,9 @@ function toLocalizedValue(item: MetaLike): LocalizedValue {
 function pickLocalized(items: MetaLike[]): LocalizedValue {
   const candidates = items.map(toLocalizedValue);
   return (
-    candidates.find(c => c.lang.toLowerCase().startsWith('en')) ??
-    candidates.find(c => c.lang === '') ??
-    candidates[0] ??
-    { text: '', lang: '', fileAs: '', id: '' }
+    candidates.find((c) => c.lang.toLowerCase().startsWith('en')) ??
+    candidates.find((c) => c.lang === '') ??
+    candidates[0] ?? { text: '', lang: '', fileAs: '', id: '' }
   );
 }
 
@@ -83,7 +85,12 @@ export function parseEpub(filePath: string): EpubMeta {
   const opf = parser.parse(opfEntry.getData().toString('utf8'));
   const pkg = opf?.package ?? opf;
   const metadata = pkg?.metadata ?? {};
-  const manifest: Array<{ '@_id': string; '@_href': string; '@_media-type': string; '@_properties'?: string }> = pkg?.manifest?.item ?? [];
+  const manifest: Array<{
+    '@_id': string;
+    '@_href': string;
+    '@_media-type': string;
+    '@_properties'?: string;
+  }> = pkg?.manifest?.item ?? [];
 
   // Step 3: extract metadata
   const titleCandidate = pickLocalized(metadata['dc:title'] ?? []);
@@ -92,9 +99,19 @@ export function parseEpub(filePath: string): EpubMeta {
   const author = pickLang(metadata['dc:creator'] ?? []);
 
   const rawDesc = metadata['dc:description'];
-  const description = Array.isArray(rawDesc) ? pickLang(rawDesc) : (typeof rawDesc === 'string' ? rawDesc : '');
+  const description = Array.isArray(rawDesc)
+    ? pickLang(rawDesc)
+    : typeof rawDesc === 'string'
+      ? rawDesc
+      : '';
 
-  const metas: Array<{ '@_name'?: string; '@_content'?: string; '@_property'?: string; '@_refines'?: string; '#text'?: string }> = metadata?.meta ?? [];
+  const metas: Array<{
+    '@_name'?: string;
+    '@_content'?: string;
+    '@_property'?: string;
+    '@_refines'?: string;
+    '#text'?: string;
+  }> = metadata?.meta ?? [];
 
   let calibreSeries = '';
   let calibreSeriesIndex = 0;
@@ -102,10 +119,11 @@ export function parseEpub(filePath: string): EpubMeta {
   const collectionCandidates: MetaLike[] = [];
 
   for (const m of metas) {
-    if (m['@_name'] === 'calibre:series')       calibreSeries = m['@_content'] ?? '';
-    if (m['@_name'] === 'calibre:series_index')  calibreSeriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
+    if (m['@_name'] === 'calibre:series') calibreSeries = m['@_content'] ?? '';
+    if (m['@_name'] === 'calibre:series_index')
+      calibreSeriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
     if (m['@_property'] === 'belongs-to-collection') collectionCandidates.push(m);
-    if (m['@_property'] === 'group-position')    groupPosition = parseFloat(m['#text'] ?? '0') || 0;
+    if (m['@_property'] === 'group-position') groupPosition = parseFloat(m['#text'] ?? '0') || 0;
   }
 
   const series = calibreSeries || pickLang(collectionCandidates);
@@ -113,9 +131,12 @@ export function parseEpub(filePath: string): EpubMeta {
 
   // file-as: prefer attribute form (EPUB 2 / Calibre), fall back to EPUB 3 <meta refines>
   const attrFileAs = titleCandidate.text ? titleCandidate.fileAs : '';
-  const refinesMeta = !attrFileAs && titleCandidate.id
-    ? metas.find(m => m['@_property'] === 'file-as' && m['@_refines'] === `#${titleCandidate.id}`)
-    : undefined;
+  const refinesMeta =
+    !attrFileAs && titleCandidate.id
+      ? metas.find(
+          (m) => m['@_property'] === 'file-as' && m['@_refines'] === `#${titleCandidate.id}`
+        )
+      : undefined;
   const fileAs = attrFileAs || (refinesMeta ? (refinesMeta['#text'] ?? '').trim() : '');
 
   // Step 4: cover image
@@ -124,20 +145,22 @@ export function parseEpub(filePath: string): EpubMeta {
 
   let coverHref: string | undefined;
   // strategy 1: <meta name="cover"> → item id → href
-  const coverMeta = metas.find(m => m['@_name'] === 'cover');
+  const coverMeta = metas.find((m) => m['@_name'] === 'cover');
   if (coverMeta?.['@_content']) {
     const coverId = coverMeta['@_content'];
-    const item = manifest.find(i => i['@_id'] === coverId);
+    const item = manifest.find((i) => i['@_id'] === coverId);
     if (item) coverHref = item['@_href'];
   }
   // strategy 2: properties="cover-image"
   if (!coverHref) {
-    const item = manifest.find(i => i['@_properties'] === 'cover-image');
+    const item = manifest.find((i) => i['@_properties'] === 'cover-image');
     if (item) coverHref = item['@_href'];
   }
   // strategy 3: href contains "cover" and is image
   if (!coverHref) {
-    const item = manifest.find(i => i['@_href']?.toLowerCase().includes('cover') && i['@_media-type']?.startsWith('image/'));
+    const item = manifest.find(
+      (i) => i['@_href']?.toLowerCase().includes('cover') && i['@_media-type']?.startsWith('image/')
+    );
     if (item) coverHref = item['@_href'];
   }
 
@@ -148,7 +171,7 @@ export function parseEpub(filePath: string): EpubMeta {
     const coverEntry = zip.getEntry(coverPath) ?? zip.getEntry(coverHref);
     if (coverEntry) {
       coverData = coverEntry.getData();
-      coverMime = manifest.find(i => i['@_href'] === coverHref)?.['@_media-type'] ?? 'image/jpeg';
+      coverMime = manifest.find((i) => i['@_href'] === coverHref)?.['@_media-type'] ?? 'image/jpeg';
     }
   }
 

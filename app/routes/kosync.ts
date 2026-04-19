@@ -52,7 +52,9 @@ export function createKosyncRouter(userStore: UserStore): Router {
       device,
       device_id,
     });
-    log.info(`Progress saved for "${req.kosyncUser}" — "${document}" at ${(percentage * 100).toFixed(1)}%`);
+    log.info(
+      `Progress saved for "${req.kosyncUser}" — "${document}" at ${(percentage * 100).toFixed(1)}%`
+    );
     res.status(200).json({ document: saved.document, timestamp: saved.timestamp });
   });
 

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import Database, { Database as DB } from 'better-sqlite3';
+import { Database as DB } from 'better-sqlite3';
 import { Book, EpubMeta } from '../types';
 import { parseEpub, partialMD5 } from './epub-parser';
 import { logger } from '../logger';
@@ -33,7 +33,10 @@ const defaultImporter: ScanImporter = { parseEpub, partialMD5 };
 export class BookStore {
   private readonly db: DB;
 
-  constructor(private readonly booksDir: string, db: DB) {
+  constructor(
+    private readonly booksDir: string,
+    db: DB
+  ) {
     this.db = db;
     this.migrate();
   }
@@ -63,7 +66,7 @@ export class BookStore {
     `);
 
     const columns = this.db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
-    if (!columns.some(column => column.name === 'file_as')) {
+    if (!columns.some((column) => column.name === 'file_as')) {
       this.db.exec(`ALTER TABLE books ADD COLUMN file_as TEXT NOT NULL DEFAULT ''`);
     }
   }
@@ -114,28 +117,40 @@ export class BookStore {
   }
 
   listBooks(): Book[] {
-    const rows = this.db.prepare(`
+    const rows = this.db
+      .prepare(
+        `
       SELECT id, filename, path, title, file_as, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books
       ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, filename
-    `).all() as BookRow[];
-    return rows.map(r => this.rowToBook(r));
+    `
+      )
+      .all() as BookRow[];
+    return rows.map((r) => this.rowToBook(r));
   }
 
   getBookById(id: string): Book | null {
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT id, filename, path, title, file_as, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books WHERE id = ?
-    `).get(id) as BookRow | undefined;
+    `
+      )
+      .get(id) as BookRow | undefined;
     return row ? this.rowToBook(row) : null;
   }
 
   deleteBook(id: string): Book | null {
     const book = this.getBookById(id);
     if (!book) return null;
-    try { fs.unlinkSync(book.path); } catch { /* file already gone */ }
+    try {
+      fs.unlinkSync(book.path);
+    } catch {
+      /* file already gone */
+    }
     this.db.prepare('DELETE FROM books WHERE id = ?').run(id);
     return book;
   }
@@ -145,7 +160,9 @@ export class BookStore {
   }
 
   getCover(id: string): { data: Buffer; mime: string } | null {
-    const row = this.db.prepare('SELECT cover_data, cover_mime FROM books WHERE id = ?').get(id) as { cover_data: Buffer | null; cover_mime: string | null } | undefined;
+    const row = this.db.prepare('SELECT cover_data, cover_mime FROM books WHERE id = ?').get(id) as
+      | { cover_data: Buffer | null; cover_mime: string | null }
+      | undefined;
     if (!row || !row.cover_data) return null;
     return { data: row.cover_data as Buffer, mime: row.cover_mime as string };
   }
@@ -155,10 +172,10 @@ export class BookStore {
     const removed: string[] = [];
 
     const dbBooks = this.listBooks();
-    const dbFilenames = new Set(dbBooks.map(b => b.filename));
+    const dbFilenames = new Set(dbBooks.map((b) => b.filename));
 
     const diskFilenames: string[] = fs.existsSync(this.booksDir)
-      ? fs.readdirSync(this.booksDir).filter(f => path.extname(f).toLowerCase() === '.epub')
+      ? fs.readdirSync(this.booksDir).filter((f) => path.extname(f).toLowerCase() === '.epub')
       : [];
     const diskFilenameSet = new Set(diskFilenames);
 
@@ -173,7 +190,9 @@ export class BookStore {
         this.addBook(id, filename, filePath, stat.size, stat.mtime, meta);
         imported.push(filename);
       } catch (err: unknown) {
-        log.warn(`scan: skipping "${filename}" — ${err instanceof Error ? err.message : String(err)}`);
+        log.warn(
+          `scan: skipping "${filename}" — ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 
