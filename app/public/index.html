@@ -574,10 +574,14 @@
         progressList.innerHTML = '<li class="progress-empty">No progress records.</li>';
       } else {
         expandedData[username].forEach(p => {
+          const book = cachedBooks.find(b => b.id === p.document);
+          const docLabel = book
+            ? `${esc(book.title)}<small style="display:block;font-size:0.75em;opacity:0.5;font-family:monospace">${esc(p.document)}</small>`
+            : esc(p.document);
           const item = document.createElement('li');
           item.className = 'progress-item';
           item.innerHTML = `
-            <span class="prog-doc">${esc(p.document)}</span>
+            <span class="prog-doc">${docLabel}</span>
             <span class="prog-pct">${Math.round(p.percentage * 100)}%</span>
             <button class="delete-btn" type="button" title="Clear progress" style="grid-column:3;align-self:start">🗑</button>
             <span class="prog-meta">${esc(p.device)} · ${relativeTime(p.timestamp)}</span>
@@ -602,7 +606,9 @@
     }
 
     async function clearAdminProgress(username, docId, item, userLi) {
-      if (!confirm(`Clear progress for "${docId}" for user "${username}"?`)) return;
+      const book = cachedBooks.find(b => b.id === docId);
+      const label = book ? book.title : docId;
+      if (!confirm(`Clear progress for "${label}" for user "${username}"?`)) return;
       const res = await fetch(
         '/api/users/' + encodeURIComponent(username) + '/progress/' + encodeURIComponent(docId),
         { method: 'DELETE' }
