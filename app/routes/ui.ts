@@ -156,7 +156,7 @@ export function createUiRouter(bookStore: BookStore, userStore: UserStore, confi
     res.send(cover.data);
   });
 
-  router.delete('/api/books/:id', sessionAuth, (req: Request, res: Response) => {
+  router.delete('/api/books/:id', sessionAuth, adminAuth, (req: Request, res: Response) => {
     const deleted = bookStore.deleteBook(req.params.id);
     if (!deleted) {
       log.warn(`Delete attempted for unknown book ID: ${req.params.id}`);
@@ -167,7 +167,7 @@ export function createUiRouter(bookStore: BookStore, userStore: UserStore, confi
     res.status(204).send();
   });
 
-  router.post('/api/books/scan', sessionAuth, (_req: Request, res: Response) => {
+  router.post('/api/books/scan', sessionAuth, adminAuth, (_req: Request, res: Response) => {
     const result = bookStore.scan();
     log.info(`Scan: ${result.imported.length} imported, ${result.removed.length} removed`);
     res.json(result);
