@@ -73,7 +73,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: home-assistant/builder@cebacc797363e17696b5649799bdaadd7b7f5d70 # 2024.03.5
+        uses: home-assistant/builder@2024.03.5
         with:
           args: >-
             --all
