@@ -82,6 +82,16 @@ describe('addBook and listBooks', () => {
     expect(book!.fileAs).toBe('Asimov, Isaac');
   });
 
+  it('stores trimmed fileAs even when metadata has extra whitespace', () => {
+    bookStore.addBook('trim1', 'whitespace.epub', '/books/whitespace.epub', 1000, new Date(1000), {
+      ...FAKE_META,
+      fileAs: '  Asimov, Isaac  ',
+    });
+
+    const book = bookStore.getBookById('trim1');
+    expect(book!.fileAs).toBe('Asimov, Isaac');
+  });
+
   it('sorts by fileAs before title', () => {
     bookStore.addBook('id1', 'zebra.epub', '/books/zebra.epub', 100, new Date(), {
       ...FAKE_META,

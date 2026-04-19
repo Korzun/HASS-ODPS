@@ -12,7 +12,7 @@ interface BookRow {
   filename: string;
   path: string;
   title: string;
-  file_as: string;
+  file_as: string | null;
   author: string;
   description: string;
   series: string;
@@ -118,7 +118,7 @@ export class BookStore {
       SELECT id, filename, path, title, file_as, author, description, series, series_index,
              cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books
-      ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title
+      ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, filename
     `).all() as BookRow[];
     return rows.map(r => this.rowToBook(r));
   }
@@ -189,12 +189,13 @@ export class BookStore {
   }
 
   private rowToBook(r: BookRow): Book {
+    const fileAs = r.file_as ?? '';
     return {
       id: r.id,
       filename: r.filename,
       path: r.path,
       title: r.title,
-      fileAs: r.file_as,
+      fileAs,
       author: r.author,
       description: r.description,
       series: r.series,
