@@ -440,6 +440,7 @@
           const { series } = groupBooks(cachedBooks);
           const entry = series.find(([name]) => name === currentSeriesName);
           if (entry) showSeriesPage(currentSeriesName, entry[1]);
+          else await loadBooks();
         } else {
           await loadBooks();
         }
