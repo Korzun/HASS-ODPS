@@ -85,7 +85,7 @@ export function createUiRouter(
     if (username === config.username && password === config.password) {
       req.session.authenticated = true;
       req.session.isAdmin = true;
-      req.session.username = 'Admin';
+      req.session.username = username;
       log.info(`Admin "${username}" logged in`);
       res.redirect('/');
       return;
