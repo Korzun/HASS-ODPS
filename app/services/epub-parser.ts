@@ -39,11 +39,11 @@ interface LocalizedValue {
 
 function toLocalizedValue(item: MetaLike): LocalizedValue {
   return typeof item === 'string'
-    ? { text: item, lang: '', fileAs: '', id: '' }
+    ? { text: decodeEntities(item), lang: '', fileAs: '', id: '' }
     : {
-        text: item['#text'] ?? '',
+        text: decodeEntities(item['#text'] ?? ''),
         lang: item['@_xml:lang'] ?? '',
-        fileAs: (item['@_file-as'] ?? item['@_opf:file-as'] ?? '').trim(),
+        fileAs: decodeEntities((item['@_file-as'] ?? item['@_opf:file-as'] ?? '').trim()),
         id: item['@_id'] ?? '',
       };
 }
@@ -59,6 +59,12 @@ function pickLocalized(items: MetaLike[]): LocalizedValue {
 
 function pickLang(items: MetaLike[]): string {
   return pickLocalized(items).text;
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
 }
 
 function inferScheme(value: string): string {
@@ -107,20 +113,19 @@ export function parseEpub(filePath: string): EpubMeta {
   const author = pickLang(metadata['dc:creator'] ?? []);
 
   const rawDesc = metadata['dc:description'];
-  const description = Array.isArray(rawDesc)
-    ? pickLang(rawDesc)
-    : typeof rawDesc === 'string'
-      ? rawDesc
-      : '';
+  const description = decodeEntities(
+    Array.isArray(rawDesc) ? pickLang(rawDesc) : typeof rawDesc === 'string' ? rawDesc : ''
+  );
 
   const rawPublisher = metadata['dc:publisher'];
-  const publisher = (
-    typeof rawPublisher === 'string'
+  const publisher = decodeEntities(
+    (typeof rawPublisher === 'string'
       ? rawPublisher
       : typeof rawPublisher === 'object' && rawPublisher !== null
         ? ((rawPublisher as { '#text'?: string })['#text'] ?? '')
         : ''
-  ).trim();
+    ).trim()
+  );
 
   const rawIdentifiers = (metadata['dc:identifier'] ?? []) as MetaLike[];
   const identifiers = rawIdentifiers
@@ -134,7 +139,7 @@ export function parseEpub(filePath: string): EpubMeta {
 
   const rawSubjects = (metadata['dc:subject'] ?? []) as MetaLike[];
   const subjects = rawSubjects
-    .map((item) => (typeof item === 'string' ? item : (item['#text'] ?? '')).trim())
+    .map((item) => decodeEntities((typeof item === 'string' ? item : (item['#text'] ?? '')).trim()))
     .filter(Boolean);
 
   const metas: Array<{
@@ -151,7 +156,7 @@ export function parseEpub(filePath: string): EpubMeta {
   const collectionCandidates: MetaLike[] = [];
 
   for (const m of metas) {
-    if (m['@_name'] === 'calibre:series') calibreSeries = m['@_content'] ?? '';
+    if (m['@_name'] === 'calibre:series') calibreSeries = decodeEntities(m['@_content'] ?? '');
     if (m['@_name'] === 'calibre:series_index')
       calibreSeriesIndex = parseFloat(m['@_content'] ?? '0') || 0;
     if (m['@_property'] === 'belongs-to-collection') collectionCandidates.push(m);
@@ -169,7 +174,8 @@ export function parseEpub(filePath: string): EpubMeta {
           (m) => m['@_property'] === 'file-as' && m['@_refines'] === `#${titleCandidate.id}`
         )
       : undefined;
-  const fileAs = attrFileAs || (refinesMeta ? (refinesMeta['#text'] ?? '').trim() : '');
+  const fileAs =
+    attrFileAs || (refinesMeta ? decodeEntities((refinesMeta['#text'] ?? '').trim()) : '');
 
   // Step 4: cover image
   let coverData: Buffer | null = null;
