@@ -207,5 +207,17 @@ export function parseEpub(filePath: string): EpubMeta {
     }
   }
 
-  return { title, fileAs, author, description, publisher, identifiers, subjects, series, seriesIndex, coverData, coverMime };
+  return {
+    title,
+    fileAs,
+    author,
+    description,
+    publisher,
+    identifiers,
+    subjects,
+    series,
+    seriesIndex,
+    coverData,
+    coverMime,
+  };
 }
