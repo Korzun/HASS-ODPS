@@ -15,9 +15,12 @@ const FAKE_META: EpubMeta = {
   title: 'My Book',
   author: 'Test Author',
   description: '',
+  publisher: '',
   series: '',
   seriesIndex: 0,
   fileAs: '',
+  identifiers: [],
+  subjects: [],
   coverData: null,
   coverMime: null,
 };
