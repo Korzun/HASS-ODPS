@@ -1,13 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
+const apiUrl = process.env['API_URL'] ?? 'http://localhost:3000';
+
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:3000',
-      '/logout': 'http://localhost:3000',
+      '/api': apiUrl,
+      '/logout': apiUrl,
     },
+    watch: process.env['DOCKER'] ? { usePolling: true } : {},
   },
   build: {
     outDir: 'dist',
