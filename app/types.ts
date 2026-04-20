@@ -19,8 +19,11 @@ export interface EpubMeta {
   fileAs: string;
   author: string;
   description: string;
+  publisher: string;
   series: string;
   seriesIndex: number;
+  identifiers: { scheme: string; value: string }[];
+  subjects: string[];
   coverData: Buffer | null;
   coverMime: string | null;
 }
