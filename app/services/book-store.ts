@@ -220,9 +220,9 @@ export class BookStore {
   }
 
   reimportBook(id: string, importer: ScanImporter = defaultImporter): Book | null {
-    const row = this.db
-      .prepare('SELECT path, filename, added_at FROM books WHERE id = ?')
-      .get(id) as { path: string; filename: string; added_at: number } | undefined;
+    const row = this.db.prepare('SELECT path, filename FROM books WHERE id = ?').get(id) as
+      | { path: string; filename: string }
+      | undefined;
     if (!row) return null;
 
     let stat: fs.Stats;
@@ -233,6 +233,10 @@ export class BookStore {
     }
     const meta = importer.parseEpub(row.path);
     const newId = importer.partialMD5(row.path);
+
+    const progressExists = this.db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
+      .get();
 
     this.db.transaction(() => {
       if (newId !== id) {
@@ -259,9 +263,6 @@ export class BookStore {
             stat.mtime.getTime(),
             id
           );
-        const progressExists = this.db
-          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
-          .get();
         if (progressExists) {
           this.db.prepare('UPDATE progress SET document=? WHERE document=?').run(newId, id);
         }
