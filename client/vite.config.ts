@@ -8,6 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': apiUrl,
+      '/login': apiUrl,
       '/logout': apiUrl,
     },
     watch: process.env['DOCKER'] ? { usePolling: true } : {},
