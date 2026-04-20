@@ -473,11 +473,9 @@
         '<div class="book-detail-hero">' +
           '<div style="flex-shrink:0">' + heroStack + '</div>' +
           '<div class="book-detail-meta">' +
+            '<div class="book-detail-series-badge">📚 ' + count + ' book' + (count !== 1 ? 's' : '') + '</div>' +
             '<div class="book-detail-title">' + esc(seriesName) + '</div>' +
             (author ? '<div class="book-detail-author">' + esc(author) + '</div>' : '') +
-            '<div class="book-detail-stats">' +
-              '<div class="book-detail-stat">Books: <span>' + count + '</span></div>' +
-            '</div>' +
           '</div>' +
         '</div>' +
         '<div class="series-order-label">Reading Order</div>' +
