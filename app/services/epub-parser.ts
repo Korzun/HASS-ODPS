@@ -62,8 +62,10 @@ function pickLang(items: MetaLike[]): string {
 }
 
 function inferScheme(value: string): string {
+  const lower = value.toLowerCase();
+  if (lower.startsWith('urn:isbn:') || lower.startsWith('isbn:')) return 'ISBN';
   if (value.startsWith('978') || value.startsWith('979')) return 'ISBN';
-  if (value.toLowerCase().startsWith('urn:uuid:')) return 'UUID';
+  if (lower.startsWith('urn:uuid:')) return 'UUID';
   return '';
 }
 

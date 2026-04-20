@@ -319,6 +319,17 @@ describe('parseEpub', () => {
     expect(meta.identifiers).toEqual([]);
   });
 
+  it('infers ISBN scheme from urn:isbn: prefix', () => {
+    const filePath = path.join(tmpDir, 'urn-isbn-infer.epub');
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', identifiers: [{ value: 'urn:isbn:978-0593135204' }] })
+    );
+    const meta = parseEpub(filePath);
+    expect(meta.identifiers[0].scheme).toBe('ISBN');
+    expect(meta.identifiers[0].value).toBe('urn:isbn:978-0593135204');
+  });
+
   it('returns empty identifiers when absent', () => {
     const filePath = path.join(tmpDir, 'no-id.epub');
     fs.writeFileSync(filePath, makeEpub({ title: 'T' }));
