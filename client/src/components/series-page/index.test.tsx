@@ -4,10 +4,10 @@ import { Routes, Route } from 'react-router-dom';
 import { renderWithProviders } from '../../test-utils';
 import { SeriesPage } from './index';
 import type { Book } from '../../types';
-import { getBooks, deleteBook } from '../../api/books';
+import { getBooks } from '../../api/books';
 import { getMyProgress } from '../../api/progress';
 
-vi.mock('../../api/books', () => ({ getBooks: vi.fn(), deleteBook: vi.fn() }));
+vi.mock('../../api/books', () => ({ getBooks: vi.fn() }));
 vi.mock('../../api/progress', () => ({ getMyProgress: vi.fn(), deleteMyProgress: vi.fn() }));
 vi.mock('./cover-stack', () => ({
   CoverStack: () => <div data-testid="cover-stack" />,

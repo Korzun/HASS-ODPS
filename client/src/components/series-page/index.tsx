@@ -41,13 +41,21 @@ export function SeriesPage() {
 
   async function handleDelete(id: string, title: string) {
     if (!confirm(`Delete "${title}"?`)) return;
-    await deleteBook(id);
-    void load();
+    try {
+      await deleteBook(id);
+      void load();
+    } catch {
+      alert('Failed to delete book.');
+    }
   }
 
   async function handleClearProgress(id: string) {
-    await deleteMyProgress(id);
-    void load();
+    try {
+      await deleteMyProgress(id);
+      void load();
+    } catch {
+      alert('Failed to clear progress.');
+    }
   }
 
   return (
@@ -69,7 +77,7 @@ export function SeriesPage() {
           layerHeight={72}
           offsets={HERO_STACK_OFFSETS}
         />
-        <div className={styles.heroInfo}>
+        <div>
           <h1 className={styles.title}>{name}</h1>
           <div className={styles.meta}>
             {author} · {books.length} book{books.length !== 1 ? 's' : ''}

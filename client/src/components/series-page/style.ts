@@ -33,7 +33,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     alignItems: 'center',
     marginBottom: '2rem',
   },
-  heroInfo: {},
   title: {
     margin: '0 0 0.375rem',
     fontSize: '1.5rem',
