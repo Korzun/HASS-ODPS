@@ -168,6 +168,15 @@ describe('writeMetadata', () => {
     expect(parseEpub(f).coverData).toEqual(newCover);
   });
 
+  it('handles compound MIME types like image/svg+xml without creating bad extension', () => {
+    const f = toFile(makeEpub({ title: 'SVG Book' }));
+    const svgBytes = Buffer.from('<svg/>');
+    writeMetadata(f, { coverData: svgBytes, coverMime: 'image/svg+xml' });
+    const meta = parseEpub(f);
+    expect(meta.coverData).toEqual(svgBytes);
+    expect(meta.coverMime).toBe('image/svg+xml');
+  });
+
   it('does not modify unspecified fields', () => {
     const f = toFile(makeEpub({ title: 'Keep', author: 'Keep Author', publisher: 'Keep Pub' }));
     writeMetadata(f, { description: 'Only this changed' });

@@ -120,6 +120,8 @@ export function writeMetadata(filePath: string, changes: EpubChanges): void {
     const filtered = existingMetas.filter(
       (m) => m['@_name'] !== 'calibre:series' && m['@_name'] !== 'calibre:series_index'
     );
+    // A seriesIndex without a series name is not written (meaningless without a series).
+    // To set only the index on an existing series, provide both series and seriesIndex.
     if (currentSeries) {
       filtered.push({ '@_name': 'calibre:series', '@_content': currentSeries });
       filtered.push({ '@_name': 'calibre:series_index', '@_content': String(currentIndex) });
@@ -129,7 +131,9 @@ export function writeMetadata(filePath: string, changes: EpubChanges): void {
 
   // Step 5: cover replacement
   if (changes.coverData !== undefined && changes.coverMime !== undefined) {
-    const ext = changes.coverMime.includes('/') ? changes.coverMime.split('/')[1] : 'jpg';
+    const ext = changes.coverMime.includes('/')
+      ? changes.coverMime.split('/')[1].split('+')[0]
+      : 'jpg';
     const coverFilename = `cover-edit.${ext}`;
     const coverEntryPath = opfDir === '.' ? coverFilename : `${opfDir}/${coverFilename}`;
 
