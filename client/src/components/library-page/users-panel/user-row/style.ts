@@ -1,0 +1,60 @@
+import { createUseStyles } from 'react-jss';
+import type { Theme } from '../../../../theme/theme';
+
+export const useStyle = createUseStyles((theme: Theme) => ({
+  root: {
+    listStyle: 'none',
+    background: theme.colors.bg.card,
+    borderRadius: theme.borderRadius.md,
+    boxShadow: theme.shadows.card,
+    marginBottom: '.5rem',
+    overflow: 'hidden',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '.5rem',
+    padding: '.6rem .75rem',
+    cursor: 'pointer',
+    userSelect: 'none',
+    '&:hover': { background: theme.colors.bg.page },
+  },
+  chevron: { fontSize: '.7rem', color: theme.colors.text.faint, flexShrink: 0 },
+  name: { flex: 1, fontWeight: 500, color: theme.colors.text.primary },
+  meta: { fontSize: '.8rem', color: theme.colors.text.muted },
+  deleteBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '0 .25rem',
+    fontSize: '.875rem',
+    color: theme.colors.text.faint,
+    '&:hover': { color: theme.colors.danger },
+  },
+  progressList: {
+    listStyle: 'none',
+    padding: '.5rem .75rem',
+    margin: 0,
+    background: theme.colors.primaryLight,
+    borderTop: `1px solid ${theme.colors.borderLight}`,
+  },
+  progressItem: {
+    display: 'grid',
+    gridTemplateColumns: '1fr auto auto',
+    gridTemplateRows: 'auto auto',
+    gap: '.25rem .5rem',
+    alignItems: 'start',
+    padding: '.4rem 0',
+    borderBottom: `1px solid ${theme.colors.borderLight}`,
+    '&:last-child': { borderBottom: 'none' },
+  },
+  progressEmpty: {
+    color: theme.colors.text.muted,
+    fontSize: '.875rem',
+    padding: '.4rem 0',
+  },
+  progDoc: { fontSize: '.875rem', color: theme.colors.text.primary },
+  progDocId: { display: 'block', fontSize: '.7rem', opacity: 0.5, fontFamily: 'monospace' },
+  progPct: { fontSize: '.875rem', color: theme.colors.success, fontWeight: 500 },
+  progMeta: { gridColumn: '1 / -1', fontSize: '.75rem', color: theme.colors.text.faint },
+}));
