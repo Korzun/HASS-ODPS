@@ -10,7 +10,7 @@ export function Header() {
       <h1 className={styles.title}>HASS-ODPS Library</h1>
       <div className={styles.actions}>
         <span className={styles.username}>{username}</span>
-        <form method="POST" action="/logout" style={{ margin: 0 }}>
+        <form method="POST" action="/logout" className={styles.form}>
           <button type="submit" className={styles.signOut}>Sign Out</button>
         </form>
       </div>
