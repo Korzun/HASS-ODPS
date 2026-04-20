@@ -1,12 +1,12 @@
 export interface Book {
   id: string;
   title: string;
-  author: string | null;
-  fileAs: string | null;
-  publisher: string | null;
-  series: string | null;
-  seriesIndex: number | null;
-  description: string | null;
+  author: string;
+  fileAs: string;
+  publisher: string;
+  series: string;
+  seriesIndex: number;
+  description?: string; // stripped from GET /api/books (list), present on GET /api/books/:id
   subjects: string[];
   identifiers: { scheme: string; value: string }[];
   hasCover: boolean;
@@ -22,8 +22,8 @@ export interface User {
 export interface Progress {
   document: string;
   percentage: number;
-  device: string;
-  timestamp: number;
+  device?: string;    // present on GET /api/users/:username/progress (admin), absent on GET /api/my/progress
+  timestamp?: number; // present on GET /api/users/:username/progress (admin), absent on GET /api/my/progress
 }
 
 export interface CurrentUser {
