@@ -48,14 +48,16 @@ it('shows series name when book belongs to a series', async () => {
   await waitFor(() => expect(screen.getByText(/Dune #1/)).toBeInTheDocument());
 });
 
-it('shows Edit Metadata button for admin only', async () => {
+it('does not show Edit Metadata button for non-admin', async () => {
   vi.mocked(getBook).mockResolvedValue(makeBook());
   renderDetail('b1', false);
   await waitFor(() => expect(screen.getByRole('heading', { name: 'Dune' })).toBeInTheDocument());
   expect(screen.queryByRole('button', { name: /edit metadata/i })).not.toBeInTheDocument();
+});
 
+it('shows Edit Metadata button for admin', async () => {
   vi.mocked(getBook).mockResolvedValue(makeBook());
   renderDetail('b1', true);
-  await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Dune' }).length).toBeGreaterThan(0));
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Dune' })).toBeInTheDocument());
   expect(screen.getByRole('button', { name: /edit metadata/i })).toBeInTheDocument();
 });
