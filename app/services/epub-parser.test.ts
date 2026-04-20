@@ -567,4 +567,57 @@ describe('parseEpub', () => {
     expect(meta.series).toBe('Three Body');
     expect(meta.seriesIndex).toBe(1);
   });
+
+  describe('HTML entity decoding', () => {
+    it('decodes double-encoded decimal entities in title (&#8212; from &amp;#8212;)', () => {
+      // Some EPUB generators double-encode: &amp;#8212; in the XML → &#8212; after XML parse
+      // → em dash after decodeEntities
+      const filePath = path.join(tmpDir, 'entity-title.epub');
+      fs.writeFileSync(filePath, makeEpub({ title: 'Part One&amp;#8212;The Beginning' }));
+      const meta = parseEpub(filePath);
+      expect(meta.title).toBe('Part One\u2014The Beginning');
+    });
+
+    it('decodes decimal entities in description (&#8220; &#8221; smart quotes)', () => {
+      const filePath = path.join(tmpDir, 'entity-desc.epub');
+      fs.writeFileSync(
+        filePath,
+        makeEpub({ title: 'T', description: '&amp;#8220;A great book.&amp;#8221;' })
+      );
+      const meta = parseEpub(filePath);
+      expect(meta.description).toBe('\u201cA great book.\u201d');
+    });
+
+    it('decodes hex entities in title (&#x2014;)', () => {
+      const filePath = path.join(tmpDir, 'entity-hex.epub');
+      fs.writeFileSync(filePath, makeEpub({ title: 'Part One&amp;#x2014;The Beginning' }));
+      const meta = parseEpub(filePath);
+      expect(meta.title).toBe('Part One\u2014The Beginning');
+    });
+
+    it('decodes entities in publisher', () => {
+      const filePath = path.join(tmpDir, 'entity-publisher.epub');
+      fs.writeFileSync(filePath, makeEpub({ title: 'T', publisher: 'Caf&amp;#233; Press' }));
+      const meta = parseEpub(filePath);
+      expect(meta.publisher).toBe('Caf\u00e9 Press');
+    });
+
+    it('decodes entities in subjects', () => {
+      const filePath = path.join(tmpDir, 'entity-subjects.epub');
+      fs.writeFileSync(
+        filePath,
+        makeEpub({ title: 'T', subjects: ['Science &amp;#38; Technology'] })
+      );
+      const meta = parseEpub(filePath);
+      expect(meta.subjects).toEqual(['Science \u0026 Technology']);
+    });
+
+    it('leaves plain text unchanged', () => {
+      const filePath = path.join(tmpDir, 'entity-plain.epub');
+      fs.writeFileSync(filePath, makeEpub({ title: 'Normal Title', description: 'A plain book.' }));
+      const meta = parseEpub(filePath);
+      expect(meta.title).toBe('Normal Title');
+      expect(meta.description).toBe('A plain book.');
+    });
+  });
 });
