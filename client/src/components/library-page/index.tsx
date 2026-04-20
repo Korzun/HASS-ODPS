@@ -80,7 +80,7 @@ export function LibraryPage() {
           )}
         </>
       ) : (
-        <UsersPanel />
+        <UsersPanel books={books} />
       )}
     </main>
   );
