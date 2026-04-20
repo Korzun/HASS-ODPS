@@ -74,4 +74,6 @@ it('calls patchBookMetadata with only changed fields', async () => {
   const fd = vi.mocked(patchBookMetadata).mock.calls[0][1] as FormData;
   expect(fd.get('title')).toBe('New Title');
   expect(fd.get('author')).toBeNull();
+
+  await waitFor(() => expect(screen.getByTestId('detail')).toBeInTheDocument());
 });

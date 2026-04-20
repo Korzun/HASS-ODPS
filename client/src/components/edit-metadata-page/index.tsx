@@ -5,10 +5,7 @@ import { useAuth } from '../../auth/auth-provider';
 import { useStyle } from './style';
 import type { Book } from '../../types';
 
-interface IdentifierRow {
-  scheme: string;
-  value: string;
-}
+type IdentifierRow = { scheme: string; value: string; _key: string };
 
 export function EditMetadataPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +42,7 @@ export function EditMetadataPage() {
         setSeriesIndex(book.seriesIndex !== 0 ? String(book.seriesIndex) : '');
         setDescription(book.description ?? '');
         setSubjects(book.subjects.join(', '));
-        setIdentifiers(book.identifiers);
+        setIdentifiers(book.identifiers.map(row => ({ ...row, _key: crypto.randomUUID() })));
       })
       .catch(() => setError('Failed to load book.'))
       .finally(() => setLoading(false));
@@ -76,8 +73,9 @@ export function EditMetadataPage() {
       if (JSON.stringify(newSubjects) !== JSON.stringify(original.subjects)) {
         fd.append('subjects', JSON.stringify(newSubjects));
       }
-      if (JSON.stringify(identifiers) !== JSON.stringify(original.identifiers)) {
-        fd.append('identifiers', JSON.stringify(identifiers));
+      const cleanIdentifiers = identifiers.map(({ _key: _, ...rest }) => rest);
+      if (JSON.stringify(cleanIdentifiers) !== JSON.stringify(original.identifiers)) {
+        fd.append('identifiers', JSON.stringify(cleanIdentifiers));
       }
       if (cover) fd.append('cover', cover);
       await patchBookMetadata(id, fd);
@@ -90,7 +88,7 @@ export function EditMetadataPage() {
   }
 
   function addIdentifier() {
-    setIdentifiers(prev => [...prev, { scheme: '', value: '' }]);
+    setIdentifiers(prev => [...prev, { scheme: '', value: '', _key: crypto.randomUUID() }]);
   }
 
   function removeIdentifier(index: number) {
@@ -179,7 +177,7 @@ export function EditMetadataPage() {
             </button>
           </div>
           {identifiers.map((row, i) => (
-            <div key={i} className={styles.identifierRow}>
+            <div key={row._key} className={styles.identifierRow}>
               <input
                 className={styles.input}
                 placeholder="scheme (e.g. isbn)"
