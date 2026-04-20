@@ -35,12 +35,8 @@ export function CoverStack({
   layerHeight,
   offsets,
 }: CoverStackProps) {
-  // offsets[0]=back → books[2], offsets[2]=front → books[0]
-  const layers: (Book | null)[] = [
-    books[2] ?? null,
-    books[1] ?? null,
-    books[0] ?? null,
-  ];
+  // offsets[0]=back → books[last], offsets[last]=front → books[0]
+  const layers: (Book | null)[] = offsets.map((_, i) => books[offsets.length - 1 - i] ?? null);
 
   return (
     <figure style={{ position: 'relative', width: containerWidth, height: containerHeight, flexShrink: 0, margin: 0, padding: 0 }}>
@@ -58,20 +54,20 @@ export function CoverStack({
             borderRadius: 2,
             transform: `rotate(${pos.rotate})`,
             zIndex: i + 1,
-            opacity: String(opacity),
+            opacity,
             boxShadow: '1px 1px 3px rgba(0,0,0,.18)',
           };
           if (book?.hasCover) {
             return (
               <img
-                key={i}
+                key={book.id}
                 src={`/api/books/${encodeURIComponent(book.id)}/cover`}
                 alt={book.title}
                 style={{ ...base, objectFit: 'cover', display: 'block' }}
               />
             );
           }
-          return <div key={i} style={{ ...base, background: '#d1d5db' }} />;
+          return <div key={`ghost-${i}`} style={{ ...base, background: '#d1d5db' }} />;
         })}
       </div>
     </figure>
