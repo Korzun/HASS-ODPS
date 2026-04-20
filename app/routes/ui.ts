@@ -69,6 +69,7 @@ export function createUiRouter(
 
   const coverUpload = multer({
     storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       cb(null, file.mimetype.startsWith('image/'));
     },
@@ -247,7 +248,14 @@ export function createUiRouter(
       if (body.description !== undefined) changes.description = body.description;
       if (body.publisher !== undefined) changes.publisher = body.publisher;
       if (body.series !== undefined) changes.series = body.series;
-      if (body.seriesIndex !== undefined) changes.seriesIndex = parseFloat(body.seriesIndex) || 0;
+      if (body.seriesIndex !== undefined) {
+        const n = parseFloat(body.seriesIndex);
+        if (Number.isNaN(n)) {
+          res.status(400).json({ error: 'seriesIndex must be a number' });
+          return;
+        }
+        changes.seriesIndex = n;
+      }
       if (body.identifiers !== undefined) {
         try {
           changes.identifiers = JSON.parse(body.identifiers) as { scheme: string; value: string }[];
