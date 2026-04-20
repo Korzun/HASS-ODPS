@@ -219,6 +219,81 @@ export class BookStore {
     return book;
   }
 
+  reimportBook(id: string, importer: ScanImporter = defaultImporter): Book | null {
+    const row = this.db
+      .prepare('SELECT path, filename, added_at FROM books WHERE id = ?')
+      .get(id) as { path: string; filename: string; added_at: number } | undefined;
+    if (!row) return null;
+
+    let stat: fs.Stats;
+    try {
+      stat = fs.statSync(row.path);
+    } catch {
+      return null;
+    }
+    const meta = importer.parseEpub(row.path);
+    const newId = importer.partialMD5(row.path);
+
+    this.db.transaction(() => {
+      if (newId !== id) {
+        this.db
+          .prepare(
+            `UPDATE books SET id=?, title=?, file_as=?, author=?, description=?, publisher=?,
+             series=?, series_index=?, identifiers=?, subjects=?, cover_data=?, cover_mime=?,
+             size=?, mtime=? WHERE id=?`
+          )
+          .run(
+            newId,
+            meta.title.trim() || path.basename(row.filename, path.extname(row.filename)),
+            (meta.fileAs || '').trim(),
+            meta.author,
+            meta.description,
+            meta.publisher,
+            meta.series,
+            meta.seriesIndex,
+            JSON.stringify(meta.identifiers),
+            JSON.stringify(meta.subjects),
+            meta.coverData,
+            meta.coverMime,
+            stat.size,
+            stat.mtime.getTime(),
+            id
+          );
+        const progressExists = this.db
+          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
+          .get();
+        if (progressExists) {
+          this.db.prepare('UPDATE progress SET document=? WHERE document=?').run(newId, id);
+        }
+      } else {
+        this.db
+          .prepare(
+            `UPDATE books SET title=?, file_as=?, author=?, description=?, publisher=?,
+             series=?, series_index=?, identifiers=?, subjects=?, cover_data=?, cover_mime=?,
+             size=?, mtime=? WHERE id=?`
+          )
+          .run(
+            meta.title.trim() || path.basename(row.filename, path.extname(row.filename)),
+            (meta.fileAs || '').trim(),
+            meta.author,
+            meta.description,
+            meta.publisher,
+            meta.series,
+            meta.seriesIndex,
+            JSON.stringify(meta.identifiers),
+            JSON.stringify(meta.subjects),
+            meta.coverData,
+            meta.coverMime,
+            stat.size,
+            stat.mtime.getTime(),
+            id
+          );
+      }
+    })();
+
+    return this.getBookById(newId);
+  }
+
   private removeStaleBook(id: string): void {
     this.db.prepare('DELETE FROM books WHERE id = ?').run(id);
   }

@@ -3,11 +3,33 @@ import * as os from 'os';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import Database from 'better-sqlite3';
+import AdmZip from 'adm-zip';
 import { BookStore, ScanImporter } from './book-store';
 import { partialMD5 } from './epub-parser';
 import { EpubMeta } from '../types';
 
 jest.mock('../logger');
+
+function makeMinimalEpub(title: string): Buffer {
+  const zip = new AdmZip();
+  zip.addFile(
+    'META-INF/container.xml',
+    Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+  );
+  zip.addFile(
+    'OEBPS/content.opf',
+    Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${title}</dc:title></metadata>
+  <manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest>
+  <spine toc="ncx"/>
+</package>`)
+  );
+  return zip.toBuffer();
+}
 
 const FAKE_META: EpubMeta = {
   title: 'Test Book',
@@ -510,5 +532,70 @@ describe('migrations', () => {
     expect(row.id).toBe(pinnedId);
 
     preDb.close();
+  });
+});
+
+describe('reimportBook', () => {
+  it('returns null for unknown book id', () => {
+    expect(bookStore.reimportBook('doesnotexist')).toBeNull();
+  });
+
+  it('re-reads metadata from disk and updates the DB row', () => {
+    const epubBuf = makeMinimalEpub('Original');
+    const epubPath = path.join(booksDir, 'test.epub');
+    fs.writeFileSync(epubPath, epubBuf);
+    const id = partialMD5(epubPath);
+    const stat = fs.statSync(epubPath);
+    bookStore.addBook(id, 'test.epub', epubPath, stat.size, stat.mtime, {
+      ...FAKE_META,
+      title: 'Original',
+    });
+
+    // Manually overwrite the EPUB on disk with new title
+    const updatedBuf = makeMinimalEpub('Updated');
+    fs.writeFileSync(epubPath, updatedBuf);
+
+    const updated = bookStore.reimportBook(id);
+    // ID may have changed due to ZIP rewrite — updated reflects new state
+    expect(updated).not.toBeNull();
+    expect(updated!.title).toBe('Updated');
+  });
+
+  it('cascades id change to progress table when partial MD5 shifts', () => {
+    const epubBuf = makeMinimalEpub('Before');
+    const epubPath = path.join(booksDir, 'cascade.epub');
+    fs.writeFileSync(epubPath, epubBuf);
+    const oldId = partialMD5(epubPath);
+    const stat = fs.statSync(epubPath);
+    bookStore.addBook(oldId, 'cascade.epub', epubPath, stat.size, stat.mtime, FAKE_META);
+
+    // Insert a progress record for the old ID directly
+    const db2 = (bookStore as unknown as { db: import('better-sqlite3').Database }).db;
+    db2.exec(`CREATE TABLE IF NOT EXISTS progress (
+      username TEXT NOT NULL, document TEXT NOT NULL, progress TEXT NOT NULL,
+      percentage REAL NOT NULL, device TEXT NOT NULL, device_id TEXT NOT NULL,
+      timestamp INTEGER NOT NULL, PRIMARY KEY (username, document)
+    )`);
+    db2
+      .prepare('INSERT INTO progress VALUES (?,?,?,?,?,?,?)')
+      .run('alice', oldId, '/p[1]', 0.5, 'Kobo', 'd1', 1000);
+
+    // Overwrite the file to force a different partial MD5
+    const newBuf = makeMinimalEpub('After');
+    fs.writeFileSync(epubPath, newBuf);
+
+    const updated = bookStore.reimportBook(oldId);
+    expect(updated).not.toBeNull();
+    const newId = updated!.id;
+
+    if (newId !== oldId) {
+      // ID changed: old progress row should be gone, new one should exist
+      const oldRow = db2.prepare('SELECT * FROM progress WHERE document=?').get(oldId);
+      expect(oldRow).toBeUndefined();
+      const newRow = db2.prepare('SELECT * FROM progress WHERE document=?').get(newId);
+      expect(newRow).toBeDefined();
+    }
+    // If ID didn't change (unlikely but possible): still verify DB is consistent
+    expect(bookStore.getBookById(newId)).not.toBeNull();
   });
 });
