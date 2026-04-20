@@ -658,3 +658,76 @@ describe('GET / HTML structure', () => {
     expect(res.text).toContain('.series-order-label');
   });
 });
+
+describe('PATCH /api/books/:id/metadata', () => {
+  let bookId: string;
+
+  beforeEach(() => {
+    // Write a real EPUB to booksDir so writeMetadata can read it
+    const zip = new AdmZip();
+    zip.addFile(
+      'META-INF/container.xml',
+      Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+    );
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Original Title</dc:title></metadata>
+  <manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest>
+  <spine toc="ncx"/>
+</package>`)
+    );
+    const epubPath = path.join(booksDir, 'edit-test.epub');
+    fs.writeFileSync(epubPath, zip.toBuffer());
+    bookStore.scan(); // import the file into the DB
+    bookId = bookStore.listBooks()[0].id;
+  });
+
+  it('returns 403 for regular user', async () => {
+    const agent = await userAgent();
+    const res = await agent.patch(`/api/books/${bookId}/metadata`).field('title', 'New');
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for unknown book id', async () => {
+    const agent = await adminAgent();
+    const res = await agent.patch('/api/books/doesnotexist/metadata').field('title', 'New');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 302 without session', async () => {
+    const res = await request(app).patch(`/api/books/${bookId}/metadata`).field('title', 'New');
+    expect(res.status).toBe(302);
+  });
+
+  it('updates title and returns the updated book', async () => {
+    const agent = await adminAgent();
+    const res = await agent.patch(`/api/books/${bookId}/metadata`).field('title', 'Updated Title');
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Updated Title');
+    expect(res.body.path).toBeUndefined(); // path must not be exposed
+    // Verify the returned book ID is now in the DB (ID may have shifted)
+    const newId: string = res.body.id;
+    expect(bookStore.getBookById(newId)).not.toBeNull();
+    expect(bookStore.getBookById(newId)!.title).toBe('Updated Title');
+  });
+
+  it('updates cover when image file is attached', async () => {
+    const agent = await adminAgent();
+    const coverBytes = Buffer.from('fake-png-cover');
+    const res = await agent
+      .patch(`/api/books/${bookId}/metadata`)
+      .attach('cover', coverBytes, { filename: 'cover.png', contentType: 'image/png' });
+    expect(res.status).toBe(200);
+    const newId: string = res.body.id;
+    expect(res.body.hasCover).toBe(true);
+    // Verify cover is stored in DB
+    const cover = bookStore.getCover(newId);
+    expect(cover).not.toBeNull();
+    expect(cover!.data).toEqual(coverBytes);
+  });
+});
