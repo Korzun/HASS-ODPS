@@ -111,7 +111,8 @@ export function parseEpub(filePath: string): EpubMeta {
   const titleCandidate = pickLocalized(metadata['dc:title'] ?? []);
   const fallbackTitle = path.basename(filePath, path.extname(filePath));
   const title = titleCandidate.text || fallbackTitle;
-  const author = pickLang(metadata['dc:creator'] ?? []);
+  const creatorCandidate = pickLocalized(metadata['dc:creator'] ?? []);
+  const author = creatorCandidate.text;
 
   const rawDesc = metadata['dc:description'];
   const description = decodeEntities(
@@ -167,16 +168,19 @@ export function parseEpub(filePath: string): EpubMeta {
   const series = calibreSeries || pickLang(collectionCandidates);
   const seriesIndex = calibreSeriesIndex || groupPosition;
 
-  // file-as: prefer attribute form (EPUB 2 / Calibre), fall back to EPUB 3 <meta refines>
+  // file-as: prefer dc:title attribute (EPUB 2 / Calibre), fall back to dc:creator file-as, then EPUB 3 <meta refines>
   const attrFileAs = titleCandidate.text ? titleCandidate.fileAs : '';
+  const creatorFileAs = creatorCandidate.fileAs;
   const refinesMeta =
-    !attrFileAs && titleCandidate.id
+    !attrFileAs && !creatorFileAs && titleCandidate.id
       ? metas.find(
           (m) => m['@_property'] === 'file-as' && m['@_refines'] === `#${titleCandidate.id}`
         )
       : undefined;
   const fileAs =
-    attrFileAs || (refinesMeta ? decodeEntities((refinesMeta['#text'] ?? '').trim()) : '');
+    attrFileAs ||
+    creatorFileAs ||
+    (refinesMeta ? decodeEntities((refinesMeta['#text'] ?? '').trim()) : '');
 
   // Step 4: cover image
   let coverData: Buffer | null = null;
