@@ -144,32 +144,78 @@
 
     <div id="series-section" style="display:none"></div>
     <div id="book-section" style="display:none"></div>
+    <div id="edit-section" style="display:none"></div>
   </main>
 
   <script>
-    // ── Tabs ──────────────────────────────────────────────
+    // ── State ─────────────────────────────────────────────
     const librarySection = document.getElementById('library-section');
     const usersSection = document.getElementById('users-section');
     const seriesSection = document.getElementById('series-section');
-    let usersLoaded = false;
-    let currentSeriesName = null;
     const bookSection = document.getElementById('book-section');
-    let currentBookId = null;
-    let bookDetailOrigin = null; // { type: 'series', name: string } | { type: 'library' }
+    const editSection = document.getElementById('edit-section');
+    let usersLoaded = false;
+
+    // ── Router ────────────────────────────────────────────
+    const router = {
+      navigate(pathname, state) {
+        history.pushState(state ?? null, '', pathname);
+        this._render(pathname, state ?? null);
+      },
+      init() {
+        window.addEventListener('popstate', (e) => {
+          this._render(location.pathname, e.state);
+        });
+        this._render(location.pathname, history.state);
+      },
+      _render(pathname, state) {
+        let m;
+        if (pathname === '/' || pathname === '') {
+          _showLibraryView();
+        } else if ((m = pathname.match(/^\/series\/(.+)$/))) {
+          const name = decodeURIComponent(m[1]);
+          const { series } = groupBooks(cachedBooks);
+          const entry = series.find(([n]) => n === name);
+          if (entry) {
+            _showSeriesPage(name, entry[1]);
+          } else {
+            loadBooks().then(() => {
+              const { series: s2 } = groupBooks(cachedBooks);
+              const e2 = s2.find(([n]) => n === name);
+              if (e2) _showSeriesPage(name, e2[1]); else _showLibraryView();
+            });
+          }
+        } else if ((m = pathname.match(/^\/books\/([^/]+)\/edit$/))) {
+          _showEditPage(m[1]).catch(() => _showLibraryView());
+        } else if ((m = pathname.match(/^\/books\/([^/]+)$/))) {
+          const origin = state?.origin ?? { type: 'library' };
+          _showBookDetailPage(m[1], origin).catch(() => _showLibraryView());
+        } else {
+          _showLibraryView();
+        }
+      }
+    };
+
+    function _hideAllSections() {
+      librarySection.style.display = 'none';
+      usersSection.style.display = 'none';
+      seriesSection.style.display = 'none';
+      bookSection.style.display = 'none';
+      editSection.style.display = 'none';
+    }
 
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         const name = tab.dataset.tab;
-        seriesSection.style.display = 'none';
-        currentSeriesName = null;
-        currentBookId = null;
-        bookDetailOrigin = null;
-        bookSection.style.display = 'none';
-        librarySection.style.display = name === 'library' ? '' : 'none';
-        usersSection.style.display = name === 'users' ? '' : 'none';
-        if (name === 'users' && !usersLoaded) loadUsers();
+        if (name === 'library') {
+          router.navigate('/');
+        } else if (name === 'users') {
+          _hideAllSections();
+          usersSection.style.display = '';
+          if (!usersLoaded) loadUsers();
+        }
       });
     });
 
@@ -408,6 +454,9 @@
               '<div class="book-detail-stat">Size: <span>' + formatSize(book.size) + '</span></div>' +
               '<div class="book-detail-stat">Added: <span>' + addedDate + '</span></div>' +
             '</div>' +
+            (currentUser && currentUser.isAdmin
+              ? '<button class="edit-metadata-btn admin-only" type="button" style="margin-top:.75rem;background:#1e40af;color:#fff;border:none;border-radius:4px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;font-family:inherit">Edit Metadata</button>'
+              : '') +
           '</div>' +
         '</div>' +
         descSection +
@@ -415,14 +464,14 @@
         identifiersSection;
     }
 
-    async function showBookDetailPage(id, origin) {
-      currentBookId = id;
-      bookDetailOrigin = origin;
-      librarySection.style.display = 'none';
-      seriesSection.style.display = 'none';
+    function showBookDetailPage(id, origin) {
+      router.navigate('/books/' + encodeURIComponent(id), { origin });
+    }
+
+    async function _showBookDetailPage(id, origin) {
+      _hideAllSections();
       bookSection.innerHTML = '<p style="color:#6b7280;padding:2rem;text-align:center">Loading…</p>';
       bookSection.style.display = '';
-
       try {
         const res = await fetch('/api/books/' + encodeURIComponent(id));
         if (!res.ok) {
@@ -431,35 +480,42 @@
         }
         const book = await res.json();
         bookSection.innerHTML = renderBookDetail(book, origin);
-        bookSection.querySelector('.book-back-btn').addEventListener('click', function() {
-          if (origin.type === 'series') {
-            const grouped = groupBooks(cachedBooks);
-            const entry = grouped.series.find(function(pair) { return pair[0] === origin.name; });
-            if (entry) showSeriesPage(origin.name, entry[1]);
-            else showLibraryView();
-          } else {
-            showLibraryView();
-          }
-        });
+        bookSection.querySelector('.book-back-btn').addEventListener('click', () => history.back());
+        const editBtn = bookSection.querySelector('.edit-metadata-btn');
+        if (editBtn) editBtn.addEventListener('click', () => router.navigate('/books/' + encodeURIComponent(id) + '/edit'));
       } catch {
         bookSection.innerHTML = '<p style="color:#dc2626;padding:2rem;text-align:center">Failed to load book details.</p>';
       }
     }
 
     function showLibraryView() {
-      currentSeriesName = null;
-      currentBookId = null;
-      bookDetailOrigin = null;
-      seriesSection.style.display = 'none';
-      bookSection.style.display = 'none';
+      router.navigate('/');
+    }
+
+    function _showLibraryView() {
+      _hideAllSections();
       librarySection.style.display = '';
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-tab="library"]').classList.add('active');
+    }
+
+    async function _showEditPage(id) {
+      if (!currentUser.isAdmin) {
+        _hideAllSections();
+        editSection.innerHTML = '<p style="color:#dc2626;padding:2rem;text-align:center">Not authorized.</p>';
+        editSection.style.display = '';
+        return;
+      }
+      // Full implementation in Task 6
+      _showLibraryView();
     }
 
     function showSeriesPage(seriesName, books) {
-      currentSeriesName = seriesName;
-      currentBookId = null;
-      bookDetailOrigin = null;
-      bookSection.style.display = 'none';
+      router.navigate('/series/' + encodeURIComponent(seriesName));
+    }
+
+    function _showSeriesPage(seriesName, books) {
+      _hideAllSections();
       const author = books[0] ? books[0].author : '';
       const count = books.length;
       const heroStack = buildCoverStack(books, 68, 86, 52, 72, HERO_STACK_OFFSETS);
@@ -516,9 +572,7 @@
         seriesBookList.appendChild(li);
       });
 
-      seriesSection.querySelector('.book-back-btn').addEventListener('click', showLibraryView);
-
-      librarySection.style.display = 'none';
+      seriesSection.querySelector('.book-back-btn').addEventListener('click', () => history.back());
       seriesSection.style.display = '';
     }
 
@@ -567,15 +621,12 @@
       if (!confirm(`Delete "${title}"?`)) return;
       const res = await fetch(`/api/books/${id}`, { method: 'DELETE' });
       if (res.status === 204) {
-        if (currentBookId !== null) {
-          currentBookId = null;
-          bookDetailOrigin = null;
-          bookSection.style.display = 'none';
-        }
-        if (currentSeriesName !== null) {
+        const onSeriesPage = location.pathname.startsWith('/series/');
+        if (onSeriesPage) {
           await refreshSeriesPage();
         } else {
           await loadBooks();
+          router.navigate('/');
         }
       } else {
         alert('Failed to delete book.');
@@ -586,40 +637,17 @@
       const res = await fetch('/api/my/progress/' + encodeURIComponent(bookId), { method: 'DELETE' });
       if (res.status === 204) {
         progressMap.delete(bookId);
-        if (currentBookId !== null) {
-          currentBookId = null;
-          bookDetailOrigin = null;
-          bookSection.style.display = 'none';
-        }
-        if (currentSeriesName !== null) {
-          const { series } = groupBooks(cachedBooks);
-          const entry = series.find(([name]) => name === currentSeriesName);
-          if (entry) showSeriesPage(currentSeriesName, entry[1]);
-          else await loadBooks();
-        } else {
-          await loadBooks();
-        }
+        await loadBooks();
+        router._render(location.pathname, history.state);
       } else {
         alert('Failed to clear reading status.');
       }
     }
 
     async function refreshSeriesPage() {
-      try {
-        const res = await fetch('/api/books');
-        if (!res.ok) { await loadBooks(); showLibraryView(); return; }
-        const allBooks = await res.json();
-        const { series } = groupBooks(allBooks);
-        const entry = series.find(([name]) => name === currentSeriesName);
-        if (entry) {
-          showSeriesPage(currentSeriesName, entry[1]);
-        } else {
-          await loadBooks();
-          showLibraryView();
-        }
-      } catch {
-        showLibraryView();
-      }
+      await loadBooks();
+      // If we're on a series page, re-render it from the router
+      router._render(location.pathname, history.state);
     }
 
     async function uploadFiles(files) {
@@ -847,6 +875,7 @@
       }
 
       await loadBooks();
+      router.init();
     }
 
     init();
