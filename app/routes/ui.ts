@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -142,10 +142,13 @@ export function createUiRouter(
     res.status(204).send();
   });
 
-  // ── Protected ─────────────────────────────────────────
+  // ── Static assets (no auth required) ──────────────────
+  router.use('/assets', express.static(path.join(__dirname, '../../client/dist/assets')));
+
+  // ── Protected SPA ──────────────────────────────────────
 
   const serveSpa = (_req: Request, res: Response): void => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
   };
 
   router.get('/', sessionAuth, serveSpa);

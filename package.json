@@ -3,7 +3,7 @@
   "version": "1.0.25",
   "private": true,
   "scripts": {
-    "build": "tsc && node -e \"const fs=require('fs');if(fs.existsSync('app/public'))fs.cpSync('app/public','dist/public',{recursive:true})\"",
+    "build": "npm run build:client && tsc",
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
