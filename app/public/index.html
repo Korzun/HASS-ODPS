@@ -358,7 +358,7 @@
         : '<div style="width:80px;height:114px;background:#e5e7eb;border-radius:4px;"></div>';
 
       const seriesBadge = book.series
-        ? '<div class="book-detail-series-badge">📚 ' + esc(book.series) + (book.seriesIndex ? ' · Book ' + book.seriesIndex : '') + '</div>'
+        ? '<div class="book-detail-series-badge">📚 ' + esc(book.series) + (book.seriesIndex ? ' · Book ' + esc(book.seriesIndex) : '') + '</div>'
         : '';
 
       const publisherStat = book.publisher
@@ -564,6 +564,7 @@
         const errStandalone = document.getElementById('standalone-section');
         if (errStandalone) errStandalone.remove();
         emptyMsg.style.display = '';
+        bookSection.style.display = 'none';
       }
     }
 
@@ -571,6 +572,11 @@
       if (!confirm(`Delete "${title}"?`)) return;
       const res = await fetch(`/api/books/${id}`, { method: 'DELETE' });
       if (res.status === 204) {
+        if (currentBookId !== null) {
+          currentBookId = null;
+          bookDetailOrigin = null;
+          bookSection.style.display = 'none';
+        }
         if (currentSeriesName !== null) {
           await refreshSeriesPage();
         } else {
@@ -585,6 +591,11 @@
       const res = await fetch('/api/my/progress/' + encodeURIComponent(bookId), { method: 'DELETE' });
       if (res.status === 204) {
         progressMap.delete(bookId);
+        if (currentBookId !== null) {
+          currentBookId = null;
+          bookDetailOrigin = null;
+          bookSection.style.display = 'none';
+        }
         if (currentSeriesName !== null) {
           const { series } = groupBooks(cachedBooks);
           const entry = series.find(([name]) => name === currentSeriesName);
