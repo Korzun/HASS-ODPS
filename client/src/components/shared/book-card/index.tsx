@@ -12,6 +12,9 @@ interface BookCardProps {
   onClick: (id: string) => void;
 }
 
+const COVER_W = { compact: 32, default: 40 } as const;
+const COVER_H = { compact: 46, default: 56 } as const;
+
 export function BookCard({
   book,
   progress,
@@ -22,11 +25,17 @@ export function BookCard({
   onClick,
 }: BookCardProps) {
   const styles = useStyle();
-  const coverW = compact ? 32 : 40;
-  const coverH = compact ? 46 : 56;
+  const coverW = compact ? COVER_W.compact : COVER_W.default;
+  const coverH = compact ? COVER_H.compact : COVER_H.default;
 
   return (
-    <div className={styles.root} onClick={() => onClick(book.id)}>
+    <div
+      className={styles.root}
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick(book.id)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(book.id); }}
+    >
       <div className={styles.cover}>
         {book.hasCover ? (
           <img
@@ -40,9 +49,9 @@ export function BookCard({
       </div>
       <div className={styles.info}>
         <div className={styles.title}>{book.title}</div>
-        {book.author && <div className={styles.meta}>{book.author}</div>}
+        {book.author.length > 0 && <div className={styles.meta}>{book.author}</div>}
         <div className={styles.format}>
-          {compact && book.seriesIndex > 0 ? `#${book.seriesIndex} · ` : ''}
+          {compact && book.series && book.seriesIndex > 0 ? `#${book.seriesIndex} · ` : ''}
           EPUB · {formatSize(book.size)}
         </div>
       </div>

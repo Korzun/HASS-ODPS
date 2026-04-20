@@ -1,7 +1,7 @@
 import { createUseStyles } from 'react-jss';
 import type { Theme } from '../../../theme/theme';
 
-const useStyle = createUseStyles((theme: Theme) => ({
+export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
     display: 'flex',
     alignItems: 'center',
@@ -62,5 +62,3 @@ const useStyle = createUseStyles((theme: Theme) => ({
     '&:hover': { color: theme.colors.danger },
   },
 }));
-
-export { useStyle };
