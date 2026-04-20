@@ -357,6 +357,43 @@ describe('POST /api/books/upload', () => {
   });
 });
 
+describe('GET /api/books/:id', () => {
+  it('returns full book data including description, publisher, identifiers, subjects', async () => {
+    const agent = await adminAgent();
+    const meta: EpubMeta = {
+      ...FAKE_META,
+      title: 'Detail Book',
+      description: 'A detailed description.',
+      publisher: 'Test Publisher',
+      identifiers: [{ scheme: 'ISBN', value: '978-1234567890' }],
+      subjects: ['Fiction', 'Mystery'],
+    };
+    bookStore.addBook('detailid1', 'detail.epub', '/books/detail.epub', 2000, new Date(), meta);
+
+    const res = await agent.get('/api/books/detailid1');
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe('detailid1');
+    expect(res.body.title).toBe('Detail Book');
+    expect(res.body.description).toBe('A detailed description.');
+    expect(res.body.publisher).toBe('Test Publisher');
+    expect(res.body.identifiers).toEqual([{ scheme: 'ISBN', value: '978-1234567890' }]);
+    expect(res.body.subjects).toEqual(['Fiction', 'Mystery']);
+    // path must NOT be exposed
+    expect(res.body.path).toBeUndefined();
+  });
+
+  it('returns 404 for unknown book ID', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/api/books/doesnotexist');
+    expect(res.status).toBe(404);
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/books/anyid');
+    expect(res.status).toBe(302);
+  });
+});
+
 describe('GET /api/books/:id/cover', () => {
   it('returns 200 with cover image for a book with cover', async () => {
     const coverBuf = Buffer.from('fake-jpeg-bytes');
