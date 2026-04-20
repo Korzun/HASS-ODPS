@@ -74,6 +74,29 @@
     .series-back{background:none;border:none;color:#1e40af;font-size:.8rem;font-weight:500;cursor:pointer;padding:0;font-family:inherit;display:inline-block;margin:.75rem 0}
     .series-back:hover{text-decoration:underline}
     .series-order-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;margin-bottom:.45rem}
+    /* Book detail page */
+    .book-detail-nav{font-size:.8rem;margin-bottom:1rem}
+    .book-back-btn{background:none;border:none;color:#1e40af;font-size:.8rem;font-weight:500;cursor:pointer;padding:0;font-family:inherit}
+    .book-back-btn:hover{text-decoration:underline}
+    .book-detail-nav .sep{color:#9ca3af;margin:0 .4rem}
+    .book-detail-nav .crumb-current{color:#6b7280}
+    .book-detail-hero{background:#fff;border-radius:6px;padding:1.25rem;margin-bottom:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;gap:1.25rem;align-items:flex-start}
+    .book-detail-meta{flex:1;min-width:0}
+    .book-detail-title{font-size:1.25rem;font-weight:700;color:#111;line-height:1.2;margin-bottom:.3rem}
+    .book-detail-author{font-size:.9rem;color:#6b7280;margin-bottom:.5rem}
+    .book-detail-series-badge{display:inline-flex;align-items:center;gap:.35rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:.2rem .75rem;font-size:.75rem;color:#1e40af;margin-bottom:.75rem}
+    .book-detail-stats{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem}
+    .book-detail-stat{font-size:.75rem;color:#9ca3af}
+    .book-detail-stat span{color:#374151}
+    .book-detail-section{background:#fff;border-radius:6px;padding:1rem 1.25rem;margin-bottom:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+    .book-detail-section-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:.6rem}
+    .book-detail-description{font-size:.875rem;line-height:1.7;color:#374151}
+    .book-detail-subjects{display:flex;flex-wrap:wrap;gap:.5rem}
+    .book-detail-subject{background:#f0f9ff;border:1px solid #bae6fd;border-radius:16px;padding:.2rem .75rem;font-size:.75rem;color:#0369a1}
+    .book-detail-identifiers{display:flex;flex-direction:column;gap:.5rem}
+    .book-detail-id-row{display:flex;align-items:center;gap:.75rem;font-size:.8rem}
+    .book-detail-id-scheme{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:.1rem .5rem;font-size:.7rem;color:#166534;font-weight:600;min-width:48px;text-align:center}
+    .book-detail-id-value{color:#374151;font-family:monospace;font-size:.8rem;word-break:break-all}
     body.user-mode .admin-only{display:none!important}
     body:not(.user-mode) .user-only{display:none!important}
     .clear-btn:hover{color:#dc2626}
@@ -126,6 +149,7 @@
     </div>
 
     <div id="series-section" style="display:none"></div>
+    <div id="book-section" style="display:none"></div>
   </main>
 
   <script>
@@ -135,6 +159,9 @@
     const seriesSection = document.getElementById('series-section');
     let usersLoaded = false;
     let currentSeriesName = null;
+    const bookSection = document.getElementById('book-section');
+    let currentBookId = null;
+    let bookDetailOrigin = null; // { type: 'series', name: string } | { type: 'library' }
 
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -143,6 +170,9 @@
         const name = tab.dataset.tab;
         seriesSection.style.display = 'none';
         currentSeriesName = null;
+        currentBookId = null;
+        bookDetailOrigin = null;
+        bookSection.style.display = 'none';
         librarySection.style.display = name === 'library' ? '' : 'none';
         usersSection.style.display = name === 'users' ? '' : 'none';
         if (name === 'users' && !usersLoaded) loadUsers();
@@ -302,6 +332,11 @@
         li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
         const clearBtn = li.querySelector('.clear-btn');
         if (clearBtn) clearBtn.addEventListener('click', () => clearProgress(book.id));
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function(e) {
+          if (e.target.closest('.delete-btn') || e.target.closest('.clear-btn')) return;
+          showBookDetailPage(book.id, { type: 'library' });
+        });
         list.appendChild(li);
       });
 
@@ -316,14 +351,121 @@
       return section;
     }
 
+    function renderBookDetail(book, origin) {
+      const backLabel = origin.type === 'series' ? esc(origin.name) : 'Library';
+      const coverHtml = book.hasCover
+        ? '<img src="/api/books/' + esc(book.id) + '/cover" alt="' + esc(book.title) + '" style="width:80px;height:114px;object-fit:cover;border-radius:4px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15)">'
+        : '<div style="width:80px;height:114px;background:#e5e7eb;border-radius:4px;"></div>';
+
+      const seriesBadge = book.series
+        ? '<div class="book-detail-series-badge">📚 ' + esc(book.series) + (book.seriesIndex ? ' · Book ' + book.seriesIndex : '') + '</div>'
+        : '';
+
+      const publisherStat = book.publisher
+        ? '<div class="book-detail-stat">Publisher: <span>' + esc(book.publisher) + '</span></div>'
+        : '';
+
+      const addedDate = new Date(book.addedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+      const descSection = book.description
+        ? '<div class="book-detail-section">' +
+            '<div class="book-detail-section-label">Description</div>' +
+            '<div class="book-detail-description">' + esc(book.description) + '</div>' +
+          '</div>'
+        : '';
+
+      const subjectsSection = book.subjects && book.subjects.length > 0
+        ? '<div class="book-detail-section">' +
+            '<div class="book-detail-section-label">Subjects</div>' +
+            '<div class="book-detail-subjects">' +
+              book.subjects.map(function(s) { return '<span class="book-detail-subject">' + esc(s) + '</span>'; }).join('') +
+            '</div>' +
+          '</div>'
+        : '';
+
+      const identifiersSection = book.identifiers && book.identifiers.length > 0
+        ? '<div class="book-detail-section">' +
+            '<div class="book-detail-section-label">Identifiers</div>' +
+            '<div class="book-detail-identifiers">' +
+              book.identifiers.map(function(id) {
+                return '<div class="book-detail-id-row">' +
+                  (id.scheme ? '<span class="book-detail-id-scheme">' + esc(id.scheme) + '</span>' : '') +
+                  '<span class="book-detail-id-value">' + esc(id.value) + '</span>' +
+                '</div>';
+              }).join('') +
+            '</div>' +
+          '</div>'
+        : '';
+
+      return '<div class="book-detail-nav">' +
+          '<button class="book-back-btn" type="button">← ' + backLabel + '</button>' +
+          '<span class="sep">/</span>' +
+          '<span class="crumb-current">' + esc(book.title) + '</span>' +
+        '</div>' +
+        '<div class="book-detail-hero">' +
+          '<div style="flex-shrink:0">' + coverHtml + '</div>' +
+          '<div class="book-detail-meta">' +
+            '<div class="book-detail-title">' + esc(book.title) + '</div>' +
+            (book.author ? '<div class="book-detail-author">' + esc(book.author) + '</div>' : '') +
+            seriesBadge +
+            '<div class="book-detail-stats">' +
+              publisherStat +
+              '<div class="book-detail-stat">Format: <span>EPUB</span></div>' +
+              '<div class="book-detail-stat">Size: <span>' + formatSize(book.size) + '</span></div>' +
+              '<div class="book-detail-stat">Added: <span>' + addedDate + '</span></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        descSection +
+        subjectsSection +
+        identifiersSection;
+    }
+
+    async function showBookDetailPage(id, origin) {
+      currentBookId = id;
+      bookDetailOrigin = origin;
+      librarySection.style.display = 'none';
+      seriesSection.style.display = 'none';
+      bookSection.innerHTML = '<p style="color:#6b7280;padding:2rem;text-align:center">Loading…</p>';
+      bookSection.style.display = '';
+
+      try {
+        const res = await fetch('/api/books/' + encodeURIComponent(id));
+        if (!res.ok) {
+          bookSection.innerHTML = '<p style="color:#dc2626;padding:2rem;text-align:center">Book not found.</p>';
+          return;
+        }
+        const book = await res.json();
+        bookSection.innerHTML = renderBookDetail(book, origin);
+        bookSection.querySelector('.book-back-btn').addEventListener('click', function() {
+          if (origin.type === 'series') {
+            const grouped = groupBooks(cachedBooks);
+            const entry = grouped.series.find(function(pair) { return pair[0] === origin.name; });
+            if (entry) showSeriesPage(origin.name, entry[1]);
+            else showLibraryView();
+          } else {
+            showLibraryView();
+          }
+        });
+      } catch {
+        bookSection.innerHTML = '<p style="color:#dc2626;padding:2rem;text-align:center">Failed to load book details.</p>';
+      }
+    }
+
     function showLibraryView() {
       currentSeriesName = null;
+      currentBookId = null;
+      bookDetailOrigin = null;
       seriesSection.style.display = 'none';
+      bookSection.style.display = 'none';
       librarySection.style.display = '';
     }
 
     function showSeriesPage(seriesName, books) {
       currentSeriesName = seriesName;
+      currentBookId = null;
+      bookDetailOrigin = null;
+      bookSection.style.display = 'none';
       const author = books[0] ? books[0].author : '';
       const count = books.length;
       const heroStack = buildCoverStack(books, 68, 86, 52, 72, HERO_STACK_OFFSETS);
@@ -371,6 +513,11 @@
         li.querySelector('.delete-btn').addEventListener('click', () => deleteBook(book.id, book.title));
         const clearBtn = li.querySelector('.clear-btn');
         if (clearBtn) clearBtn.addEventListener('click', () => clearProgress(book.id));
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function(e) {
+          if (e.target.closest('.delete-btn') || e.target.closest('.clear-btn')) return;
+          showBookDetailPage(book.id, { type: 'series', name: seriesName });
+        });
         seriesBookList.appendChild(li);
       });
 
