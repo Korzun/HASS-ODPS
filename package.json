@@ -8,7 +8,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint . && tsc --noEmit",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "dev:client": "npm run --prefix client dev",
+    "build:client": "npm run --prefix client build"
   },
   "dependencies": {
     "adm-zip": "^0.5.17",
