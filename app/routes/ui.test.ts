@@ -655,6 +655,6 @@ describe('GET / HTML structure', () => {
     const agent = await adminAgent();
     const res = await agent.get('/');
     expect(res.text).toContain('.series-row');
-    expect(res.text).toContain('.series-hero');
+    expect(res.text).toContain('.series-order-label');
   });
 });
