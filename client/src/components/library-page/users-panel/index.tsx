@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUsers, deleteUser } from '../../../api/users';
+import { getUsers } from '../../../api/users';
 import { RegisterUserForm } from './register-user-form';
 import { UserRow } from './user-row';
 import { useStyle } from './style';
@@ -27,13 +27,8 @@ export function UsersPanel({ books }: UsersPanelProps) {
 
   useEffect(() => { void loadUsers(); }, []);
 
-  async function handleDelete(username: string) {
-    try {
-      await deleteUser(username);
-      void loadUsers();
-    } catch {
-      alert('Failed to delete user.');
-    }
+  function handleDelete(_username: string) {
+    void loadUsers();
   }
 
   function handleProgressCleared() {
