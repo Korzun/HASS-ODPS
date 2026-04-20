@@ -1,13 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { AuthProvider, useAuth } from './auth-provider';
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { AuthProvider, useAuth } from './auth-provider';
 
 function UserDisplay() {
-  const { username, isAdmin } = useAuth();
+  const { username, isAdmin, loading } = useAuth();
   return (
     <div>
       <span data-testid="username">{username}</span>
       <span data-testid="is-admin">{String(isAdmin)}</span>
+      <span data-testid="loading">{String(loading)}</span>
     </div>
   );
 }
@@ -25,18 +26,32 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('username').textContent).toBe('admin')
     );
     expect(screen.getByTestId('is-admin').textContent).toBe('true');
+    expect(screen.getByTestId('loading').textContent).toBe('false');
   });
 
-  it('defaults to empty user when fetch fails', async () => {
+  it('starts in loading state', () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+    render(<AuthProvider><UserDisplay /></AuthProvider>);
+    expect(screen.getByTestId('loading').textContent).toBe('true');
+    expect(screen.getByTestId('username').textContent).toBe('');
+  });
+
+  it('clears loading and defaults to empty user when fetch fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
     render(<AuthProvider><UserDisplay /></AuthProvider>);
-    await waitFor(() => expect(screen.getByTestId('username').textContent).toBe(''));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false')
+    );
+    expect(screen.getByTestId('username').textContent).toBe('');
     expect(screen.getByTestId('is-admin').textContent).toBe('false');
   });
 
-  it('defaults to empty user when response is not ok', async () => {
+  it('clears loading and defaults to empty user when response is not ok', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
     render(<AuthProvider><UserDisplay /></AuthProvider>);
-    await waitFor(() => expect(screen.getByTestId('username').textContent).toBe(''));
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false')
+    );
+    expect(screen.getByTestId('username').textContent).toBe('');
   });
 });
