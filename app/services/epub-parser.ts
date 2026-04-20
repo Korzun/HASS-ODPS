@@ -80,6 +80,7 @@ export function parseEpub(filePath: string): EpubMeta {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
+    parseTagValue: false,
     isArray: (name) =>
       ['item', 'meta', 'dc:title', 'dc:creator', 'dc:identifier', 'dc:subject'].includes(name),
   });
