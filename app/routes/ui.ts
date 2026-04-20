@@ -8,6 +8,7 @@ import { UserStore } from '../services/user-store';
 import { sessionAuth, adminAuth } from '../middleware/auth';
 import { logger } from '../logger';
 import { parseEpub, partialMD5 } from '../services/epub-parser';
+import { writeMetadata, EpubChanges } from '../services/epub-writer';
 
 const log = logger('UI');
 
@@ -63,6 +64,13 @@ export function createUiRouter(
     fileFilter: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, ALLOWED_EXTENSIONS.has(ext));
+    },
+  });
+
+  const coverUpload = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (_req, file, cb) => {
+      cb(null, file.mimetype.startsWith('image/'));
     },
   });
 
@@ -218,6 +226,69 @@ export function createUiRouter(
     log.info(`Scan: ${result.imported.length} imported, ${result.removed.length} removed`);
     res.json(result);
   });
+
+  router.patch(
+    '/api/books/:id/metadata',
+    sessionAuth,
+    adminAuth,
+    coverUpload.single('cover'),
+    async (req: Request, res: Response) => {
+      const book = bookStore.getBookById(req.params.id);
+      if (!book) {
+        res.status(404).json({ error: 'Book not found' });
+        return;
+      }
+
+      const body = req.body as Record<string, string>;
+      const changes: EpubChanges = {};
+      if (body.title !== undefined) changes.title = body.title;
+      if (body.author !== undefined) changes.author = body.author;
+      if (body.fileAs !== undefined) changes.fileAs = body.fileAs;
+      if (body.description !== undefined) changes.description = body.description;
+      if (body.publisher !== undefined) changes.publisher = body.publisher;
+      if (body.series !== undefined) changes.series = body.series;
+      if (body.seriesIndex !== undefined) changes.seriesIndex = parseFloat(body.seriesIndex) || 0;
+      if (body.identifiers !== undefined) {
+        try {
+          changes.identifiers = JSON.parse(body.identifiers) as { scheme: string; value: string }[];
+        } catch {
+          res.status(400).json({ error: 'Invalid identifiers JSON' });
+          return;
+        }
+      }
+      if (body.subjects !== undefined) {
+        try {
+          changes.subjects = JSON.parse(body.subjects) as string[];
+        } catch {
+          res.status(400).json({ error: 'Invalid subjects JSON' });
+          return;
+        }
+      }
+      if (req.file) {
+        changes.coverData = req.file.buffer;
+        changes.coverMime = req.file.mimetype;
+      }
+
+      try {
+        writeMetadata(book.path, changes);
+      } catch (err: unknown) {
+        res.status(500).json({
+          error: `Failed to update EPUB: ${err instanceof Error ? err.message : String(err)}`,
+        });
+        return;
+      }
+
+      const updated = bookStore.reimportBook(req.params.id);
+      if (!updated) {
+        res.status(500).json({ error: 'Failed to re-import book after update' });
+        return;
+      }
+
+      log.info(`Book metadata updated: "${updated.filename}"`);
+      const { path: _path, ...rest } = updated;
+      res.json(rest);
+    }
+  );
 
   return router;
 }
