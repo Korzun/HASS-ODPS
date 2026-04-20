@@ -6,12 +6,14 @@ import { AuthContext, type AuthState } from './auth/auth-provider';
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
   user?: Omit<AuthState, 'loading'>;
+  initialEntries?: string[];
 }
 
 export function renderWithProviders(
   ui: ReactElement,
   {
     user = { username: '', isAdmin: false },
+    initialEntries,
     ...options
   }: RenderWithProvidersOptions = {}
 ) {
@@ -19,7 +21,7 @@ export function renderWithProviders(
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <ThemeProvider>
           <AuthContext.Provider value={authState}>
             {children}
