@@ -182,6 +182,16 @@ export function createUiRouter(
     }
   );
 
+  router.get('/api/books/:id', sessionAuth, (req: Request, res: Response) => {
+    const book = bookStore.getBookById(req.params.id);
+    if (!book) {
+      res.status(404).json({ error: 'Book not found' });
+      return;
+    }
+    const { path: _path, ...rest } = book;
+    res.json(rest);
+  });
+
   router.get('/api/books/:id/cover', sessionAuth, (req: Request, res: Response) => {
     const cover = bookStore.getCover(req.params.id);
     if (!cover) {
