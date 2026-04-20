@@ -6,8 +6,11 @@ export interface Book {
   fileAs: string;
   author: string;
   description: string;
+  publisher: string;
   series: string;
   seriesIndex: number; // REAL — supports fractional entries like 2.5
+  identifiers: { scheme: string; value: string }[];
+  subjects: string[];
   hasCover: boolean; // true when cover blob is present in SQLite
   size: number;
   mtime: Date;
