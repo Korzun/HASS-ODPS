@@ -94,6 +94,25 @@
     body.user-mode .admin-only{display:none!important}
     body:not(.user-mode) .user-only{display:none!important}
     .clear-btn:hover{color:#dc2626}
+    /* Edit metadata page */
+    .edit-form-section{background:#fff;border-radius:6px;padding:1rem 1.25rem;margin-bottom:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+    .edit-form-section label{display:block;font-size:.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
+    .edit-form-section input[type=text],.edit-form-section input[type=number],.edit-form-section textarea{width:100%;padding:.45rem .65rem;border:1px solid #d1d5db;border-radius:4px;font-size:.875rem;font-family:inherit;box-sizing:border-box}
+    .edit-form-section textarea{min-height:80px;resize:vertical;line-height:1.5}
+    .edit-form-section input:focus,.edit-form-section textarea:focus{outline:2px solid #3b82f6;border-color:transparent}
+    .edit-id-row{display:flex;gap:.5rem;margin-bottom:.4rem;align-items:center}
+    .edit-id-row input{flex:1}
+    .edit-id-scheme{flex:0 0 90px!important}
+    .edit-remove-btn{background:transparent;border:1px solid #fca5a5;color:#dc2626;border-radius:4px;padding:.2rem .5rem;font-size:.75rem;cursor:pointer;white-space:nowrap}
+    .edit-remove-btn:hover{background:#fee2e2}
+    .edit-add-btn{background:transparent;border:1px solid #d1d5db;color:#374151;border-radius:4px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer;margin-top:.25rem}
+    .edit-add-btn:hover{background:#f9fafb}
+    .edit-save-btn{background:#1e40af;color:#fff;border:none;border-radius:4px;padding:.6rem 1.5rem;font-size:.875rem;cursor:pointer;font-family:inherit;font-weight:500}
+    .edit-save-btn:hover{background:#1d4ed8}
+    .edit-save-btn:disabled{opacity:.6;cursor:not-allowed}
+    .edit-error{color:#dc2626;font-size:.875rem;margin-top:.75rem;min-height:1.25rem}
+    .edit-cover-preview{width:60px;height:86px;object-fit:cover;border-radius:3px;display:block;margin-bottom:.5rem;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+    .edit-cover-placeholder{width:60px;height:86px;background:#e5e7eb;border-radius:3px;margin-bottom:.5rem}
   </style>
 </head>
 <body>
@@ -499,6 +518,81 @@
       document.querySelector('.tab[data-tab="library"]').classList.add('active');
     }
 
+    function renderEditPage(book) {
+      const coverHtml = book.hasCover
+        ? `<img class="edit-cover-preview" id="cover-preview" src="/api/books/${esc(book.id)}/cover" alt="Current cover">`
+        : `<div class="edit-cover-placeholder" id="cover-preview-placeholder"></div>`;
+
+      const subjectVal = (book.subjects ?? []).join(', ');
+
+      const identifierRows = (book.identifiers ?? []).map((id, i) =>
+        `<div class="edit-id-row" data-idx="${i}">
+          <input class="edit-id-scheme" type="text" placeholder="Scheme (ISBN, UUID…)" value="${esc(id.scheme)}">
+          <input type="text" placeholder="Value" value="${esc(id.value)}">
+          <button type="button" class="edit-remove-btn" data-remove-id="${i}">Remove</button>
+        </div>`
+      ).join('');
+
+      return `
+        <div class="book-detail-nav">
+          <button class="book-back-btn" type="button">← Back</button>
+          <span class="sep">/</span>
+          <span class="crumb-current">Edit Metadata</span>
+        </div>
+        <div class="edit-form-section">
+          <div style="font-size:1rem;font-weight:700;color:#111;margin-bottom:1rem">Edit Metadata — ${esc(book.title)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+              <label for="ef-title">Title</label>
+              <input id="ef-title" type="text" value="${esc(book.title)}">
+            </div>
+            <div>
+              <label for="ef-author">Author</label>
+              <input id="ef-author" type="text" value="${esc(book.author ?? '')}">
+            </div>
+            <div>
+              <label for="ef-fileAs">Author Sort</label>
+              <input id="ef-fileAs" type="text" value="${esc(book.fileAs ?? '')}">
+            </div>
+            <div>
+              <label for="ef-publisher">Publisher</label>
+              <input id="ef-publisher" type="text" value="${esc(book.publisher ?? '')}">
+            </div>
+            <div>
+              <label for="ef-series">Series</label>
+              <input id="ef-series" type="text" value="${esc(book.series ?? '')}">
+            </div>
+            <div>
+              <label for="ef-seriesIndex">Series Index</label>
+              <input id="ef-seriesIndex" type="number" step="0.1" min="0" value="${esc(String(book.seriesIndex ?? 0))}">
+            </div>
+          </div>
+        </div>
+        <div class="edit-form-section">
+          <label for="ef-description">Description</label>
+          <textarea id="ef-description">${esc(book.description ?? '')}</textarea>
+        </div>
+        <div class="edit-form-section">
+          <label>Subjects (comma-separated)</label>
+          <input id="ef-subjects" type="text" placeholder="e.g. Fiction, Mystery" value="${esc(subjectVal)}">
+        </div>
+        <div class="edit-form-section">
+          <label>Identifiers</label>
+          <div id="ef-identifiers">${identifierRows}</div>
+          <button type="button" class="edit-add-btn" id="ef-add-identifier">+ Add Identifier</button>
+        </div>
+        <div class="edit-form-section">
+          <label>Cover Image</label>
+          ${coverHtml}
+          <input type="file" id="ef-cover" accept="image/*" style="font-size:.8rem">
+          <div id="ef-cover-preview-new" style="margin-top:.5rem"></div>
+        </div>
+        <div class="edit-form-section" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <button type="button" class="edit-save-btn" id="ef-save">Save Changes</button>
+          <span class="edit-error" id="ef-error"></span>
+        </div>`;
+    }
+
     async function _showEditPage(id) {
       if (!currentUser.isAdmin) {
         _hideAllSections();
@@ -506,8 +600,135 @@
         editSection.style.display = '';
         return;
       }
-      // Full implementation in Task 6
-      router.navigate('/');
+
+      _hideAllSections();
+      editSection.innerHTML = '<p style="color:#6b7280;padding:2rem;text-align:center">Loading…</p>';
+      editSection.style.display = '';
+
+      let book;
+      try {
+        const res = await fetch('/api/books/' + encodeURIComponent(id));
+        if (!res.ok) {
+          editSection.innerHTML = '<p style="color:#dc2626;padding:2rem">Book not found.</p>';
+          return;
+        }
+        book = await res.json();
+      } catch {
+        editSection.innerHTML = '<p style="color:#dc2626;padding:2rem">Failed to load.</p>';
+        return;
+      }
+
+      editSection.innerHTML = renderEditPage(book);
+
+      // Back button
+      editSection.querySelector('.book-back-btn').addEventListener('click', () => history.back());
+
+      // Add identifier row
+      editSection.querySelector('#ef-add-identifier').addEventListener('click', () => {
+        const container = editSection.querySelector('#ef-identifiers');
+        const idx = container.children.length;
+        const div = document.createElement('div');
+        div.className = 'edit-id-row';
+        div.dataset.idx = String(idx);
+        div.innerHTML = `<input class="edit-id-scheme" type="text" placeholder="Scheme"><input type="text" placeholder="Value"><button type="button" class="edit-remove-btn">Remove</button>`;
+        div.querySelector('.edit-remove-btn').addEventListener('click', () => div.remove());
+        container.appendChild(div);
+      });
+
+      // Wire existing remove buttons
+      editSection.querySelectorAll('.edit-remove-btn[data-remove-id]').forEach(btn => {
+        btn.addEventListener('click', () => btn.closest('.edit-id-row').remove());
+      });
+
+      // Cover preview on file select
+      editSection.querySelector('#ef-cover').addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        editSection.querySelector('#ef-cover-preview-new').innerHTML =
+          `<img src="${url}" style="width:60px;height:86px;object-fit:cover;border-radius:3px;display:block;box-shadow:0 1px 4px rgba(0,0,0,.15)" alt="New cover">`;
+      });
+
+      // Save
+      editSection.querySelector('#ef-save').addEventListener('click', async () => {
+        const saveBtn = editSection.querySelector('#ef-save');
+        const errorEl = editSection.querySelector('#ef-error');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+        errorEl.textContent = '';
+
+        const fd = new FormData();
+
+        const title = editSection.querySelector('#ef-title').value;
+        if (title !== book.title) fd.append('title', title);
+
+        const author = editSection.querySelector('#ef-author').value;
+        if (author !== (book.author ?? '')) fd.append('author', author);
+
+        const fileAs = editSection.querySelector('#ef-fileAs').value;
+        if (fileAs !== (book.fileAs ?? '')) fd.append('fileAs', fileAs);
+
+        const publisher = editSection.querySelector('#ef-publisher').value;
+        if (publisher !== (book.publisher ?? '')) fd.append('publisher', publisher);
+
+        const series = editSection.querySelector('#ef-series').value;
+        if (series !== (book.series ?? '')) fd.append('series', series);
+
+        const seriesIndex = editSection.querySelector('#ef-seriesIndex').value;
+        if (parseFloat(seriesIndex) !== (book.seriesIndex ?? 0)) fd.append('seriesIndex', seriesIndex);
+
+        const description = editSection.querySelector('#ef-description').value;
+        if (description !== (book.description ?? '')) fd.append('description', description);
+
+        const subjectsRaw = editSection.querySelector('#ef-subjects').value;
+        const newSubjects = subjectsRaw.split(',').map(s => s.trim()).filter(Boolean);
+        const oldSubjects = book.subjects ?? [];
+        if (JSON.stringify(newSubjects) !== JSON.stringify(oldSubjects)) {
+          fd.append('subjects', JSON.stringify(newSubjects));
+        }
+
+        const idRows = editSection.querySelectorAll('#ef-identifiers .edit-id-row');
+        const newIdentifiers = Array.from(idRows).map(row => ({
+          scheme: row.querySelector('.edit-id-scheme').value.trim(),
+          value: row.querySelectorAll('input')[1].value.trim(),
+        })).filter(identifier => identifier.value);
+        const oldIdentifiers = book.identifiers ?? [];
+        if (JSON.stringify(newIdentifiers) !== JSON.stringify(oldIdentifiers)) {
+          fd.append('identifiers', JSON.stringify(newIdentifiers));
+        }
+
+        const coverFile = editSection.querySelector('#ef-cover').files[0];
+        if (coverFile) fd.append('cover', coverFile);
+
+        // Only submit if something changed
+        if ([...fd.keys()].length === 0) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Changes';
+          router.navigate('/books/' + encodeURIComponent(id));
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/books/' + encodeURIComponent(id) + '/metadata', {
+            method: 'PATCH',
+            body: fd,
+          });
+          if (res.ok) {
+            const updated = await res.json();
+            await loadBooks();
+            router.navigate('/books/' + encodeURIComponent(updated.id));
+          } else {
+            const data = await res.json().catch(() => ({}));
+            errorEl.textContent = data.error || 'Save failed.';
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
+          }
+        } catch {
+          errorEl.textContent = 'Network error. Please try again.';
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Changes';
+        }
+      });
     }
 
     function showSeriesPage(seriesName, books) {
