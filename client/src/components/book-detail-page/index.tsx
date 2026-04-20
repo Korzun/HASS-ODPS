@@ -33,9 +33,9 @@ export function BookDetailPage() {
       <button
         type="button"
         className={styles.backBtn}
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/')}
       >
-        ← Back
+        ← Library
       </button>
       <div className={styles.detail}>
         {book.hasCover ? (

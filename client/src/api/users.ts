@@ -33,7 +33,7 @@ export async function registerUser(username: string, password: string): Promise<
   });
   if (res.status === 409) throw new Error('Username already taken');
   if (!res.ok) {
-    const data = await res.json().catch(() => ({})) as { error?: string };
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(data.error ?? 'Registration failed');
   }
 }

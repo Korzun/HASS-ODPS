@@ -22,7 +22,7 @@ export async function uploadBooks(files: FileList): Promise<UploadResult> {
   for (const f of files) fd.append('files', f);
   const res = await fetch('/api/books/upload', { method: 'POST', body: fd });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({})) as { error?: string };
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(data.error ?? 'Upload failed');
   }
   return res.json() as Promise<UploadResult>;
@@ -40,7 +40,7 @@ export async function patchBookMetadata(id: string, data: FormData): Promise<Boo
     body: data,
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({})) as { error?: string };
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? 'Save failed');
   }
   return res.json() as Promise<Book>;
