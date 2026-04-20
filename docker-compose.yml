@@ -23,6 +23,8 @@ services:
     volumes:
       - ./client/src:/app/src
       - ./client/index.html:/app/index.html
+      - ./client/vite.config.ts:/app/vite.config.ts
+      - ./client/tsconfig.json:/app/tsconfig.json
     environment:
       API_URL: http://api:3000
       DOCKER: "true"
