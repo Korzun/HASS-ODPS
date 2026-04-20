@@ -30,15 +30,13 @@ describe('AuthProvider', () => {
   it('defaults to empty user when fetch fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
     render(<AuthProvider><UserDisplay /></AuthProvider>);
-    await waitFor(() => {});
-    expect(screen.getByTestId('username').textContent).toBe('');
+    await waitFor(() => expect(screen.getByTestId('username').textContent).toBe(''));
     expect(screen.getByTestId('is-admin').textContent).toBe('false');
   });
 
   it('defaults to empty user when response is not ok', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
     render(<AuthProvider><UserDisplay /></AuthProvider>);
-    await waitFor(() => {});
-    expect(screen.getByTestId('username').textContent).toBe('');
+    await waitFor(() => expect(screen.getByTestId('username').textContent).toBe(''));
   });
 });
