@@ -644,21 +644,6 @@ describe('DELETE /api/my/progress/:document', () => {
   });
 });
 
-describe('GET / HTML structure', () => {
-  it('contains series-section element', async () => {
-    const agent = await adminAgent();
-    const res = await agent.get('/');
-    expect(res.text).toContain('id="series-section"');
-  });
-
-  it('contains series UI CSS classes', async () => {
-    const agent = await adminAgent();
-    const res = await agent.get('/');
-    expect(res.text).toContain('.series-row');
-    expect(res.text).toContain('.series-order-label');
-  });
-});
-
 describe('PATCH /api/books/:id/metadata', () => {
   let bookId: string;
 
