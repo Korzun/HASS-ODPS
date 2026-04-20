@@ -61,3 +61,15 @@ it('calls scanLibrary and shows success on scan click', async () => {
   await waitFor(() => expect(screen.getByText(/scan complete/i)).toBeInTheDocument());
   expect(onScanComplete).toHaveBeenCalled();
 });
+
+it('disables scan button while scanning is in progress', async () => {
+  const user = userEvent.setup();
+  let resolveScan!: (v: { imported: string[]; removed: string[] }) => void;
+  vi.mocked(scanLibrary).mockReturnValue(new Promise(res => { resolveScan = res; }));
+  renderWithProviders(<UploadZone isAdmin={true} onUploadComplete={noop} onScanComplete={noop} />);
+  const btn = screen.getByRole('button', { name: 'Scan Library' });
+  await user.click(btn);
+  expect(btn).toBeDisabled();
+  resolveScan({ imported: [], removed: [] });
+  await waitFor(() => expect(btn).not.toBeDisabled());
+});

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { uploadBooks, scanLibrary } from '../../../api/books';
 import { useStyle } from './style';
 
@@ -15,7 +15,6 @@ interface Status {
 
 export function UploadZone({ isAdmin, onUploadComplete, onScanComplete }: UploadZoneProps) {
   const styles = useStyle();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<Status | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -84,18 +83,17 @@ export function UploadZone({ isAdmin, onUploadComplete, onScanComplete }: Upload
         onDrop={e => {
           e.preventDefault();
           setDragOver(false);
-          handleFiles(e.dataTransfer.files);
+          void handleFiles(e.dataTransfer.files);
         }}
       >
         <input
-          ref={inputRef}
           id="upload-file-input"
           type="file"
           accept=".epub"
           multiple
           style={{ display: 'none' }}
           onChange={e => {
-            if (e.target.files) handleFiles(e.target.files);
+            if (e.target.files) void handleFiles(e.target.files);
             e.target.value = '';
           }}
         />
