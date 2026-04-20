@@ -13,6 +13,20 @@ import { AppConfig, EpubMeta } from '../types';
 
 jest.mock('../logger');
 
+// The SPA routes call res.sendFile('client/dist/index.html'). Create a
+// minimal placeholder before the suite runs so the file exists in CI.
+const SPA_HTML_DIR = path.join(__dirname, '..', '..', 'client', 'dist');
+const SPA_HTML_PATH = path.join(SPA_HTML_DIR, 'index.html');
+
+beforeAll(() => {
+  fs.mkdirSync(SPA_HTML_DIR, { recursive: true });
+  fs.writeFileSync(SPA_HTML_PATH, '<!DOCTYPE html><html><body><div id="root"></div></body></html>');
+});
+
+afterAll(() => {
+  fs.rmSync(SPA_HTML_DIR, { recursive: true, force: true });
+});
+
 let booksDir: string;
 let db: InstanceType<typeof Database>;
 let bookStore: BookStore;
@@ -641,21 +655,6 @@ describe('DELETE /api/my/progress/:document', () => {
     const res = await agent.delete('/api/my/progress/nonexistent');
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Progress record not found' });
-  });
-});
-
-describe('GET / HTML structure', () => {
-  it('contains series-section element', async () => {
-    const agent = await adminAgent();
-    const res = await agent.get('/');
-    expect(res.text).toContain('id="series-section"');
-  });
-
-  it('contains series UI CSS classes', async () => {
-    const agent = await adminAgent();
-    const res = await agent.get('/');
-    expect(res.text).toContain('.series-row');
-    expect(res.text).toContain('.series-order-label');
   });
 });
 

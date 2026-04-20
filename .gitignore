@@ -1,5 +1,6 @@
 .worktrees/
 node_modules/
-dist/
+/dist/
 .superpowers/
 *.sqlite
+dev-books/
