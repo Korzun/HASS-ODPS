@@ -731,3 +731,32 @@ describe('PATCH /api/books/:id/metadata', () => {
     expect(cover!.data).toEqual(coverBytes);
   });
 });
+
+describe('SPA routes serve index.html', () => {
+  it('GET /books/:id returns 200 with HTML', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/books/someid');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<!DOCTYPE html>');
+  });
+
+  it('GET /books/:id/edit returns 200 with HTML', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/books/someid/edit');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<!DOCTYPE html>');
+  });
+
+  it('GET /series/:name returns 200 with HTML', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/series/My%20Series');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<!DOCTYPE html>');
+  });
+
+  it('SPA routes redirect to /login without session', async () => {
+    const res = await request(app).get('/books/someid');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe('/login');
+  });
+});

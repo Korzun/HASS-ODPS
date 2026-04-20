@@ -144,9 +144,14 @@ export function createUiRouter(
 
   // ── Protected ─────────────────────────────────────────
 
-  router.get('/', sessionAuth, (_req: Request, res: Response) => {
+  const serveSpa = (_req: Request, res: Response): void => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
-  });
+  };
+
+  router.get('/', sessionAuth, serveSpa);
+  router.get('/books/:id', sessionAuth, serveSpa);
+  router.get('/books/:id/edit', sessionAuth, serveSpa);
+  router.get('/series/:name', sessionAuth, serveSpa);
 
   router.get('/api/books', sessionAuth, (_req: Request, res: Response) => {
     res.json(
