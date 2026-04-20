@@ -15,8 +15,11 @@ interface BookRow {
   file_as: string;
   author: string;
   description: string;
+  publisher: string;
   series: string;
   series_index: number;
+  identifiers: string; // JSON string
+  subjects: string; // JSON string
   has_cover: number;
   size: number;
   mtime: number;
@@ -106,6 +109,21 @@ export class BookStore {
       this.db.exec('PRAGMA user_version = 2');
       if (recomputed > 0) log.info(`Migration v2: recomputed ${recomputed} book ID(s)`);
     }
+
+    if (user_version < 3) {
+      const cols = this.db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+      const colNames = new Set(cols.map((c) => c.name));
+      if (!colNames.has('publisher')) {
+        this.db.exec(`ALTER TABLE books ADD COLUMN publisher TEXT NOT NULL DEFAULT ''`);
+      }
+      if (!colNames.has('identifiers')) {
+        this.db.exec(`ALTER TABLE books ADD COLUMN identifiers TEXT NOT NULL DEFAULT '[]'`);
+      }
+      if (!colNames.has('subjects')) {
+        this.db.exec(`ALTER TABLE books ADD COLUMN subjects TEXT NOT NULL DEFAULT '[]'`);
+      }
+      this.db.exec('PRAGMA user_version = 3');
+    }
   }
 
   addBook(
@@ -117,8 +135,8 @@ export class BookStore {
     meta: EpubMeta
   ): void {
     const stmt = this.db.prepare(`
-      INSERT INTO books (id, filename, path, title, file_as, author, description, series, series_index, cover_data, cover_mime, size, mtime, added_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO books (id, filename, path, title, file_as, author, description, publisher, series, series_index, identifiers, subjects, cover_data, cover_mime, size, mtime, added_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(filename) DO UPDATE SET
         id = excluded.id,
         path = excluded.path,
@@ -126,8 +144,11 @@ export class BookStore {
         file_as = excluded.file_as,
         author = excluded.author,
         description = excluded.description,
+        publisher = excluded.publisher,
         series = excluded.series,
         series_index = excluded.series_index,
+        identifiers = excluded.identifiers,
+        subjects = excluded.subjects,
         cover_data = excluded.cover_data,
         cover_mime = excluded.cover_mime,
         size = excluded.size,
@@ -143,8 +164,11 @@ export class BookStore {
       fileAs,
       meta.author,
       meta.description,
+      meta.publisher,
       meta.series,
       meta.seriesIndex,
+      JSON.stringify(meta.identifiers),
+      JSON.stringify(meta.subjects),
       meta.coverData,
       meta.coverMime,
       size,
@@ -157,8 +181,8 @@ export class BookStore {
     const rows = this.db
       .prepare(
         `
-      SELECT id, filename, path, title, file_as, author, description, series, series_index,
-             cover_data IS NOT NULL AS has_cover, size, mtime, added_at
+      SELECT id, filename, path, title, file_as, author, description, publisher, series, series_index,
+             identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books
       ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, filename
     `
@@ -171,8 +195,8 @@ export class BookStore {
     const row = this.db
       .prepare(
         `
-      SELECT id, filename, path, title, file_as, author, description, series, series_index,
-             cover_data IS NOT NULL AS has_cover, size, mtime, added_at
+      SELECT id, filename, path, title, file_as, author, description, publisher, series, series_index,
+             identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at
       FROM books WHERE id = ?
     `
       )
@@ -254,8 +278,11 @@ export class BookStore {
       fileAs,
       author: r.author,
       description: r.description,
+      publisher: r.publisher,
       series: r.series,
       seriesIndex: r.series_index,
+      identifiers: JSON.parse(r.identifiers) as { scheme: string; value: string }[],
+      subjects: JSON.parse(r.subjects) as string[],
       hasCover: Boolean(r.has_cover),
       size: r.size,
       mtime: new Date(r.mtime),

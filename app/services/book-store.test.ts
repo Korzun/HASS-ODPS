@@ -325,6 +325,52 @@ describe('BookStore.scan()', () => {
   });
 });
 
+describe('publisher, identifiers, subjects', () => {
+  it('DB migration adds publisher, identifiers, subjects columns', () => {
+    const cols = db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    const names = cols.map((c) => c.name);
+    expect(names).toContain('publisher');
+    expect(names).toContain('identifiers');
+    expect(names).toContain('subjects');
+  });
+
+  it('stores and retrieves publisher', () => {
+    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), FAKE_META);
+    const book = bookStore.getBookById('id1');
+    expect(book?.publisher).toBe('Test Publisher');
+  });
+
+  it('stores and retrieves identifiers (JSON round-trip)', () => {
+    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), FAKE_META);
+    const book = bookStore.getBookById('id1');
+    expect(book?.identifiers).toEqual([{ scheme: 'ISBN', value: '978-0000000000' }]);
+  });
+
+  it('stores and retrieves subjects (JSON round-trip)', () => {
+    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), FAKE_META);
+    const book = bookStore.getBookById('id1');
+    expect(book?.subjects).toEqual(['Fiction']);
+  });
+
+  it('stores empty identifiers as empty array', () => {
+    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), {
+      ...FAKE_META,
+      identifiers: [],
+    });
+    const book = bookStore.getBookById('id1');
+    expect(book?.identifiers).toEqual([]);
+  });
+
+  it('stores empty subjects as empty array', () => {
+    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), {
+      ...FAKE_META,
+      subjects: [],
+    });
+    const book = bookStore.getBookById('id1');
+    expect(book?.subjects).toEqual([]);
+  });
+});
+
 const BOOKS_SCHEMA = `
   CREATE TABLE books (
     id TEXT PRIMARY KEY, filename TEXT NOT NULL UNIQUE, path TEXT NOT NULL,
@@ -385,7 +431,7 @@ describe('migrations', () => {
 
     const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
     expect(row.id).toBe(correctId);
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 2 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 3 });
 
     preDb.close();
   });
