@@ -13,6 +13,20 @@ import { AppConfig, EpubMeta } from '../types';
 
 jest.mock('../logger');
 
+// The SPA routes call res.sendFile('client/dist/index.html'). Create a
+// minimal placeholder before the suite runs so the file exists in CI.
+const SPA_HTML_DIR = path.join(__dirname, '..', '..', 'client', 'dist');
+const SPA_HTML_PATH = path.join(SPA_HTML_DIR, 'index.html');
+
+beforeAll(() => {
+  fs.mkdirSync(SPA_HTML_DIR, { recursive: true });
+  fs.writeFileSync(SPA_HTML_PATH, '<!DOCTYPE html><html><body><div id="root"></div></body></html>');
+});
+
+afterAll(() => {
+  fs.rmSync(SPA_HTML_DIR, { recursive: true, force: true });
+});
+
 let booksDir: string;
 let db: InstanceType<typeof Database>;
 let bookStore: BookStore;
