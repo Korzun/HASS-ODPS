@@ -465,18 +465,21 @@
       const heroStack = buildCoverStack(books, 68, 86, 52, 72, HERO_STACK_OFFSETS);
 
       seriesSection.innerHTML =
-        '<div class="series-hero">' +
-          heroStack +
-          '<div>' +
-            '<div class="series-hero-badge">Series</div>' +
-            '<div class="series-hero-title">' + esc(seriesName) + '</div>' +
-            '<div class="series-hero-meta">' +
-              (author ? esc(author) + ' · ' : '') +
-              count + ' book' + (count !== 1 ? 's' : '') +
+        '<div class="book-detail-nav">' +
+          '<button class="book-back-btn" type="button">← Library</button>' +
+          '<span class="sep">/</span>' +
+          '<span class="crumb-current">' + esc(seriesName) + '</span>' +
+        '</div>' +
+        '<div class="book-detail-hero">' +
+          '<div style="flex-shrink:0">' + heroStack + '</div>' +
+          '<div class="book-detail-meta">' +
+            '<div class="book-detail-title">' + esc(seriesName) + '</div>' +
+            (author ? '<div class="book-detail-author">' + esc(author) + '</div>' : '') +
+            '<div class="book-detail-stats">' +
+              '<div class="book-detail-stat">Books: <span>' + count + '</span></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
-        '<button class="series-back" type="button">← Library</button>' +
         '<div class="series-order-label">Reading Order</div>' +
         '<ul id="series-book-list" style="list-style:none;padding:0;margin:0"></ul>';
 
@@ -515,7 +518,7 @@
         seriesBookList.appendChild(li);
       });
 
-      seriesSection.querySelector('.series-back').addEventListener('click', showLibraryView);
+      seriesSection.querySelector('.book-back-btn').addEventListener('click', showLibraryView);
 
       librarySection.style.display = 'none';
       seriesSection.style.display = '';
