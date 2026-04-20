@@ -10,6 +10,9 @@ function makeEpub(
     title?: string;
     author?: string;
     description?: string;
+    publisher?: string;
+    identifiers?: Array<{ scheme?: string; value: string }>;
+    subjects?: string[];
     series?: string;
     seriesIndex?: number;
     coverData?: Buffer;
@@ -33,13 +36,26 @@ function makeEpub(
   const seriesMeta = opts.series
     ? `<meta name="calibre:series" content="${opts.series}"/><meta name="calibre:series_index" content="${opts.seriesIndex ?? 1}"/>`
     : '';
+  const identifierElems = (opts.identifiers ?? [])
+    .map((id) =>
+      id.scheme
+        ? `<dc:identifier opf:scheme="${id.scheme}">${id.value}</dc:identifier>`
+        : `<dc:identifier>${id.value}</dc:identifier>`
+    )
+    .join('\n    ');
+  const subjectElems = (opts.subjects ?? [])
+    .map((s) => `<dc:subject>${s}</dc:subject>`)
+    .join('\n    ');
 
   const opf = `<?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0" xmlns:opf="http://www.idpf.org/2007/opf">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     ${opts.title !== undefined ? `<dc:title>${opts.title}</dc:title>` : ''}
     ${opts.author !== undefined ? `<dc:creator>${opts.author}</dc:creator>` : ''}
     ${opts.description !== undefined ? `<dc:description>${opts.description}</dc:description>` : ''}
+    ${opts.publisher !== undefined ? `<dc:publisher>${opts.publisher}</dc:publisher>` : ''}
+    ${identifierElems}
+    ${subjectElems}
     ${coverMeta}
     ${seriesMeta}
   </metadata>
@@ -245,6 +261,86 @@ describe('parseEpub', () => {
     const filePath = path.join(tmpDir, 'bad.epub');
     fs.writeFileSync(filePath, Buffer.from('not a zip file'));
     expect(() => parseEpub(filePath)).toThrow();
+  });
+
+  it('parses publisher', () => {
+    const filePath = path.join(tmpDir, 'publisher.epub');
+    fs.writeFileSync(filePath, makeEpub({ title: 'T', publisher: 'Penguin Books' }));
+    const meta = parseEpub(filePath);
+    expect(meta.publisher).toBe('Penguin Books');
+  });
+
+  it('returns empty publisher when absent', () => {
+    const filePath = path.join(tmpDir, 'no-publisher.epub');
+    fs.writeFileSync(filePath, makeEpub({ title: 'T' }));
+    const meta = parseEpub(filePath);
+    expect(meta.publisher).toBe('');
+  });
+
+  it('parses identifier with opf:scheme attribute', () => {
+    const filePath = path.join(tmpDir, 'isbn-scheme.epub');
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', identifiers: [{ scheme: 'ISBN', value: '978-0593135204' }] })
+    );
+    const meta = parseEpub(filePath);
+    expect(meta.identifiers).toEqual([{ scheme: 'ISBN', value: '978-0593135204' }]);
+  });
+
+  it('infers ISBN scheme from value starting with 978', () => {
+    const filePath = path.join(tmpDir, 'isbn-infer.epub');
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', identifiers: [{ value: '978-0593135204' }] })
+    );
+    const meta = parseEpub(filePath);
+    expect(meta.identifiers[0].scheme).toBe('ISBN');
+    expect(meta.identifiers[0].value).toBe('978-0593135204');
+  });
+
+  it('infers UUID scheme from urn:uuid: prefix', () => {
+    const filePath = path.join(tmpDir, 'uuid-infer.epub');
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', identifiers: [{ value: 'urn:uuid:abc1-2345' }] })
+    );
+    const meta = parseEpub(filePath);
+    expect(meta.identifiers[0].scheme).toBe('UUID');
+    expect(meta.identifiers[0].value).toBe('urn:uuid:abc1-2345');
+  });
+
+  it('skips identifiers with empty values', () => {
+    const filePath = path.join(tmpDir, 'empty-id.epub');
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', identifiers: [{ scheme: 'ISBN', value: '' }] })
+    );
+    const meta = parseEpub(filePath);
+    expect(meta.identifiers).toEqual([]);
+  });
+
+  it('returns empty identifiers when absent', () => {
+    const filePath = path.join(tmpDir, 'no-id.epub');
+    fs.writeFileSync(filePath, makeEpub({ title: 'T' }));
+    const meta = parseEpub(filePath);
+    expect(meta.identifiers).toEqual([]);
+  });
+
+  it('parses multiple subjects', () => {
+    const filePath = path.join(tmpDir, 'subjects.epub');
+    fs.writeFileSync(
+      filePath,
+      makeEpub({ title: 'T', subjects: ['Science Fiction', 'Space Exploration'] })
+    );
+    const meta = parseEpub(filePath);
+    expect(meta.subjects).toEqual(['Science Fiction', 'Space Exploration']);
+  });
+
+  it('returns empty subjects when absent', () => {
+    const filePath = path.join(tmpDir, 'no-subjects.epub');
+    fs.writeFileSync(filePath, makeEpub({ title: 'T' }));
+    const meta = parseEpub(filePath);
+    expect(meta.subjects).toEqual([]);
   });
 
   it('parses title as string when dc:title elements have xml attributes', () => {

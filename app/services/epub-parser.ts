@@ -61,12 +61,19 @@ function pickLang(items: MetaLike[]): string {
   return pickLocalized(items).text;
 }
 
+function inferScheme(value: string): string {
+  if (value.startsWith('978') || value.startsWith('979')) return 'ISBN';
+  if (value.toLowerCase().startsWith('urn:uuid:')) return 'UUID';
+  return '';
+}
+
 export function parseEpub(filePath: string): EpubMeta {
   const zip = new AdmZip(filePath);
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
-    isArray: (name) => ['item', 'meta', 'dc:title', 'dc:creator'].includes(name),
+    isArray: (name) =>
+      ['item', 'meta', 'dc:title', 'dc:creator', 'dc:identifier', 'dc:subject'].includes(name),
   });
 
   // Step 1: container.xml → OPF path
@@ -103,6 +110,30 @@ export function parseEpub(filePath: string): EpubMeta {
     : typeof rawDesc === 'string'
       ? rawDesc
       : '';
+
+  const rawPublisher = metadata['dc:publisher'];
+  const publisher = (
+    typeof rawPublisher === 'string'
+      ? rawPublisher
+      : typeof rawPublisher === 'object' && rawPublisher !== null
+        ? ((rawPublisher as { '#text'?: string })['#text'] ?? '')
+        : ''
+  ).trim();
+
+  const rawIdentifiers = (metadata['dc:identifier'] ?? []) as MetaLike[];
+  const identifiers = rawIdentifiers
+    .map((item) => {
+      const value = (typeof item === 'string' ? item : (item['#text'] ?? '')).trim();
+      const schemeAttr = typeof item === 'object' ? ((item['@_opf:scheme'] as string) ?? '') : '';
+      const scheme = schemeAttr || inferScheme(value);
+      return { scheme, value };
+    })
+    .filter(({ value }) => value !== '');
+
+  const rawSubjects = (metadata['dc:subject'] ?? []) as MetaLike[];
+  const subjects = rawSubjects
+    .map((item) => (typeof item === 'string' ? item : (item['#text'] ?? '')).trim())
+    .filter(Boolean);
 
   const metas: Array<{
     '@_name'?: string;
@@ -174,5 +205,5 @@ export function parseEpub(filePath: string): EpubMeta {
     }
   }
 
-  return { title, fileAs, author, description, series, seriesIndex, coverData, coverMime };
+  return { title, fileAs, author, description, publisher, identifiers, subjects, series, seriesIndex, coverData, coverMime };
 }
