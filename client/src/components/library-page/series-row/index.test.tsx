@@ -68,3 +68,15 @@ it('calls onClick with series name when clicked', async () => {
   await user.click(screen.getByText('Dune'));
   expect(handleClick).toHaveBeenCalledWith('Dune');
 });
+
+it('calls onClick when Enter key is pressed', async () => {
+  const user = userEvent.setup();
+  const handleClick = vi.fn();
+  renderWithProviders(
+    <SeriesRow seriesName="Dune" books={books} progressMap={new Map()} onClick={handleClick} />
+  );
+  const row = screen.getByRole('button', { name: /dune/i });
+  row.focus();
+  await user.keyboard('{Enter}');
+  expect(handleClick).toHaveBeenCalledWith('Dune');
+});

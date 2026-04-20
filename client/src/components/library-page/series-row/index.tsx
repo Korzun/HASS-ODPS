@@ -10,6 +10,7 @@ interface SeriesRowProps {
 }
 
 function seriesProgressPct(books: Book[], progressMap: Map<string, number>): number | null {
+  if (!books.length) return null;
   if (!books.some(b => progressMap.has(b.id))) return null;
   const avg = books.reduce((sum, b) => sum + (progressMap.get(b.id) ?? 0), 0) / books.length;
   return Math.round(avg * 100);
@@ -27,7 +28,12 @@ export function SeriesRow({ seriesName, books, progressMap, onClick }: SeriesRow
       role="button"
       tabIndex={0}
       onClick={() => onClick(seriesName)}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(seriesName); }}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(seriesName);
+        }
+      }}
     >
       <CoverStack
         books={books}
