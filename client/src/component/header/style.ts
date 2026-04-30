@@ -1,5 +1,5 @@
-import { createUseStyles } from 'react-jss';
-import type { Theme } from '../../theme/theme';
+import { createUseStyles } from '../../provider/theme';
+import type { Theme } from '../../provider/theme';
 
 export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
@@ -10,18 +10,16 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  title: { fontSize: '1.25rem' },
-  actions: { display: 'flex', alignItems: 'center', gap: '.75rem' },
-  username: { fontSize: '.875rem', opacity: 0.85 },
-  signOut: {
-    background: 'transparent',
-    color: '#fff',
-    border: '1px solid rgba(255,255,255,.5)',
-    borderRadius: theme.borderRadius.sm,
-    padding: '.375rem .75rem',
-    cursor: 'pointer',
-    fontSize: '.875rem',
-    '&:hover': { background: 'rgba(255,255,255,.1)' },
+  title: {
+    fontSize: '1.25rem'
   },
-  form: { margin: 0 },
+  actions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '.75rem'
+  },
+  username: {
+    fontSize: '.875rem',
+    opacity: 0.85
+  },
 }));

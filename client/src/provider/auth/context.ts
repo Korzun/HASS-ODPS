@@ -1,0 +1,23 @@
+import { createContext } from 'react';
+
+interface AuthContextMutators {
+  setUsername: (username: string) => void,
+  setIsAdmin: (isAdmin: boolean) => void,
+}
+
+export type AuthContext = AuthContextMutators & (
+  | {username: string, isAdmin: boolean, loading: false, error: false, errorMessage: undefined }
+  | {username: string | undefined, isAdmin: boolean, loading: true, error: boolean, errorMessage: undefined }
+  | {username: undefined, isAdmin: false, loading: false, error: true, errorMessage: string | undefined }
+  | {username: undefined, isAdmin: false, loading: false, error: true, errorMessage: string }
+)
+
+export const Context = createContext<AuthContext>({
+  username: undefined,
+  setUsername: () => {},
+  isAdmin: false,
+  setIsAdmin: () => {},
+  loading: true,
+  error: false,
+  errorMessage: undefined,
+});

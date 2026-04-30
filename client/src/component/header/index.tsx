@@ -1,8 +1,11 @@
-import { useAuth } from '../../auth/auth-provider';
+import { Button } from '../../control/button';
+import { useLogout, useUsername } from '../../provider/auth';
+
 import { useStyle } from './style';
 
-export function Header() {
-  const { username } = useAuth();
+export const Header = () => {
+  const [ username ] = useUsername();
+  const [ logout, loading ] = useLogout();
   const styles = useStyle();
 
   return (
@@ -10,9 +13,7 @@ export function Header() {
       <h1 className={styles.title}>HASS-ODPS Library</h1>
       <div className={styles.actions}>
         <span className={styles.username}>{username}</span>
-        <form method="POST" action="/logout" className={styles.form}>
-          <button type="submit" className={styles.signOut}>Sign Out</button>
-        </form>
+        <Button onClick={logout} loading={loading} text='Sign Out'/>
       </div>
     </header>
   );

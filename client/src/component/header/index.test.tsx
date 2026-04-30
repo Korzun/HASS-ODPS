@@ -1,5 +1,7 @@
 import { screen } from '@testing-library/react';
+
 import { renderWithProviders } from '../../test-utils';
+
 import { Header } from './index';
 
 it('renders the app title', () => {
@@ -12,11 +14,9 @@ it('displays the username from auth context', () => {
   expect(screen.getByText('alice')).toBeInTheDocument();
 });
 
-it('renders a sign-out form posting to /logout', () => {
+it('renders a sign-out button', () => {
   renderWithProviders(<Header />);
-  const form = screen.getByRole('button', { name: 'Sign Out' }).closest('form')!;
-  expect(form).toHaveAttribute('method', 'POST');
-  expect(form).toHaveAttribute('action', '/logout');
+  expect(screen.getByRole('button', { name: 'Sign Out' })).toBeInTheDocument();
 });
 
 it('renders with empty username when no user is signed in', () => {

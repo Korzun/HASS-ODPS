@@ -1,8 +1,9 @@
 import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { ThemeProvider } from './theme/theme-provider';
-import { AuthContext, type AuthState } from './auth/auth-provider';
+
+import { AuthContext, type AuthState } from './provider/auth/auth-provider';
+import { ThemeProvider } from './provider/theme/theme-provider';
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
   user?: Omit<AuthState, 'loading'>;
