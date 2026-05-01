@@ -1,52 +1,35 @@
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext } from 'react';
 
 import { Context } from '../context';
-import type { UserProgressList, Progress} from '../type';
+import type { Progress, UserProgressList } from '../type';
 
+export type FetchUserProgressList = (username: string) => Promise<void>;
 
-export type FetchUserProgressList = (username: string) => Promise<void>
-export type UseFetchUserProgressList =
-  | [FetchUserProgressList, false, false, undefined]  // Initial State
-  | [FetchUserProgressList, true, false, undefined]   // Progress is being loaded
-  | [FetchUserProgressList, false, true, undefined]   // There was an unspecified error while loading progress
-  | [FetchUserProgressList, false, true, string];     // There was a specified error while loading progress
-export const useFetchUserProgressList = (): UseFetchUserProgressList => {
-  const { progressList, setProgressList } = useContext(Context);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+export const useFetchUserProgressList = (): FetchUserProgressList => {
+  const {
+    loadingByUsername,
+    setLoadingForUsername,
+    setErrorForUsername,
+    setProgressForUsername,
+  } = useContext(Context);
 
-  const fetchUserProgress = useCallback(async (username: string) => {
-    // Prevent multiple parallel requests 
-    if(loading) {
-      return;
-    }
+  return useCallback(async (username: string) => {
+    if (loadingByUsername[username]) return;
 
-    setLoading(true);
-    setError(false);
-    setErrorMessage(undefined);
+    setLoadingForUsername(username, true);
+    setErrorForUsername(username, undefined);
     try {
       const response = await fetch(`/api/users/${encodeURIComponent(username)}/progress`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch books');
-      }
-      const userProgressList = await (response.json() as Promise<Progress[]>)
-      setProgressList({
-        ...progressList,
-        [username]: userProgressList.reduce((keyedProgressList, progress) => {
-          return {...keyedProgressList, [progress.document]: progress}
-        }, {} as UserProgressList),
-      });
+      if (!response.ok) throw new Error('Failed to fetch progress');
+      const data = await (response.json() as Promise<Progress[]>);
+      setProgressForUsername(
+        username,
+        data.reduce((acc, p) => ({ ...acc, [p.document]: p }), {} as UserProgressList),
+      );
     } catch (err) {
-      setError(true);
-      if (err instanceof Error) setErrorMessage(err.message);
+      setErrorForUsername(username, err instanceof Error ? err.message : 'Unknown error');
     } finally {
-      setLoading(false);
+      setLoadingForUsername(username, false);
     }
-  }, [setProgressList]);
-
-  return useMemo(
-    () => [fetchUserProgress, loading, error, errorMessage] as UseFetchUserProgressList,
-    [fetchUserProgress, loading, error, errorMessage],
-  );
+  }, [loadingByUsername, setLoadingForUsername, setErrorForUsername, setProgressForUsername]);
 };
