@@ -12,5 +12,5 @@ export const useStyle = createUseStyles(() => ({
   seperator: {
     color: '#9ca3af',
     cursor: 'default',
-  }
+  },
 }));

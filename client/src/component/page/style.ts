@@ -8,7 +8,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       background: theme.colors.bg.page,
       color: theme.colors.text.primary,
       minHeight: '100vh',
-    }
+    },
   },
   root: {
     maxWidth: 800,

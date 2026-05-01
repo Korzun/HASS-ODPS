@@ -1,19 +1,19 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from 'react';
 
-import { useFetchBookList } from "./use-fetch-book-list";
+import { useFetchBookList } from './use-fetch-book-list';
 
 export type ScanResult = {
   imported: string[];
   removed: string[];
-}
+};
 
 export type ScanLibrary = () => Promise<void>;
 export type UseScanLibrary =
-  | [ScanLibrary, undefined, false, false, undefined]  // Initial state
-  | [ScanLibrary, undefined, true, false, undefined]   // Scan is under way
+  | [ScanLibrary, undefined, false, false, undefined] // Initial state
+  | [ScanLibrary, undefined, true, false, undefined] // Scan is under way
   | [ScanLibrary, ScanResult, false, false, undefined] // Scan completed successfully
-  | [ScanLibrary, undefined, false, true, undefined]   // There was an unspecified error while scanning
-  | [ScanLibrary, undefined, false, true, string];     // There was a specified error while scanning
+  | [ScanLibrary, undefined, false, true, undefined] // There was an unspecified error while scanning
+  | [ScanLibrary, undefined, false, true, string]; // There was a specified error while scanning
 export const useScanLibrary = (): UseScanLibrary => {
   const fetchBookList = useFetchBookList();
   const [scanResult, setScanResult] = useState<ScanResult | undefined>();
@@ -22,11 +22,11 @@ export const useScanLibrary = (): UseScanLibrary => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const scanLibrary: ScanLibrary = useCallback(async () => {
-    // Prevent multiple parallel requests 
-    if(loading === true) {
+    // Prevent multiple parallel requests
+    if (loading === true) {
       return;
     }
-    
+
     setLoading(true);
     setError(false);
     setErrorMessage(undefined);
@@ -37,7 +37,7 @@ export const useScanLibrary = (): UseScanLibrary => {
       if (!response.ok) {
         throw new Error('Scan failed');
       }
-      const scanResult = await (response.json() as Promise<ScanResult>)
+      const scanResult = await (response.json() as Promise<ScanResult>);
       setScanResult(scanResult);
       fetchBookList();
     } catch (err) {
@@ -52,6 +52,6 @@ export const useScanLibrary = (): UseScanLibrary => {
 
   return useMemo(
     () => [scanLibrary, scanResult, loading, error, errorMessage] as UseScanLibrary,
-    [scanLibrary, scanResult, loading, error, errorMessage],
+    [scanLibrary, scanResult, loading, error, errorMessage]
   );
 };

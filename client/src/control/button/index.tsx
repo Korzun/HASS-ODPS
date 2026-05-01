@@ -6,20 +6,20 @@ import { LoadingSpinner } from '../loading-spinner';
 import { ButtonType, ButtonTypeValue, useStyle } from './style';
 
 export type ButtonProps = {
-  danger?: boolean,
-  disabled?: boolean,
-  loading?: boolean,
-  onClick?: () => void,
-  tabIndex?: number,
-  text: string,
-  title?: string,
-  type?: ButtonTypeValue,
+  danger?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: () => void;
+  tabIndex?: number;
+  text: string;
+  title?: string;
+  type?: ButtonTypeValue;
 };
 export const Button = ({
   danger = false,
   disabled = false,
   loading = false,
-  onClick = () => { },
+  onClick = () => {},
   tabIndex,
   text,
   title,
@@ -27,19 +27,22 @@ export const Button = ({
 }: ButtonProps) => {
   const styles = useStyle();
   const className = cx(
-      styles.root,
-      styles[type],
-      {[styles.danger]: danger},
-      {[styles.loading]: loading},
-      {[styles.disabled]: disabled}
-    );
-  
-  const handleClick = useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if(!disabled && !loading) {
-      event.stopPropagation();
-      onClick();
-    }
-  }, [onClick]);
+    styles.root,
+    styles[type],
+    { [styles.danger]: danger },
+    { [styles.loading]: loading },
+    { [styles.disabled]: disabled }
+  );
+
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (!disabled && !loading) {
+        event.stopPropagation();
+        onClick();
+      }
+    },
+    [onClick]
+  );
 
   return (
     <div
@@ -49,8 +52,8 @@ export const Button = ({
       onClick={handleClick}
       title={title ?? text}
     >
-      {loading && <LoadingSpinner/>}
+      {loading && <LoadingSpinner />}
       {text}
     </div>
   );
-}
+};

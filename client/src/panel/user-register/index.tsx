@@ -30,7 +30,7 @@ export const UserRegisterPanel = () => {
           placeholder="Username"
           autoComplete="off"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           onKeyDown={handleKeyDown}
         />
         <input
@@ -39,7 +39,7 @@ export const UserRegisterPanel = () => {
           placeholder="Password"
           autoComplete="new-password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
         />
         <button
@@ -58,4 +58,4 @@ export const UserRegisterPanel = () => {
       )}
     </div>
   );
-}
+};

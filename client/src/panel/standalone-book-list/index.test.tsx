@@ -7,9 +7,7 @@ import type { Book } from '../../../types';
 import { StandaloneSection } from './index';
 
 vi.mock('../../shared/book-card', () => ({
-  BookCard: ({ book }: { book: Book }) => (
-    <div data-testid="book-card" data-id={book.id} />
-  ),
+  BookCard: ({ book }: { book: Book }) => <div data-testid="book-card" data-id={book.id} />,
 }));
 
 function makeBook(id: string): Book {

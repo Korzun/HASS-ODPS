@@ -6,7 +6,8 @@ import type { Book, BookList } from '../type';
 export type FetchBookList = () => Promise<void>;
 
 export const useFetchBookList = (): FetchBookList => {
-  const { bookListLoading, setBookList, setBookListLoading, setBookListError } = useContext(Context);
+  const { bookListLoading, setBookList, setBookListLoading, setBookListError } =
+    useContext(Context);
 
   return useCallback(async () => {
     if (bookListLoading) return;
@@ -18,7 +19,7 @@ export const useFetchBookList = (): FetchBookList => {
       if (!response.ok) throw new Error('Failed to fetch books');
       const bookListArray = await (response.json() as Promise<Book[]>);
       setBookList(() =>
-        bookListArray.reduce((acc, book) => ({ ...acc, [book.id]: book }), {} as BookList),
+        bookListArray.reduce((acc, book) => ({ ...acc, [book.id]: book }), {} as BookList)
       );
     } catch (err) {
       setBookListError(err instanceof Error ? err.message : 'Unknown error');

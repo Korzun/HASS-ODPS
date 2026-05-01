@@ -1,8 +1,8 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo } from 'react';
 
-import { Context } from "../context";
+import { Context } from '../context';
 
-export type UseIsAdmin = 
+export type UseIsAdmin =
   | [boolean, false, false, undefined]
   | [boolean, true, false, undefined]
   | [false, false, true, undefined]
@@ -12,6 +12,6 @@ export const useIsAdmin = (): UseIsAdmin => {
 
   return useMemo(
     () => [isAdmin, loading, error, errorMessage] as UseIsAdmin,
-    [isAdmin, loading, error, errorMessage],
+    [isAdmin, loading, error, errorMessage]
   );
 };

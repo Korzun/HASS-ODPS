@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from 'react';
 
 export type UseLogout = [() => Promise<void>, boolean, boolean, string | undefined];
 export const useLogout = (): UseLogout => {
@@ -25,6 +25,6 @@ export const useLogout = (): UseLogout => {
 
   return useMemo(
     () => [logout, loading, error, errorMessage],
-    [logout, loading, error, errorMessage],
+    [logout, loading, error, errorMessage]
   );
 };

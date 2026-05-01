@@ -1,30 +1,29 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo } from 'react';
 
-import { Context } from "../context";
-import type { Progress } from "../type";
+import { Context } from '../context';
+import type { Progress } from '../type';
 
-import { useMyProgressList } from "./use-my-progress-list";
+import { useMyProgressList } from './use-my-progress-list';
 
 export type UseMyProgress =
-  | [undefined, false, false, undefined]  // Initial State (or if no progress exists for user)
-  | [Progress, false, false, undefined]   // Progress was successfully loaded
-  | [Progress, true, false, undefined]    // Progress was already successfully loaded and new progress is being loaded
-  | [undefined, true, false, undefined]   // Progress is being loaded
-  | [undefined, false, true, undefined]   // There was an unspecified error while loading progress
-  | [undefined, false, true, string];     // There was a specified error while loading progress
+  | [undefined, false, false, undefined] // Initial State (or if no progress exists for user)
+  | [Progress, false, false, undefined] // Progress was successfully loaded
+  | [Progress, true, false, undefined] // Progress was already successfully loaded and new progress is being loaded
+  | [undefined, true, false, undefined] // Progress is being loaded
+  | [undefined, false, true, undefined] // There was an unspecified error while loading progress
+  | [undefined, false, true, string]; // There was a specified error while loading progress
 export const useMyProgress = (bookId: string): UseMyProgress => {
   const { progressList } = useContext(Context);
   const [myProgressList, loading, error, errorMessage] = useMyProgressList();
 
   return useMemo((): UseMyProgress => {
-      if(error) {
-        return [undefined, false, error, errorMessage]
-      }
+    if (error) {
+      return [undefined, false, error, errorMessage];
+    }
 
-      if(myProgressList === undefined || myProgressList[bookId] === undefined) {
-        return [undefined, loading, false, undefined]
-      }
-      return [myProgressList[bookId], loading, false, undefined];
-    }, [progressList, loading, error, errorMessage],
-  );
+    if (myProgressList === undefined || myProgressList[bookId] === undefined) {
+      return [undefined, loading, false, undefined];
+    }
+    return [myProgressList[bookId], loading, false, undefined];
+  }, [progressList, loading, error, errorMessage]);
 };

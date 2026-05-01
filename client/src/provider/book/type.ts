@@ -14,10 +14,10 @@ export type Book = {
   hasCover: boolean;
   size: number;
   addedAt: string;
-}
+};
 
 export type Identifier = { scheme: string; value: string };
 
 export type Series = Record<string, BookList>;
 
-export type UploadResult = { uploaded: string[] }
+export type UploadResult = { uploaded: string[] };

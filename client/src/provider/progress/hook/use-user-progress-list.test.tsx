@@ -12,27 +12,31 @@ function makeWrapper(initialProgress: ProgressList = {}) {
   return function Wrapper({ children }: { children: ReactNode }) {
     const [progressList, setProgressListRaw] = useState<ProgressList>(initialProgress);
     const [loadingByUsername, setLoadingByUsernameRaw] = useState<Record<string, boolean>>({});
-    const [errorByUsername, setErrorByUsernameRaw] = useState<Record<string, string | undefined>>({});
+    const [errorByUsername, setErrorByUsernameRaw] = useState<Record<string, string | undefined>>(
+      {}
+    );
 
     const setProgressForUsername = useCallback((username: string, data: UserProgressList) => {
-      setProgressListRaw(prev => ({ ...prev, [username]: data }));
+      setProgressListRaw((prev) => ({ ...prev, [username]: data }));
     }, []);
     const setLoadingForUsername = useCallback((username: string, loading: boolean) => {
-      setLoadingByUsernameRaw(prev => ({ ...prev, [username]: loading }));
+      setLoadingByUsernameRaw((prev) => ({ ...prev, [username]: loading }));
     }, []);
     const setErrorForUsername = useCallback((username: string, error: string | undefined) => {
-      setErrorByUsernameRaw(prev => ({ ...prev, [username]: error }));
+      setErrorByUsernameRaw((prev) => ({ ...prev, [username]: error }));
     }, []);
 
     return (
-      <Context.Provider value={{
-        progressList,
-        loadingByUsername,
-        errorByUsername,
-        setProgressForUsername,
-        setLoadingForUsername,
-        setErrorForUsername,
-      }}>
+      <Context.Provider
+        value={{
+          progressList,
+          loadingByUsername,
+          errorByUsername,
+          setProgressForUsername,
+          setLoadingForUsername,
+          setErrorForUsername,
+        }}
+      >
         {children}
       </Context.Provider>
     );
@@ -77,9 +81,14 @@ describe('useUserProgressList', () => {
 
   it('shows loading state while fetch is in flight', async () => {
     let resolveFetch!: (value: unknown) => void;
-    vi.stubGlobal('fetch', vi.fn().mockReturnValue(
-      new Promise(resolve => { resolveFetch = resolve; })
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+      )
+    );
 
     const { result } = renderHook(() => useUserProgressList('alice'), {
       wrapper: makeWrapper(),
@@ -110,25 +119,28 @@ describe('useUserProgressList', () => {
       wrapper: makeWrapper({ alice: existingProgress }),
     });
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('concurrent fetches for different usernames both persist', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
-      const username = decodeURIComponent((url as string).split('/')[3]);
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([{ document: `book-${username}`, percentage: 50 }]),
-      });
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        const username = decodeURIComponent((url as string).split('/')[3]);
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([{ document: `book-${username}`, percentage: 50 }]),
+        });
+      })
+    );
 
     const { result } = renderHook(
       () => ({
         alice: useUserProgressList('alice'),
         bob: useUserProgressList('bob'),
       }),
-      { wrapper: makeWrapper() },
+      { wrapper: makeWrapper() }
     );
 
     await waitFor(() => {
@@ -137,7 +149,9 @@ describe('useUserProgressList', () => {
     });
 
     // Both datasets survive — this is the regression test for the stale-closure race
-    expect(result.current.alice[0]).toEqual({ 'book-alice': { document: 'book-alice', percentage: 50 } });
+    expect(result.current.alice[0]).toEqual({
+      'book-alice': { document: 'book-alice', percentage: 50 },
+    });
     expect(result.current.bob[0]).toEqual({ 'book-bob': { document: 'book-bob', percentage: 50 } });
   });
 });

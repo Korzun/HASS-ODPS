@@ -29,6 +29,6 @@ export const useBookList = (): UseBookList => {
         bookListError !== undefined,
         bookListError,
       ] as UseBookList,
-    [bookList, bookListLoading, bookListError],
+    [bookList, bookListLoading, bookListError]
   );
 };

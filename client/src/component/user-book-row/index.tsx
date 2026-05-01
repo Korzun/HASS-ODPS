@@ -16,16 +16,16 @@ interface UserBookRowProps {
 export const UserBookRow = ({ bookId, username }: UserBookRowProps) => {
   const styles = useStyle();
 
-  const [ book ] = useBook(bookId);
-  const [ progress, progressLoading, progressError ] = useUserProgress(username, bookId);
-  const [ deleteProgress, deleting ] = useDeleteUserProgress(username);
+  const [book] = useBook(bookId);
+  const [progress, progressLoading, progressError] = useUserProgress(username, bookId);
+  const [deleteProgress, deleting] = useDeleteUserProgress(username);
 
   const [showDeleteProgressModal, setShowDeleteProgressModal] = useState<boolean>(false);
   const handleDeleteProgress = useCallback(() => {
     setShowDeleteProgressModal(true);
   }, []);
   const handleDeleteProgressCancel = useCallback(() => {
-    setShowDeleteProgressModal(false)
+    setShowDeleteProgressModal(false);
   }, []);
   const handleDeleteProgressConfirm = useCallback(() => {
     setShowDeleteProgressModal(false);
@@ -39,11 +39,17 @@ export const UserBookRow = ({ bookId, username }: UserBookRowProps) => {
     return parts.join(' · ');
   };
 
-  if(progressLoading) { return (<li className={styles.progressItem}>Loading…</li>) }
-  if(progressError) { return (<li className={styles.progressItem}>Error</li>) }
-  if(progress === undefined) { return null }
+  if (progressLoading) {
+    return <li className={styles.progressItem}>Loading…</li>;
+  }
+  if (progressError) {
+    return <li className={styles.progressItem}>Error</li>;
+  }
+  if (progress === undefined) {
+    return null;
+  }
 
-  const bookTitle = book?.title ?? progress.document
+  const bookTitle = book?.title ?? progress.document;
 
   return (
     <li className={styles.progressItem}>
@@ -56,7 +62,7 @@ export const UserBookRow = ({ bookId, username }: UserBookRowProps) => {
         type="link"
         danger
         onClick={handleDeleteProgress}
-        text='Delete progress'
+        text="Delete progress"
         loading={deleting}
         title={`Delete progress for ${bookTitle}`}
       />
@@ -68,9 +74,11 @@ export const UserBookRow = ({ bookId, username }: UserBookRowProps) => {
         onConfirm={handleDeleteProgressConfirm}
         danger
         title={`Delete reading progress for “${bookTitle}” permanently?`}
-        confirmText='Delete'>
-        This user's progress, notes, and highlights for this book will be permanently deleted. This action cannot be undone.
+        confirmText="Delete"
+      >
+        This user's progress, notes, and highlights for this book will be permanently deleted. This
+        action cannot be undone.
       </ConfirmModal>
     </li>
   );
-}
+};

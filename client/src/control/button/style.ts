@@ -10,10 +10,9 @@ export enum ButtonType {
   Link = 'link',
 }
 
-
 export type StyleProps = {
-  type: ButtonType,
-}
+  type: ButtonType;
+};
 export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
     display: 'flex',
@@ -46,9 +45,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     backgroundColor: '#FFFFFF',
     borderColor: '#D9D9D9',
     borderStyle: 'solid',
-    borderWidth: "1px",
+    borderWidth: '1px',
     boxShadow: `0px 2px 0px ${applyTransparency('#D9D9D9', 0.2)}`,
-    color: "#1f1f1f",
+    color: '#1f1f1f',
     '&:focus': {
       borderColor: '#FFF',
       outlineColor: '#91CAFF',
@@ -223,7 +222,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
           backgroundColor: '#fff1f0',
         },
       },
-    }
+    },
   },
 
   [ButtonType.Link]: {
@@ -246,7 +245,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       '&:hover': {
         color: '#87BAFF',
       },
-       '&:active': {
+      '&:active': {
         color: '#6893e7',
       },
     },
@@ -268,7 +267,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
           color: '#e98182',
         },
       },
-    }
+    },
   },
   danger: {},
   disabled: {},

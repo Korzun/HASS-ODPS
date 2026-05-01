@@ -1,3 +1,3 @@
-import { Book } from "./type";
+import { Book } from './type';
 
-export const bookSort = (bookA: Book, bookB:Book) => bookA.title.localeCompare(bookB.title)
+export const bookSort = (bookA: Book, bookB: Book) => bookA.title.localeCompare(bookB.title);

@@ -78,4 +78,3 @@ it('gives ghost back layer opacity 0.3 and ghost middle layer 0.45', () => {
   expect(layers[0].style.opacity).toBe('0.3');
   expect(layers[1].style.opacity).toBe('0.45');
 });
-

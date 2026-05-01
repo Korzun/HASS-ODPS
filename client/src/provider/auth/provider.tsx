@@ -19,14 +19,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!response.ok) {
         throw new Error('Not authenticated');
       }
-      const currentUser = await (response.json() as Promise<{ username: string, isAdmin: boolean }>);
+      const currentUser = await (response.json() as Promise<{
+        username: string;
+        isAdmin: boolean;
+      }>);
       setUsername(currentUser.username);
       setIsAdmin(currentUser.isAdmin);
     } catch (error) {
       setUsername(undefined);
       setIsAdmin(false);
       setError(true);
-      if(error instanceof Error) {
+      if (error instanceof Error) {
         setErrorMessage(error.message);
       }
     } finally {
@@ -37,21 +40,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     fetchMe();
   }, [fetchMe]);
 
-  const state = useMemo(() => ({
-    username,
-    setUsername,
-    isAdmin,
-    setIsAdmin,
-    loading,
-    error,
-    errorMessage,
-  } as AuthContext), [
-    username,
-    isAdmin,
-    loading,
-    error,
-    errorMessage,
-  ]);
+  const state = useMemo(
+    () =>
+      ({
+        username,
+        setUsername,
+        isAdmin,
+        setIsAdmin,
+        loading,
+        error,
+        errorMessage,
+      }) as AuthContext,
+    [username, isAdmin, loading, error, errorMessage]
+  );
 
   return <Context.Provider value={state}>{children}</Context.Provider>;
-}
+};

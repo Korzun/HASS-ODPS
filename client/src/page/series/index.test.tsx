@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route,Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 import { getBooks } from '../../api/books';
 import { getMyProgress } from '../../provider/progress';
@@ -27,9 +27,19 @@ beforeEach(() => vi.clearAllMocks());
 
 function makeBook(overrides: Partial<Book> = {}): Book {
   return {
-    id: 'b1', title: 'Dune', author: 'Frank Herbert', fileAs: 'Herbert, Frank',
-    publisher: '', series: 'Dune', seriesIndex: 1, subjects: [], identifiers: [],
-    hasCover: false, size: 1000, addedAt: '2024-01-01T00:00:00.000Z', ...overrides,
+    id: 'b1',
+    title: 'Dune',
+    author: 'Frank Herbert',
+    fileAs: 'Herbert, Frank',
+    publisher: '',
+    series: 'Dune',
+    seriesIndex: 1,
+    subjects: [],
+    identifiers: [],
+    hasCover: false,
+    size: 1000,
+    addedAt: '2024-01-01T00:00:00.000Z',
+    ...overrides,
   };
 }
 

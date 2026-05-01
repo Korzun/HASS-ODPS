@@ -13,16 +13,13 @@ import { useStyle } from './style';
 
 interface BookCardProps {
   book: Book;
-  progress?: number;      // 0–1; undefined = no reading data
+  progress?: number; // 0–1; undefined = no reading data
 }
 
-export function BookCard({
-  book,
-  progress,
-}: BookCardProps) {
+export function BookCard({ book, progress }: BookCardProps) {
   const styles = useStyle();
   const navigate = useNavigate();
-  const [ isAdmin ] = useIsAdmin();
+  const [isAdmin] = useIsAdmin();
 
   const [deleteBook] = useDeleteBook();
 
@@ -31,7 +28,7 @@ export function BookCard({
     setShowDeleteModal(true);
   }, [deleteBook, book.title, book.id]);
   const handleDeleteCancel = useCallback(() => {
-    setShowDeleteModal(false)
+    setShowDeleteModal(false);
   }, []);
   const handleDeleteConfirm = useCallback(() => {
     setShowDeleteModal(false);
@@ -43,7 +40,7 @@ export function BookCard({
     setShowDeleteProgressModal(true);
   }, [deleteBook, book.title, book.id]);
   const handleDeleteProgressCancel = useCallback(() => {
-    setShowDeleteProgressModal(false)
+    setShowDeleteProgressModal(false);
   }, []);
   const handleDeleteProgressConfirm = useCallback(() => {
     setShowDeleteProgressModal(false);
@@ -71,20 +68,14 @@ export function BookCard({
         <div className={styles.info}>
           <div className={styles.title}>{book.title}</div>
           {book.author.length > 0 && <div className={styles.meta}>{book.author}</div>}
-          <div className={styles.format}>
-            EPUB · {formatSize(book.size)}
-          </div>
+          <div className={styles.format}>EPUB · {formatSize(book.size)}</div>
         </div>
-        {progress != null && (
-          <span className={styles.progress}>{Math.round(progress * 100)}%</span>
-        )}
+        {progress != null && <span className={styles.progress}>{Math.round(progress * 100)}%</span>}
 
-         {progress != null && !isAdmin && (
-          <Button text="Clear progress" onClick={handleDeleteProgress} type='link' danger/>
+        {progress != null && !isAdmin && (
+          <Button text="Clear progress" onClick={handleDeleteProgress} type="link" danger />
         )}
-        {isAdmin && (
-          <Button text="Delete book" onClick={handleDelete} type='link' danger/>
-        )}
+        {isAdmin && <Button text="Delete book" onClick={handleDelete} type="link" danger />}
       </div>
       <ConfirmModal
         isOpen={showDeleteProgressModal}
@@ -92,8 +83,10 @@ export function BookCard({
         onConfirm={handleDeleteProgressConfirm}
         danger
         title={`Delete reading progress for “${book.title}” permanently?`}
-        confirmText='Delete'>
-        Your progress, notes, and highlights for this book will be permanently deleted. This action cannot be undone.
+        confirmText="Delete"
+      >
+        Your progress, notes, and highlights for this book will be permanently deleted. This action
+        cannot be undone.
       </ConfirmModal>
       <ConfirmModal
         isOpen={showDeleteModal}
@@ -101,7 +94,8 @@ export function BookCard({
         onConfirm={handleDeleteConfirm}
         danger
         title={`Delete “${book.title}” permanently?`}
-        confirmText='Delete'>
+        confirmText="Delete"
+      >
         This book will be removed from all user libraries. This action cannot be undone.
       </ConfirmModal>
     </Card>

@@ -6,9 +6,9 @@ import { UploadZonePanel } from '../../panel/upload-zone';
 
 export const LibraryPage = () => (
   <Page>
-    <NavigationPanel active='library'/>
-    <LibraryScanPanel/>
-    <UploadZonePanel/>
-    <BookListPanel/>
+    <NavigationPanel active="library" />
+    <LibraryScanPanel />
+    <UploadZonePanel />
+    <BookListPanel />
   </Page>
 );

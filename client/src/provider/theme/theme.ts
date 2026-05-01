@@ -78,6 +78,6 @@ export const defaultTheme: Theme = {
       md: '12px',
       lg: '16px',
       xlg: '20px',
-    }
-  }
+    },
+  },
 };

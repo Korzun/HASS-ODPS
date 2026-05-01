@@ -1,4 +1,4 @@
-import { ComponentType, ReactNode } from "react";
+import { ComponentType, ReactNode } from 'react';
 
 type ProviderEntry = [ComponentType<{ children: ReactNode }>, Record<string, unknown>?];
 type WrapperComponent = ({ children }: { children: ReactNode }) => JSX.Element;

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useNavigate,useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { Page } from '../../component/page';
 import { Button } from '../../control/button';
@@ -7,7 +7,7 @@ import { BreadcrumbList } from '../../panel/breadcrumb-list';
 import { NavigationPanel } from '../../panel/navigation';
 import { useIsAdmin } from '../../provider/auth';
 import { useBook } from '../../provider/book';
-import * as path from '../../router/path'
+import * as path from '../../router/path';
 import { formatSize } from '../../utils';
 
 import { useStyle } from './style';
@@ -17,9 +17,9 @@ export const BookPage = () => {
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [ isAdmin ] = useIsAdmin();
-  
-  const [ book, loading, error ] = useBook(id!)
+  const [isAdmin] = useIsAdmin();
+
+  const [book, loading, error] = useBook(id!);
 
   const handleEditMetadata = useCallback(() => navigate(path.bookEdit(book?.id ?? '')), [book]);
 
@@ -27,13 +27,13 @@ export const BookPage = () => {
   if (error) return <p className={styles.notFound}>Book not found.</p>;
 
   const addedDate = new Date(book.addedAt).toLocaleDateString();
-  
+
   return (
     <Page>
-      <NavigationPanel active='library'/>
+      <NavigationPanel active="library" />
       <BreadcrumbList
         currentTitle={book.title}
-        previous={book.series ? [{path: path.series(book.series), text: book.series}] : []}
+        previous={book.series ? [{ path: path.series(book.series), text: book.series }] : []}
       />
       <div className={styles.detail}>
         {book.hasCover ? (
@@ -49,29 +49,26 @@ export const BookPage = () => {
         )}
         <div className={styles.info}>
           <h1 className={styles.title}>{book.title}</h1>
-          {book.author.length > 0 && (
-            <div className={styles.author}>{book.author}</div>
-          )}
+          {book.author.length > 0 && <div className={styles.author}>{book.author}</div>}
           {book.series.length > 0 && (
             <div className={styles.series}>
-              {book.series}{book.seriesIndex > 0 ? ` #${book.seriesIndex}` : ''}
+              {book.series}
+              {book.seriesIndex > 0 ? ` #${book.seriesIndex}` : ''}
             </div>
           )}
-          {book.publisher.length > 0 && (
-            <div className={styles.meta}>{book.publisher}</div>
-          )}
+          {book.publisher.length > 0 && <div className={styles.meta}>{book.publisher}</div>}
           <div className={styles.meta}>EPUB · {formatSize(book.size)}</div>
           <div className={styles.meta}>Added {addedDate}</div>
-          {isAdmin && (<Button onClick={handleEditMetadata} text='Edit Metadata'/>)}
+          {isAdmin && <Button onClick={handleEditMetadata} text="Edit Metadata" />}
         </div>
       </div>
-      {book.description && (
-        <p className={styles.description}>{book.description}</p>
-      )}
+      {book.description && <p className={styles.description}>{book.description}</p>}
       {book.subjects.length > 0 && (
         <div className={styles.subjects}>
-          {book.subjects.map(s => (
-            <span key={s} className={styles.pill}>{s}</span>
+          {book.subjects.map((s) => (
+            <span key={s} className={styles.pill}>
+              {s}
+            </span>
           ))}
         </div>
       )}
@@ -86,4 +83,4 @@ export const BookPage = () => {
       )}
     </Page>
   );
-}
+};

@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route,Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 import { getBook, patchBookMetadata } from '../../api/books';
 import { renderWithProviders } from '../../test-utils';
@@ -14,11 +14,20 @@ beforeEach(() => vi.clearAllMocks());
 
 function makeBook(overrides: Partial<Book> = {}): Book {
   return {
-    id: 'b1', title: 'Dune', author: 'Frank Herbert', fileAs: 'Herbert, Frank',
-    publisher: 'Chilton Books', series: '', seriesIndex: 0,
-    subjects: ['Science Fiction'], identifiers: [],
-    hasCover: false, size: 1_000_000, addedAt: '2024-01-01T00:00:00.000Z',
-    description: 'A desert planet.', ...overrides,
+    id: 'b1',
+    title: 'Dune',
+    author: 'Frank Herbert',
+    fileAs: 'Herbert, Frank',
+    publisher: 'Chilton Books',
+    series: '',
+    seriesIndex: 0,
+    subjects: ['Science Fiction'],
+    identifiers: [],
+    hasCover: false,
+    size: 1_000_000,
+    addedAt: '2024-01-01T00:00:00.000Z',
+    description: 'A desert planet.',
+    ...overrides,
   };
 }
 

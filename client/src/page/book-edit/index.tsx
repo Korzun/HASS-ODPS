@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate,useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { Page } from '../../component/page';
 import { NavigationPanel } from '../../panel/navigation';
@@ -13,11 +13,11 @@ type IdentifierRow = { scheme: string; value: string; _key: string };
 export const BookEditPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [ isAdmin, isAdminLoading ] = useIsAdmin();
+  const [isAdmin, isAdminLoading] = useIsAdmin();
   const styles = useStyle();
 
-  const [ original, loading, error] = useBook(id!);
-  const [ patchBookMetadata, saving ] = usePatchBookMetadata();
+  const [original, loading, error] = useBook(id!);
+  const [patchBookMetadata, saving] = usePatchBookMetadata();
 
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -31,7 +31,7 @@ export const BookEditPage = () => {
   const [cover, setCover] = useState<File | null>(null);
 
   useEffect(() => {
-    if(original && isAdmin) {
+    if (original && isAdmin) {
       setTitle(original.title);
       setAuthor(original.author);
       setFileAs(original.fileAs);
@@ -40,14 +40,14 @@ export const BookEditPage = () => {
       setSeriesIndex(original.seriesIndex !== 0 ? String(original.seriesIndex) : '');
       setDescription(original.description ?? '');
       setSubjects(original.subjects.join(', '));
-      setIdentifiers(original.identifiers.map(row => ({ ...row, _key: crypto.randomUUID() })));
+      setIdentifiers(original.identifiers.map((row) => ({ ...row, _key: crypto.randomUUID() })));
     }
   }, [original, id, isAdmin]);
 
   if (isAdmin === false && isAdminLoading === false) {
-    console.log({isAdmin, isAdminLoading})
-    return <Navigate to="/" replace />
-  };
+    console.log({ isAdmin, isAdminLoading });
+    return <Navigate to="/" replace />;
+  }
   if (loading) return <p className={styles.loading}>Loading…</p>;
   if (!original) return <p className={styles.error}>{error ?? 'Book not found.'}</p>;
 
@@ -80,22 +80,20 @@ export const BookEditPage = () => {
   }
 
   function addIdentifier() {
-    setIdentifiers(prev => [...prev, { scheme: '', value: '', _key: crypto.randomUUID() }]);
+    setIdentifiers((prev) => [...prev, { scheme: '', value: '', _key: crypto.randomUUID() }]);
   }
 
   function removeIdentifier(index: number) {
-    setIdentifiers(prev => prev.filter((_, i) => i !== index));
+    setIdentifiers((prev) => prev.filter((_, i) => i !== index));
   }
 
   function updateIdentifier(index: number, field: 'scheme' | 'value', val: string) {
-    setIdentifiers(prev =>
-      prev.map((row, i) => i === index ? { ...row, [field]: val } : row)
-    );
+    setIdentifiers((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: val } : row)));
   }
 
   return (
     <Page>
-      <NavigationPanel active='library'/>
+      <NavigationPanel active="library" />
       <div className={styles.topBar}>
         <button
           type="button"
@@ -117,33 +115,49 @@ export const BookEditPage = () => {
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.form}>
         <label className={styles.label}>Title</label>
-        <input className={styles.input} value={title} onChange={e => setTitle(e.target.value)} />
+        <input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <label className={styles.label}>Author</label>
-        <input className={styles.input} value={author} onChange={e => setAuthor(e.target.value)} />
+        <input
+          className={styles.input}
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+        />
 
         <label className={styles.label}>File As</label>
-        <input className={styles.input} value={fileAs} onChange={e => setFileAs(e.target.value)} />
+        <input
+          className={styles.input}
+          value={fileAs}
+          onChange={(e) => setFileAs(e.target.value)}
+        />
 
         <label className={styles.label}>Publisher</label>
-        <input className={styles.input} value={publisher} onChange={e => setPublisher(e.target.value)} />
+        <input
+          className={styles.input}
+          value={publisher}
+          onChange={(e) => setPublisher(e.target.value)}
+        />
 
         <label className={styles.label}>Series</label>
-        <input className={styles.input} value={series} onChange={e => setSeries(e.target.value)} />
+        <input
+          className={styles.input}
+          value={series}
+          onChange={(e) => setSeries(e.target.value)}
+        />
 
         <label className={styles.label}>Series #</label>
         <input
           className={styles.input}
           type="number"
           value={seriesIndex}
-          onChange={e => setSeriesIndex(e.target.value)}
+          onChange={(e) => setSeriesIndex(e.target.value)}
         />
 
         <label className={styles.label}>Description</label>
         <textarea
           className={styles.textarea}
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           rows={4}
         />
 
@@ -151,7 +165,7 @@ export const BookEditPage = () => {
         <input
           className={styles.input}
           value={subjects}
-          onChange={e => setSubjects(e.target.value)}
+          onChange={(e) => setSubjects(e.target.value)}
           placeholder="comma-separated"
         />
 
@@ -159,7 +173,7 @@ export const BookEditPage = () => {
         <input
           type="file"
           accept="image/*"
-          onChange={e => setCover(e.target.files?.[0] ?? null)}
+          onChange={(e) => setCover(e.target.files?.[0] ?? null)}
         />
 
         <div className={styles.identifierSection}>
@@ -175,13 +189,13 @@ export const BookEditPage = () => {
                 className={styles.input}
                 placeholder="scheme (e.g. isbn)"
                 value={row.scheme}
-                onChange={e => updateIdentifier(i, 'scheme', e.target.value)}
+                onChange={(e) => updateIdentifier(i, 'scheme', e.target.value)}
               />
               <input
                 className={styles.input}
                 placeholder="value"
                 value={row.value}
-                onChange={e => updateIdentifier(i, 'value', e.target.value)}
+                onChange={(e) => updateIdentifier(i, 'value', e.target.value)}
               />
               <button
                 type="button"
@@ -197,4 +211,4 @@ export const BookEditPage = () => {
       </div>
     </Page>
   );
-}
+};

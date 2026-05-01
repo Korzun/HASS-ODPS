@@ -17,13 +17,16 @@ export function applyTransparency(color: string, alpha: number): string {
   const clampedAlpha = Math.min(1, Math.max(0, alpha));
 
   // Match hex: #RGB, #RGBA, #RRGGBB, #RRGGBBAA
-  const hexMatch = color.match(/^#([0-9a-fA-F]{3,8})$/)
+  const hexMatch = color.match(/^#([0-9a-fA-F]{3,8})$/);
   if (hexMatch) {
     let hex = hexMatch[1];
 
     // Expand shorthand #RGB or #RGBA to full form
     if (hex.length === 3 || hex.length === 4) {
-      hex = hex.split('').map((c) => c + c).join('');
+      hex = hex
+        .split('')
+        .map((c) => c + c)
+        .join('');
     }
 
     const r = parseInt(hex.slice(0, 2), 16);

@@ -44,7 +44,5 @@ it('shows "already taken" message when registerUser throws that error', async ()
   await u.type(screen.getByPlaceholderText('Username'), 'alice');
   await u.type(screen.getByPlaceholderText('Password'), 'secret');
   await u.click(screen.getByRole('button', { name: 'Register' }));
-  await waitFor(() =>
-    expect(screen.getByText(/username already taken/i)).toBeInTheDocument()
-  );
+  await waitFor(() => expect(screen.getByText(/username already taken/i)).toBeInTheDocument());
 });

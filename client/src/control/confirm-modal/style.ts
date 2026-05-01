@@ -14,7 +14,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     '&::backdrop': {
       backgroundColor: applyTransparency('#000', 0.8),
       backdropFilter: 'saturate(0%)',
-    }
+    },
   },
   dialog: {
     display: 'flex',

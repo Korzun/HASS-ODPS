@@ -5,8 +5,8 @@ import { UserRegisterPanel } from '../../panel/user-register';
 
 export const UserListPage = () => (
   <Page>
-    <NavigationPanel active='user-list'/>
-    <UserRegisterPanel/>
+    <NavigationPanel active="user-list" />
+    <UserRegisterPanel />
     <UserListPanel />
   </Page>
 );

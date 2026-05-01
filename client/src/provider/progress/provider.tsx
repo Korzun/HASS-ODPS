@@ -10,26 +10,28 @@ export const ProgressProvider = ({ children }: ProgressProviderProps) => {
   const [errorByUsername, setErrorByUsernameRaw] = useState<Record<string, string | undefined>>({});
 
   const setProgressForUsername = useCallback((username: string, data: UserProgressList) => {
-    setProgressListRaw(prev => ({ ...prev, [username]: data }));
+    setProgressListRaw((prev) => ({ ...prev, [username]: data }));
   }, []);
 
   const setLoadingForUsername = useCallback((username: string, loading: boolean) => {
-    setLoadingByUsernameRaw(prev => ({ ...prev, [username]: loading }));
+    setLoadingByUsernameRaw((prev) => ({ ...prev, [username]: loading }));
   }, []);
 
   const setErrorForUsername = useCallback((username: string, error: string | undefined) => {
-    setErrorByUsernameRaw(prev => ({ ...prev, [username]: error }));
+    setErrorByUsernameRaw((prev) => ({ ...prev, [username]: error }));
   }, []);
 
   return (
-    <Context.Provider value={{
-      progressList,
-      loadingByUsername,
-      errorByUsername,
-      setProgressForUsername,
-      setLoadingForUsername,
-      setErrorForUsername,
-    }}>
+    <Context.Provider
+      value={{
+        progressList,
+        loadingByUsername,
+        errorByUsername,
+        setProgressForUsername,
+        setLoadingForUsername,
+        setErrorForUsername,
+      }}
+    >
       {children}
     </Context.Provider>
   );

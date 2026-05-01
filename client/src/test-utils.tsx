@@ -24,9 +24,7 @@ export function renderWithProviders(
     return (
       <MemoryRouter initialEntries={initialEntries}>
         <ThemeProvider>
-          <AuthContext.Provider value={authState}>
-            {children}
-          </AuthContext.Provider>
+          <AuthContext.Provider value={authState}>{children}</AuthContext.Provider>
         </ThemeProvider>
       </MemoryRouter>
     );

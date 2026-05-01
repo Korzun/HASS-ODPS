@@ -4,7 +4,7 @@ import { Cover } from './cover';
 import { useStyle } from './style';
 
 interface CoverStackProps {
-  seriesName: string,
+  seriesName: string;
   containerWidth: number;
   containerHeight: number;
   layerWidth: number;
@@ -19,16 +19,21 @@ export function CoverStack({
   layerHeight,
 }: CoverStackProps) {
   const style = useStyle();
-  const [ bookList ] = useSeriesBookList(seriesName)
+  const [bookList] = useSeriesBookList(seriesName);
 
   return (
     <figure
       className={style.figure}
-      style={{ position: 'relative', overflow: 'hidden', width: containerWidth, height: containerHeight }}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        width: containerWidth,
+        height: containerHeight,
+      }}
     >
       <div className={style.wrapper}>
         {([3, 2, 1] as const).map((seq) => {
-          const book = bookList ? bookList[3 - seq] ?? null : null;
+          const book = bookList ? (bookList[3 - seq] ?? null) : null;
           return (
             <Cover
               key={book ? book.id : `ghost-${seq}`}

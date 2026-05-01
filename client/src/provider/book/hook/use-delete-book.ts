@@ -1,10 +1,10 @@
-import { useCallback, useContext, useMemo, useState} from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { Context } from '../context';
 import { BookList } from '../type';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const removeBookById = (bookId: string, {[bookId]: _, ...rest}: BookList) => rest;
+const removeBookById = (bookId: string, { [bookId]: _, ...rest }: BookList) => rest;
 
 export type UseDeleteBook = [(id: string) => Promise<void>, boolean, boolean, string | undefined];
 export const useDeleteBook = (): UseDeleteBook => {
@@ -14,8 +14,8 @@ export const useDeleteBook = (): UseDeleteBook => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const deleteBook = useCallback(async (id: string) => {
-    // Prevent multiple parallel requests 
-    if(loading === true) {
+    // Prevent multiple parallel requests
+    if (loading === true) {
       return;
     }
 
@@ -25,8 +25,8 @@ export const useDeleteBook = (): UseDeleteBook => {
       setErrorMessage('Failed to delete book');
       return;
     }
-    
-    setBookList(prev => removeBookById(id, prev));
+
+    setBookList((prev) => removeBookById(id, prev));
 
     try {
       setLoading(true);
@@ -36,7 +36,7 @@ export const useDeleteBook = (): UseDeleteBook => {
       if (res.status !== 204) throw new Error('Failed to delete book');
     } catch (err) {
       setError(true);
-      setBookList(prev => ({ ...prev, [book.id]: book }));
+      setBookList((prev) => ({ ...prev, [book.id]: book }));
       if (err instanceof Error) setErrorMessage(err.message);
     } finally {
       setLoading(false);
@@ -45,6 +45,6 @@ export const useDeleteBook = (): UseDeleteBook => {
 
   return useMemo(
     () => [deleteBook, loading, error, errorMessage],
-    [deleteBook, loading, error, errorMessage],
+    [deleteBook, loading, error, errorMessage]
   );
 };

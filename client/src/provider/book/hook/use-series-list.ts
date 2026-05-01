@@ -20,9 +20,7 @@ export const useSeriesList = (): UseSeriesList => {
     for (const bookList of seriesMap.values()) {
       bookList.sort((bookA, bookB) => bookA.seriesIndex - bookB.seriesIndex);
     }
-    return [...seriesMap.entries()]
-      .sort(([seriesA], [seriesB]) => seriesA.localeCompare(seriesB))
-    ;
+    return [...seriesMap.entries()].sort(([seriesA], [seriesB]) => seriesA.localeCompare(seriesB));
   }, [bookList]);
   return useMemo(
     () => [seriesList, loading, error, errorMessage],

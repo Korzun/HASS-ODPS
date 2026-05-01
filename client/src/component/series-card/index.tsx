@@ -17,19 +17,22 @@ export function SeriesCard({ seriesName }: SeriesCardProps) {
   const styles = useStyle();
   const navigate = useNavigate();
 
-  const [ bookList, loading, error] = useSeriesBookList(seriesName);
-  const [ seriesProgressPercent ] = useMySeriesProgress(seriesName);
+  const [bookList, loading, error] = useSeriesBookList(seriesName);
+  const [seriesProgressPercent] = useMySeriesProgress(seriesName);
 
   const handleNavigate = useCallback(() => {
-    navigate(path.series(seriesName))
+    navigate(path.series(seriesName));
   }, []);
 
-  if (loading === true) { return <Card>Loading...</Card> }
-  if (error === true) { return <Card>Error</Card> }
+  if (loading === true) {
+    return <Card>Loading...</Card>;
+  }
+  if (error === true) {
+    return <Card>Error</Card>;
+  }
 
   const author = bookList[0]?.author ?? '';
   const count = bookList.length;
-
 
   return (
     <Card onClick={handleNavigate}>
@@ -46,9 +49,11 @@ export function SeriesCard({ seriesName }: SeriesCardProps) {
           <div className={styles.meta}>
             {author.length > 0 ? `${author} · ` : ''}
             {count} book{count !== 1 ? 's' : ''}
-            {seriesProgressPercent !== undefined && <span className={styles.progress}> · {seriesProgressPercent}%</span>}
+            {seriesProgressPercent !== undefined && (
+              <span className={styles.progress}> · {seriesProgressPercent}%</span>
+            )}
           </div>
-           <div className={styles.link}>View series →</div>
+          <div className={styles.link}>View series →</div>
         </div>
       </div>
     </Card>

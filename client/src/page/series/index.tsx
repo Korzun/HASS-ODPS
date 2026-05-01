@@ -13,17 +13,18 @@ export const SeriesPage = () => {
   const { name } = useParams<{ name: string }>();
   const styles = useStyle();
 
-  const [ seriesBookList, loading, error ] = useSeriesBookList(name!);
+  const [seriesBookList, loading, error] = useSeriesBookList(name!);
 
   if (loading && seriesBookList === undefined) return <p className={styles.loading}>Loading…</p>;
-  if (!name || error || seriesBookList.length === 0) return <p className={styles.notFound}>Series not found.</p>;
+  if (!name || error || seriesBookList.length === 0)
+    return <p className={styles.notFound}>Series not found.</p>;
 
   const author = seriesBookList[0].author;
 
   return (
     <Page>
-      <NavigationPanel active='library'/>
-      <BreadcrumbList currentTitle={name}/>
+      <NavigationPanel active="library" />
+      <BreadcrumbList currentTitle={name} />
       <div className={styles.hero}>
         <CoverStack
           seriesName={name}
@@ -41,10 +42,10 @@ export const SeriesPage = () => {
       </div>
       <h2 className={styles.readingOrderLabel}>Reading Order</h2>
       <div className={styles.bookList}>
-        {seriesBookList.map(book => (
-          <BookCard key={book.id} book={book}/>
+        {seriesBookList.map((book) => (
+          <BookCard key={book.id} book={book} />
         ))}
       </div>
     </Page>
   );
-}
+};

@@ -11,13 +11,13 @@ import { useDeleteUser, useUserList } from '.';
 function makeWrapper(initialUsers: User[] = []) {
   return function Wrapper({ children }: { children: ReactNode }) {
     const [userList, setUserListRaw] = useState<UserList>(
-      Object.fromEntries(initialUsers.map((u) => [u.username, u])),
+      Object.fromEntries(initialUsers.map((u) => [u.username, u]))
     );
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | undefined>();
     const setUserList = useCallback(
       (updater: (prev: UserList) => UserList) => setUserListRaw(updater),
-      [],
+      []
     );
     return (
       <Context.Provider value={{ userList, loading, error, setUserList, setLoading, setError }}>

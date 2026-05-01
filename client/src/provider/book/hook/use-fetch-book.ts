@@ -8,20 +8,23 @@ export type FetchBook = (bookId: string) => Promise<void>;
 export const useFetchBook = (): FetchBook => {
   const { loadingByBookId, setBookList, setLoadingForBook, setErrorForBook } = useContext(Context);
 
-  return useCallback(async (bookId: string) => {
-    if (loadingByBookId[bookId]) return;
+  return useCallback(
+    async (bookId: string) => {
+      if (loadingByBookId[bookId]) return;
 
-    setLoadingForBook(bookId, true);
-    setErrorForBook(bookId, undefined);
-    try {
-      const response = await fetch(`/api/books/${encodeURIComponent(bookId)}`);
-      if (!response.ok) throw new Error('Book not found');
-      const book = await (response.json() as Promise<Book>);
-      setBookList(prev => ({ ...prev, [book.id]: book }));
-    } catch (err) {
-      setErrorForBook(bookId, err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoadingForBook(bookId, false);
-    }
-  }, [loadingByBookId, setBookList, setLoadingForBook, setErrorForBook]);
+      setLoadingForBook(bookId, true);
+      setErrorForBook(bookId, undefined);
+      try {
+        const response = await fetch(`/api/books/${encodeURIComponent(bookId)}`);
+        if (!response.ok) throw new Error('Book not found');
+        const book = await (response.json() as Promise<Book>);
+        setBookList((prev) => ({ ...prev, [book.id]: book }));
+      } catch (err) {
+        setErrorForBook(bookId, err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoadingForBook(bookId, false);
+      }
+    },
+    [loadingByBookId, setBookList, setLoadingForBook, setErrorForBook]
+  );
 };

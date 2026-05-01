@@ -11,15 +11,15 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: '1.25rem'
+    fontSize: '1.25rem',
   },
   actions: {
     display: 'flex',
     alignItems: 'center',
-    gap: '.75rem'
+    gap: '.75rem',
   },
   username: {
     fontSize: '.875rem',
-    opacity: 0.85
+    opacity: 0.85,
   },
 }));

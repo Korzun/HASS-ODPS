@@ -13,8 +13,8 @@ export interface NavigationPanelProps {
 
 export function NavigationPanel({ active }: NavigationPanelProps) {
   const styles = useStyle();
-  
-  const [ isAdmin ] = useIsAdmin();
+
+  const [isAdmin] = useIsAdmin();
   const navigate = useNavigate();
 
   return (

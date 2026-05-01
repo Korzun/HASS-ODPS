@@ -49,10 +49,7 @@ it('renders upload-zone and book-list after data loads', async () => {
 });
 
 it('shows users-panel when users tab is clicked', async () => {
-  renderWithProviders(
-    <LibraryPage />,
-    { user: { username: 'admin', isAdmin: true } }
-  );
+  renderWithProviders(<LibraryPage />, { user: { username: 'admin', isAdmin: true } });
   await waitFor(() => expect(screen.getByTestId('tab-bar')).toBeInTheDocument());
   act(() => {
     screen.getByTestId('tab-bar').click();
@@ -62,10 +59,7 @@ it('shows users-panel when users tab is clicked', async () => {
 });
 
 it('does not call getMyProgress for admin users', async () => {
-  renderWithProviders(
-    <LibraryPage />,
-    { user: { username: 'admin', isAdmin: true } }
-  );
+  renderWithProviders(<LibraryPage />, { user: { username: 'admin', isAdmin: true } });
   await waitFor(() => expect(screen.getByTestId('book-list')).toBeInTheDocument());
   expect(vi.mocked(getMyProgress)).not.toHaveBeenCalled();
 });

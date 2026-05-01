@@ -5,11 +5,11 @@ import type { User } from '../type';
 import { useUserList } from './use-user-list';
 
 export type UseUser =
-  | [User, false, false, undefined]       // User was successfully loaded
-  | [User, true, false, undefined]        // User was loaded and list is being reloaded
-  | [undefined, true, false, undefined]   // User list is loading
-  | [undefined, false, true, undefined]   // Unspecified error
-  | [undefined, false, true, string];     // Specified error
+  | [User, false, false, undefined] // User was successfully loaded
+  | [User, true, false, undefined] // User was loaded and list is being reloaded
+  | [undefined, true, false, undefined] // User list is loading
+  | [undefined, false, true, undefined] // Unspecified error
+  | [undefined, false, true, string]; // Specified error
 export const useUser = (username: string): UseUser => {
   const [userList, loading, error, errorMessage] = useUserList();
 

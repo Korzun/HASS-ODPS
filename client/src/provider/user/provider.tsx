@@ -11,7 +11,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   const setUserList = useCallback(
     (updater: (prev: UserList) => UserList) => setUserListRaw(updater),
-    [],
+    []
   );
 
   return (

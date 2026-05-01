@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useScanLibrary,useUploadBooks } from '../../provider/book';
+import { useScanLibrary, useUploadBooks } from '../../provider/book';
 
 import { useStyle } from './style';
 
@@ -38,9 +38,10 @@ export function UploadZone({ isAdmin }: UploadZoneProps) {
     if (result) {
       const total = result.imported.length + result.removed.length;
       setScanStatus({
-        text: total === 0
-          ? '✓ Library already up to date'
-          : `✓ Scan complete: ${result.imported.length} imported, ${result.removed.length} removed`,
+        text:
+          total === 0
+            ? '✓ Library already up to date'
+            : `✓ Scan complete: ${result.imported.length} imported, ${result.removed.length} removed`,
         ok: true,
       });
     } else {
@@ -69,9 +70,12 @@ export function UploadZone({ isAdmin }: UploadZoneProps) {
       )}
       <div
         className={dragOver ? styles.dropZoneOver : styles.dropZone}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
-        onDrop={e => {
+        onDrop={(e) => {
           e.preventDefault();
           setDragOver(false);
           void handleFiles(e.dataTransfer.files);
@@ -83,14 +87,17 @@ export function UploadZone({ isAdmin }: UploadZoneProps) {
           accept=".epub"
           multiple
           style={{ display: 'none' }}
-          onChange={e => {
+          onChange={(e) => {
             if (e.target.files) void handleFiles(e.target.files);
             e.target.value = '';
           }}
         />
         <p className={styles.dropText}>
           Drop books here or{' '}
-          <label htmlFor="upload-file-input" style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+          <label
+            htmlFor="upload-file-input"
+            style={{ textDecoration: 'underline', cursor: 'pointer' }}
+          >
             click to upload
           </label>
         </p>

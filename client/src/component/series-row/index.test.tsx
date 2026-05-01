@@ -52,7 +52,10 @@ it('renders the book count', () => {
 });
 
 it('shows average progress percentage when progressMap has entries for series books', () => {
-  const progressMap = new Map([['b1', 1.0], ['b2', 0.5]]);
+  const progressMap = new Map([
+    ['b1', 1.0],
+    ['b2', 0.5],
+  ]);
   renderWithProviders(
     <SeriesRow seriesName="Dune" books={books} progressMap={progressMap} onClick={() => {}} />
   );

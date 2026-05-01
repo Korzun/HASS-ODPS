@@ -13,30 +13,32 @@ export const BookProvider = ({ children }: BookProviderProps) => {
 
   const setBookList = useCallback(
     (updater: (prev: BookList) => BookList) => setBookListRaw(updater),
-    [],
+    []
   );
 
   const setLoadingForBook = useCallback((bookId: string, loading: boolean) => {
-    setLoadingByBookIdRaw(prev => ({ ...prev, [bookId]: loading }));
+    setLoadingByBookIdRaw((prev) => ({ ...prev, [bookId]: loading }));
   }, []);
 
   const setErrorForBook = useCallback((bookId: string, error: string | undefined) => {
-    setErrorByBookIdRaw(prev => ({ ...prev, [bookId]: error }));
+    setErrorByBookIdRaw((prev) => ({ ...prev, [bookId]: error }));
   }, []);
 
   return (
-    <Context.Provider value={{
-      bookList,
-      bookListLoading,
-      bookListError,
-      loadingByBookId,
-      errorByBookId,
-      setBookList,
-      setBookListLoading,
-      setBookListError,
-      setLoadingForBook,
-      setErrorForBook,
-    }}>
+    <Context.Provider
+      value={{
+        bookList,
+        bookListLoading,
+        bookListError,
+        loadingByBookId,
+        errorByBookId,
+        setBookList,
+        setBookListLoading,
+        setBookListError,
+        setLoadingForBook,
+        setErrorForBook,
+      }}
+    >
       {children}
     </Context.Provider>
   );

@@ -7,7 +7,7 @@ import { useStyle } from './style';
 type UploadStatus = {
   text: string;
   ok: boolean;
-}
+};
 
 export const UploadZonePanel = () => {
   const styles = useStyle();
@@ -24,25 +24,25 @@ export const UploadZonePanel = () => {
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragOver(false);
-    uploadBookList(event.dataTransfer.files)
+    uploadBookList(event.dataTransfer.files);
   }, []);
 
   const [uploadBookList, uploadResult, uploading, error] = useUploadBookList();
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | undefined>();
   const handleFiles = useCallback((files: FileList) => {
-    if(files.length) {
-      uploadBookList(files)
+    if (files.length) {
+      uploadBookList(files);
     }
   }, []);
   useEffect(() => {
-    if(uploading === true) {
+    if (uploading === true) {
       setUploadStatus(undefined);
-    } else if(error === true) {
-      setUploadStatus({ text: '✗ Upload failed', ok: false })
-    } else if(uploadResult !== undefined) {
+    } else if (error === true) {
+      setUploadStatus({ text: '✗ Upload failed', ok: false });
+    } else if (uploadResult !== undefined) {
       setUploadStatus({ text: `✓ Uploaded: ${uploadResult.uploaded.join(', ')}`, ok: true });
     }
-  }, [uploading, error, uploadResult])
+  }, [uploading, error, uploadResult]);
 
   return (
     <div
@@ -57,14 +57,17 @@ export const UploadZonePanel = () => {
         accept=".epub"
         multiple
         style={{ display: 'none' }}
-        onChange={e => {
+        onChange={(e) => {
           if (e.target.files) void handleFiles(e.target.files);
           e.target.value = '';
         }}
       />
       <p className={styles.dropText}>
         Drop books here or{' '}
-        <label htmlFor="upload-file-input" style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+        <label
+          htmlFor="upload-file-input"
+          style={{ textDecoration: 'underline', cursor: 'pointer' }}
+        >
           click to upload
         </label>
       </p>
@@ -76,4 +79,4 @@ export const UploadZonePanel = () => {
       )}
     </div>
   );
-}
+};

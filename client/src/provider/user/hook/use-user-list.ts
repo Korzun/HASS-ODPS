@@ -24,8 +24,8 @@ export const useUserList = (): UseUserList => {
       setUserList(() =>
         users.reduce(
           (record, user) => ({ ...record, [user.username]: user }),
-          {} as Record<string, User>,
-        ),
+          {} as Record<string, User>
+        )
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -48,6 +48,6 @@ export const useUserList = (): UseUserList => {
         error !== undefined,
         error,
       ] as UseUserList,
-    [userList, loading, error],
+    [userList, loading, error]
   );
 };

@@ -10,27 +10,31 @@ import { CoverStack } from '../cover-stack';
 import { useStyle } from './style';
 
 type SeriesRowProps = {
-  seriesName: string;         // sorted ascending by seriesIndex; books[0] = front cover
-}
+  seriesName: string; // sorted ascending by seriesIndex; books[0] = front cover
+};
 export function SeriesRow({ seriesName }: SeriesRowProps) {
   const styles = useStyle();
   const navigate = useNavigate();
-  const [ bookList, loading, error ] = useSeriesBookList(seriesName);
-  const [ seriesProgressPercent ] = useMySeriesProgress(seriesName);
+  const [bookList, loading, error] = useSeriesBookList(seriesName);
+  const [seriesProgressPercent] = useMySeriesProgress(seriesName);
 
   const handleNavigate = useCallback(() => {
-    navigate(path.series(seriesName))
+    navigate(path.series(seriesName));
   }, []);
 
-  if (loading === true) { return <Card>Loading...</Card> }
-  if (error === true) { return <Card>Error</Card> }
+  if (loading === true) {
+    return <Card>Loading...</Card>;
+  }
+  if (error === true) {
+    return <Card>Error</Card>;
+  }
 
   const meta: string[] = [];
-  if(bookList[0]?.author) {
-    meta.push(bookList[0]?.author)
+  if (bookList[0]?.author) {
+    meta.push(bookList[0]?.author);
   }
   meta.push(`${bookList.length} book${bookList.length !== 1 ? 's' : ''}`);
-  if(seriesProgressPercent !== undefined) {
+  if (seriesProgressPercent !== undefined) {
     meta.push(`${seriesProgressPercent}%`);
   }
 
@@ -47,7 +51,7 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
         <div className={styles.info}>
           <div className={styles.name}>{seriesName}</div>
           <div className={styles.meta}>{meta.join(' · ')}</div>
-           <div className={styles.link}>View series →</div> 
+          <div className={styles.link}>View series →</div>
         </div>
       </div>
     </Card>

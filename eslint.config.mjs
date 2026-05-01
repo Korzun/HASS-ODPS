@@ -42,6 +42,7 @@ export default tseslint.config(
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     plugins: {
       import: importX,
+      prettier: eslintPluginPrettier,
     },
     settings: {
       "import-x/resolver": {
@@ -52,6 +53,8 @@ export default tseslint.config(
       },
     },
     rules: {
+      ...eslintConfigPrettier.rules,
+      "prettier/prettier": "error",
       "import/order": [
         "error",
         {

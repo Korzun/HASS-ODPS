@@ -61,13 +61,11 @@ describe('useSeriesBookList', () => {
     const [list, loading, error] = result.current;
     expect(loading).toBe(true);
     expect(error).toBe(false);
-    expect(list?.map(b => b.seriesIndex)).toEqual([1, 2]);
+    expect(list?.map((b) => b.seriesIndex)).toEqual([1, 2]);
   });
 
   it('returns error when loading=true but other series exist and requested is missing', () => {
-    const books: Book[] = [
-      makeBook({ id: '1', series: 'Foundation', seriesIndex: 1 }),
-    ];
+    const books: Book[] = [makeBook({ id: '1', series: 'Foundation', seriesIndex: 1 })];
     stubBookList([books, true, false, undefined]);
     const { result } = renderHook(() => useSeriesBookList('Dune'));
     expect(result.current).toEqual([undefined, false, true, 'Unknown series Dune']);
@@ -84,13 +82,11 @@ describe('useSeriesBookList', () => {
     const [list, loading, error] = result.current;
     expect(loading).toBe(false);
     expect(error).toBe(false);
-    expect(list?.map(b => b.seriesIndex)).toEqual([1, 2, 3]);
+    expect(list?.map((b) => b.seriesIndex)).toEqual([1, 2, 3]);
   });
 
   it('returns error for unknown series when fully loaded', () => {
-    const books: Book[] = [
-      makeBook({ id: '1', series: 'Foundation', seriesIndex: 1 }),
-    ];
+    const books: Book[] = [makeBook({ id: '1', series: 'Foundation', seriesIndex: 1 })];
     stubBookList([books, false, false, undefined]);
     const { result } = renderHook(() => useSeriesBookList('Dune'));
     expect(result.current).toEqual([undefined, false, true, 'Unknown series Dune']);

@@ -5,7 +5,7 @@ import { useStyle } from './style';
 export type Props = PropsWithChildren<{
   onClick?: () => void;
 }>;
-export const Card = ({ children, onClick = () => { } }: Props) => {
+export const Card = ({ children, onClick = () => {} }: Props) => {
   const styles = useStyle();
 
   const handleBookKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -22,9 +22,7 @@ export const Card = ({ children, onClick = () => { } }: Props) => {
       onClick={onClick}
       onKeyDown={handleBookKeyDown}
     >
-      <div className={styles.contentContainer}>
-        {children}
-      </div>
+      <div className={styles.contentContainer}>{children}</div>
     </div>
   );
-}
+};

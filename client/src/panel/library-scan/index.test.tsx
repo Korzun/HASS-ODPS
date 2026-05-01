@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { ScanResult, UploadResult } from '../../../provider/book';
-import { useScanLibrary,useUploadBooks } from '../../../provider/book';
+import { useScanLibrary, useUploadBooks } from '../../../provider/book';
 import { renderWithProviders } from '../../../test-utils';
 
 import { UploadZone } from './index';

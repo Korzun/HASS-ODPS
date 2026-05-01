@@ -12,7 +12,7 @@ type ConfirmModalProps = PropsWithChildren<{
   onCancel?: () => void;
   onConfirm?: () => void;
   title?: string;
-}>
+}>;
 
 export function ConfirmModal({
   cancelText = 'Cancel',
@@ -45,26 +45,30 @@ export function ConfirmModal({
   const handleConfirm = useCallback(() => {
     onConfirm();
   }, [onConfirm]);
-  const handleClickBackground = useCallback((event: React.MouseEvent<HTMLDialogElement, MouseEvent>) => {
-    event.stopPropagation();
-    handleCancel();
-  }, [handleCancel]);
-  const handleClickDialog = useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    event.stopPropagation();
-  }, [handleCancel]);
+  const handleClickBackground = useCallback(
+    (event: React.MouseEvent<HTMLDialogElement, MouseEvent>) => {
+      event.stopPropagation();
+      handleCancel();
+    },
+    [handleCancel]
+  );
+  const handleClickDialog = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      event.stopPropagation();
+    },
+    [handleCancel]
+  );
 
   return (
     <dialog ref={modalRef} className={styles.root} closedby="none" onClick={handleClickBackground}>
       <div className={styles.dialog} onClick={handleClickDialog}>
         <div className={styles.header}>{title}</div>
-        <div className={styles.body}>
-          {children}
-        </div>
+        <div className={styles.body}>{children}</div>
         <div className={styles.footer}>
-          <Button onClick={handleCancel} text={cancelText} type='text'/>
-          <Button onClick={handleConfirm} text={confirmText} type="primary" danger={danger}/>
+          <Button onClick={handleCancel} text={cancelText} type="text" />
+          <Button onClick={handleConfirm} text={confirmText} type="primary" danger={danger} />
         </div>
       </div>
     </dialog>
-  )
-};
+  );
+}
