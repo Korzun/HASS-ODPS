@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo } from 'react';
 
 import { Context } from '../context';
 import type { User } from '../type';
@@ -7,46 +7,47 @@ export const sortUserList = (userA: User, userB: User) =>
   userA.username.localeCompare(userB.username);
 
 export type UseUserList =
-  | [User[], true, false, undefined] // Loading
-  | [User[], false, false, undefined] // Loaded
-  | [User[], false, true, undefined] // Unspecified error
-  | [User[], false, true, string]; // Specified error
+  | [User[], true, false, undefined]
+  | [User[], false, false, undefined]
+  | [User[], false, true, undefined]
+  | [User[], false, true, string];
+
 export const useUserList = (): UseUserList => {
-  const { userList, setUserList } = useContext(Context);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const { userList, loading, error, setUserList, setLoading, setError } = useContext(Context);
 
   const getUserList = useCallback(async () => {
     setLoading(true);
-    setError(false);
-    setErrorMessage(undefined);
-
+    setError(undefined);
     try {
       const response = await fetch('/api/users');
       const users = await (response.json() as Promise<User[]>);
-      setUserList(
+      setUserList(() =>
         users.reduce(
           (record, user) => ({ ...record, [user.username]: user }),
-          {} as Record<string, User>
-        )
+          {} as Record<string, User>,
+        ),
       );
-    } catch (error) {
-      setError(true);
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [setUserList]);
+  }, [setUserList, setLoading, setError]);
 
   useEffect(() => {
-    getUserList();
+    if (!loading && error === undefined && Object.keys(userList).length === 0) {
+      void getUserList();
+    }
   }, [getUserList]);
 
   return useMemo(
-    () => [Object.values(userList).sort(sortUserList), loading, error, errorMessage] as UseUserList,
-    [userList, loading, error, errorMessage]
+    () =>
+      [
+        Object.values(userList).sort(sortUserList),
+        loading,
+        error !== undefined,
+        error,
+      ] as UseUserList,
+    [userList, loading, error],
   );
 };

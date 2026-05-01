@@ -1,19 +1,29 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Context } from '../context';
-import type { User } from '../type';
+import type { User, UserList } from '../type';
 
 import { useUserList } from '.';
 
 function makeWrapper(initialUsers: User[] = []) {
   return function Wrapper({ children }: { children: ReactNode }) {
-    const [userList, setUserList] = useState<Record<string, User>>(
-      Object.fromEntries(initialUsers.map((u) => [u.username, u]))
+    const [userList, setUserListRaw] = useState<UserList>(
+      Object.fromEntries(initialUsers.map((u) => [u.username, u])),
     );
-    return <Context.Provider value={{ userList, setUserList }}>{children}</Context.Provider>;
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | undefined>();
+    const setUserList = useCallback(
+      (updater: (prev: UserList) => UserList) => setUserListRaw(updater),
+      [],
+    );
+    return (
+      <Context.Provider value={{ userList, loading, error, setUserList, setLoading, setError }}>
+        {children}
+      </Context.Provider>
+    );
   };
 }
 
