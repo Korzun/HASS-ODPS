@@ -23,7 +23,7 @@ export const useBook = (bookId: string): UseBook => {
     if (!loading && errorMessage === undefined && bookList[bookId] === undefined) {
       void fetchBook(bookId);
     }
-  }, [fetchBook]);
+  }, [bookId, bookList, loading, errorMessage, fetchBook]);
 
   return useMemo(
     () => {

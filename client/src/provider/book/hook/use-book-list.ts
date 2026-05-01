@@ -19,7 +19,7 @@ export const useBookList = (): UseBookList => {
     if (!bookListLoading && bookListError === undefined && Object.keys(bookList).length === 0) {
       void fetchBookList();
     }
-  }, [fetchBookList]);
+  }, [bookList, bookListLoading, bookListError, fetchBookList]);
 
   return useMemo(
     () =>
