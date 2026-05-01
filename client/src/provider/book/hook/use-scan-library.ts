@@ -15,7 +15,7 @@ export type UseScanLibrary =
   | [ScanLibrary, undefined, false, true, undefined]   // There was an unspecified error while scanning
   | [ScanLibrary, undefined, false, true, string];     // There was a specified error while scanning
 export const useScanLibrary = (): UseScanLibrary => {
-  const { fetchBookList } = useFetchBookList();
+  const fetchBookList = useFetchBookList();
   const [scanResult, setScanResult] = useState<ScanResult | undefined>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);

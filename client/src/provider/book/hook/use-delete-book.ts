@@ -26,7 +26,7 @@ export const useDeleteBook = (): UseDeleteBook => {
       return;
     }
     
-    setBookList(removeBookById(id, bookList));
+    setBookList(prev => removeBookById(id, prev));
 
     try {
       setLoading(true);
@@ -36,7 +36,7 @@ export const useDeleteBook = (): UseDeleteBook => {
       if (res.status !== 204) throw new Error('Failed to delete book');
     } catch (err) {
       setError(true);
-      setBookList({...bookList, [book.id]: book});
+      setBookList(prev => ({ ...prev, [book.id]: book }));
       if (err instanceof Error) setErrorMessage(err.message);
     } finally {
       setLoading(false);

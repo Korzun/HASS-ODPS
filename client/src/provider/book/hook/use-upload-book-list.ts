@@ -6,7 +6,7 @@ import { useFetchBookList } from "./use-fetch-book-list";
 
 export type UseUploadBookList = [(files: FileList) => Promise<void>, UploadResult | undefined, boolean, boolean, string | undefined];
 export const useUploadBookList = (): UseUploadBookList => {
-  const { fetchBookList } = useFetchBookList();
+  const fetchBookList = useFetchBookList();
   const [uploadResult, setUploadResult] = useState<UploadResult|undefined>();
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
