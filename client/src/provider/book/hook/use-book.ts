@@ -1,34 +1,38 @@
-import { useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo } from 'react';
 
-import { Context } from "../context";
-import type { Book } from "../type";
+import { Context } from '../context';
+import type { Book } from '../type';
 
-import { useFetchBook } from "./use-fetch-book";
-
+import { useFetchBook } from './use-fetch-book';
 
 export type UseBook =
-  | [Book, false, false, undefined]       // Data was successfully loaded
-  | [Book, true, false, undefined]        // Data was already successfully loaded and new data is being loaded
-  | [undefined, true, false, undefined]   // Data is being loaded
-  | [undefined, false, true, undefined]   // There was an unspecified error while loading data
-  | [undefined, false, true, string];     // There was a specified error while loading data
+  | [Book, false, false, undefined]
+  | [Book, true, false, undefined]
+  | [undefined, true, false, undefined]
+  | [undefined, false, true, undefined]
+  | [undefined, false, true, string];
+
 export const useBook = (bookId: string): UseBook => {
-  const { bookList } = useContext(Context);
-  const [fetchBook, loading, error, errorMessage] = useFetchBook();
+  const { bookList, loadingByBookId, errorByBookId } = useContext(Context);
+  const fetchBook = useFetchBook();
+
+  const loading = loadingByBookId[bookId] ?? false;
+  const errorMessage = errorByBookId[bookId];
 
   useEffect(() => {
-    if(!loading && !error && bookList[bookId] === undefined) {
-      fetchBook(bookId);
+    if (!loading && errorMessage === undefined && bookList[bookId] === undefined) {
+      void fetchBook(bookId);
     }
-  }, [fetchBook])
+  }, [fetchBook]);
 
   return useMemo(
-    () => [
-      bookList[bookId],
-      loading === false && error === false && bookList[bookId] === undefined ? true : loading,
-      error,
-      errorMessage
-    ] as UseBook,
-    [bookList, loading, error, errorMessage],
+    () => {
+      const book = bookList[bookId];
+      const isLoading = loading || (!loading && errorMessage === undefined && book === undefined);
+      if (errorMessage !== undefined) return [undefined, false, true, errorMessage] as UseBook;
+      if (book === undefined) return [undefined, isLoading, false, undefined] as UseBook;
+      return [book, loading, false, undefined] as UseBook;
+    },
+    [bookList, loading, errorMessage, bookId],
   );
 };
