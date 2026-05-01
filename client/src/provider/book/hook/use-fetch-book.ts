@@ -1,46 +1,27 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext } from 'react';
 
-import { Context } from "../context";
-import { Book } from '../type';
+import { Context } from '../context';
+import type { Book } from '../type';
 
-type FetchBook = (bookId: string) => Promise<void>;
-export type UseFetchBook =
-  | [FetchBook, false, false, undefined]  // Initial state
-  | [FetchBook, true, false, undefined]   // Data is being loaded
-  | [FetchBook, false, true, undefined]   // There was an unspecified error while loading data
-  | [FetchBook, false, true, string];     // There was a specified error while loading data
-export const useFetchBook = (): UseFetchBook => {
-  const { bookList, setBookList } = useContext(Context);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+export type FetchBook = (bookId: string) => Promise<void>;
 
-  const fetchBook = useCallback(async (bookId: string): Promise<void> => {
-    // Prevent multiple parallel requests 
-    if(loading === true) {
-      return;
-    }
+export const useFetchBook = (): FetchBook => {
+  const { loadingByBookId, setBookList, setLoadingForBook, setErrorForBook } = useContext(Context);
 
-    setLoading(true);
-    setError(false);
-    setErrorMessage(undefined);
+  return useCallback(async (bookId: string) => {
+    if (loadingByBookId[bookId]) return;
+
+    setLoadingForBook(bookId, true);
+    setErrorForBook(bookId, undefined);
     try {
       const response = await fetch(`/api/books/${encodeURIComponent(bookId)}`);
       if (!response.ok) throw new Error('Book not found');
       const book = await (response.json() as Promise<Book>);
-      setBookList({...bookList, [book.id]: book});
-    } catch (error) {
-      setError(true);
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      }
+      setBookList(prev => ({ ...prev, [book.id]: book }));
+    } catch (err) {
+      setErrorForBook(bookId, err instanceof Error ? err.message : 'Unknown error');
     } finally {
-      setLoading(false);
+      setLoadingForBook(bookId, false);
     }
-  }, [bookList, setBookList]);
-
-  return useMemo(
-    () => [fetchBook, loading, error, errorMessage] as UseFetchBook,
-    [fetchBook, loading, error, errorMessage],
-  );
+  }, [loadingByBookId, setBookList, setLoadingForBook, setErrorForBook]);
 };
