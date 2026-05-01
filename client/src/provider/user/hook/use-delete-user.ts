@@ -25,7 +25,7 @@ export const useDeleteUser = (): UseDeleteUser => {
         return;
       }
 
-      setUserList(removeUserByUsername(username, userList));
+      setUserList(prev => removeUserByUsername(username, prev));
 
       try {
         setLoading(true);
@@ -40,7 +40,7 @@ export const useDeleteUser = (): UseDeleteUser => {
         }
       } catch (err) {
         setError(true);
-        setUserList({ ...userList, [username]: user });
+        setUserList(prev => ({ ...prev, [username]: user }));
         if (err instanceof Error) setErrorMessage(err.message);
       } finally {
         setLoading(false);

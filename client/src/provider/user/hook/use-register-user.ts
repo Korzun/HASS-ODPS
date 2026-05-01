@@ -34,7 +34,7 @@ export const useRegisterUser = (): UseRegisterUser => {
         return;
       }
 
-      setUserList({ ...userList, [username]: { username, progressCount: 0 } });
+      setUserList(prev => ({ ...prev, [username]: { username, progressCount: 0 } }));
 
       try {
         setLoading(true);
@@ -52,7 +52,7 @@ export const useRegisterUser = (): UseRegisterUser => {
         setOkay(true);
       } catch (err) {
         setError(true);
-        setUserList(removeUserByUsername(username, userList));
+        setUserList(prev => removeUserByUsername(username, prev));
         if (err instanceof Error) {
           setErrorMessage(err.message);
         } else {
