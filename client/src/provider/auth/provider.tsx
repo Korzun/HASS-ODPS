@@ -47,11 +47,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUsername,
         isAdmin,
         setIsAdmin,
+        refetch: fetchMe,
         loading,
         error,
         errorMessage,
       }) as AuthContext,
-    [username, isAdmin, loading, error, errorMessage]
+    [username, isAdmin, loading, error, errorMessage, fetchMe]
   );
 
   return <Context.Provider value={state}>{children}</Context.Provider>;

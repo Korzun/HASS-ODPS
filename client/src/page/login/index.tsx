@@ -1,16 +1,14 @@
-import { useCallback, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useCallback, useContext, useState } from 'react';
 
 import { Page } from '../../component/page';
 import { Button } from '../../control/button';
-import { path } from '../../router';
+import { Context as AuthContext } from '../../provider/auth/context';
 
 import { useStyle } from './style';
 
 export const LoginPage = () => {
   const styles = useStyle();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { refetch } = useContext(AuthContext);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | undefined>();
@@ -26,7 +24,6 @@ export const LoginPage = () => {
   }, []);
 
   const handleLogin = useCallback(async () => {
-    console.log({ username, password });
     try {
       setLoading(true);
       setError(undefined);
@@ -36,7 +33,7 @@ export const LoginPage = () => {
         body: new URLSearchParams({ username, password }),
       });
       if (response.ok) {
-        navigate(location?.state?.from?.pathname ?? path.library());
+        await refetch();
       } else {
         setError('Invalid credentials');
       }
@@ -45,7 +42,7 @@ export const LoginPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [username, password, location]);
+  }, [username, password, refetch]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -90,12 +87,14 @@ export const LoginPage = () => {
             onChange={handlePasswordChange}
             onKeyDown={handleKeyDown}
           />
-          <Button
-            loading={loading}
-            type="primary"
-            text={loading ? 'Signing in…' : 'Sign In'}
-            onClick={handleLogin}
-          />
+          <div className={styles.login}>
+            <Button
+              loading={loading}
+              type="primary"
+              text={loading ? 'Signing in…' : 'Sign In'}
+              onClick={handleLogin}
+            />
+          </div>
         </div>
       </div>
     </Page>

@@ -10,12 +10,15 @@ import { UserListPage } from '../page/user-list';
 import * as path from './path-internal';
 import * as pathKey from './path-key-internal';
 import { ProtectedRoute } from './protected-route';
+import { UnprotectedRoute } from './unprotected-route';
 
 export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path={path.login()} element={<LoginPage />} />
+        <Route element={<UnprotectedRoute />}>
+          <Route path={path.login()} element={<LoginPage />} />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path={path.library()} element={<LibraryPage />} />

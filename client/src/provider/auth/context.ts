@@ -3,6 +3,7 @@ import { createContext } from 'react';
 interface AuthContextMutators {
   setUsername: (username: string) => void;
   setIsAdmin: (isAdmin: boolean) => void;
+  refetch: () => Promise<void>;
 }
 
 export type AuthContext = AuthContextMutators &
@@ -30,6 +31,7 @@ export const Context = createContext<AuthContext>({
   setUsername: () => {},
   isAdmin: false,
   setIsAdmin: () => {},
+  refetch: () => Promise.resolve(),
   loading: true,
   error: false,
   errorMessage: undefined,

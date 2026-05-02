@@ -22,6 +22,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fontSize: theme.text.size.xlg,
     color: theme.colors.text.primary,
     fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '.5rem',
+    justifyContent: 'center',
   },
   label: {
     display: 'block',
@@ -44,6 +48,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       outlineOffset: '-1px',
       borderColor: theme.colors.primary,
     },
+  },
+  login: {
+    marginTop: '0.5rem',
   },
   error: {
     color: theme.colors.danger,

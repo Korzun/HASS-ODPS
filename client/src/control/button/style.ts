@@ -227,6 +227,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
 
   [ButtonType.Link]: {
     cursor: 'pointer',
+    display: 'inline',
+    borderStyle: 'none',
+    outlineStyle: 'none',
     padding: '0',
     color: '#1777FF',
     '&:hover': {
