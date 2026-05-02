@@ -5,22 +5,22 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
     display: 'flex',
     alignItems: 'center',
-    gap: '.75rem',
+    gap: '1rem',
   },
   cover: {
     flexShrink: 0,
     borderRadius: theme.borderRadius.sm,
   },
   coverImg: {
-    width: 40,
-    height: 56,
+    width: 43,
+    height: 60,
     objectFit: 'cover',
     borderRadius: 2,
     display: 'block',
   },
   coverPlaceholder: {
-    width: 40,
-    height: 56,
+    width: 43,
+    height: 60,
     background: '#e0e0e0',
     borderRadius: 2,
   },
