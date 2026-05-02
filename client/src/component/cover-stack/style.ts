@@ -5,7 +5,8 @@ export const useStyle = createUseStyles(() => ({
     flexShrink: 0,
     margin: 0,
     padding: 0,
-    marginBottom: '-6px',
+    marginBottom: '-12px',
+    marginRight: '-15px',
   },
   wrapper: {
     position: 'absolute',
