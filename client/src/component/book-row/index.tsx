@@ -4,52 +4,85 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../control/button';
 import { ConfirmModal } from '../../control/confirm-modal';
 import { useIsAdmin } from '../../provider/auth';
-import { useDeleteBook, type Book } from '../../provider/book';
+import { useBook, useDeleteBook } from '../../provider/book';
+import { useMyProgress } from '../../provider/progress';
 import * as path from '../../router/path';
 import { formatSize } from '../../utils';
 import { Card } from '../card';
 
 import { useStyle } from './style';
 
-interface BookCardProps {
-  book: Book;
-  progress?: number; // 0–1; undefined = no reading data
+interface BookRowdProps {
+  bookId: string;
 }
 
-export function BookCard({ book, progress }: BookCardProps) {
+export function BookRow({ bookId }: BookRowdProps) {
   const styles = useStyle();
   const navigate = useNavigate();
   const [isAdmin] = useIsAdmin();
 
+  const [book, loading, error] = useBook(bookId);
+  const [progress] = useMyProgress(bookId);
   const [deleteBook] = useDeleteBook();
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const handleDelete = useCallback(() => {
+    if (!book) {
+      return;
+    }
     setShowDeleteModal(true);
-  }, [deleteBook, book.title, book.id]);
+  }, [deleteBook]);
   const handleDeleteCancel = useCallback(() => {
     setShowDeleteModal(false);
   }, []);
   const handleDeleteConfirm = useCallback(() => {
     setShowDeleteModal(false);
+    if (!book) {
+      return;
+    }
     deleteBook(book.id);
-  }, [deleteBook]);
+  }, [deleteBook, book]);
 
   const [showDeleteProgressModal, setShowDeleteProgressModal] = useState<boolean>(false);
   const handleDeleteProgress = useCallback(() => {
+    if (!book) {
+      return;
+    }
     setShowDeleteProgressModal(true);
-  }, [deleteBook, book.title, book.id]);
+  }, [deleteBook, book]);
   const handleDeleteProgressCancel = useCallback(() => {
     setShowDeleteProgressModal(false);
   }, []);
   const handleDeleteProgressConfirm = useCallback(() => {
     setShowDeleteProgressModal(false);
-    // deleteBook(book.id);
+    if (!book) {
+      return;
+    }
+    deleteBook(book.id);
   }, [deleteBook]);
 
   const handleNavigate = useCallback(() => {
+    if (!book) {
+      return;
+    }
     navigate(path.book(book.id));
-  }, []);
+  }, [book]);
+
+  if (loading) {
+    return (
+      <Card onClick={handleNavigate}>
+        <div className={styles.root}>Loading...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card onClick={handleNavigate}>
+        <div className={styles.root}>Error loading book</div>
+      </Card>
+    );
+  }
 
   return (
     <Card onClick={handleNavigate}>
@@ -70,7 +103,9 @@ export function BookCard({ book, progress }: BookCardProps) {
           {book.author.length > 0 && <div className={styles.meta}>{book.author}</div>}
           <div className={styles.format}>EPUB · {formatSize(book.size)}</div>
         </div>
-        {progress != null && <span className={styles.progress}>{Math.round(progress * 100)}%</span>}
+        {progress != null && (
+          <span className={styles.progress}>{Math.round((progress.percentage ?? 0) * 100)}%</span>
+        )}
 
         {progress != null && !isAdmin && (
           <Button text="Clear progress" onClick={handleDeleteProgress} type="link" danger />

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { Button } from '../../control/button';
 import { useSeriesBookList } from '../../provider/book';
 import { useMySeriesProgress } from '../../provider/progress';
 import * as path from '../../router/path';
@@ -51,7 +52,7 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
         <div className={styles.info}>
           <div className={styles.name}>{seriesName}</div>
           <div className={styles.meta}>{meta.join(' · ')}</div>
-          <div className={styles.link}>View series →</div>
+          <Button type="link" text="View series →" />
         </div>
       </div>
     </Card>

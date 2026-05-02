@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 
-import { BookCard } from '../../component/book-card';
+import { BookRow } from '../../component/book-row';
 import { CoverStack } from '../../component/cover-stack';
 import { Page } from '../../component/page';
 import { BreadcrumbList } from '../../panel/breadcrumb-list';
@@ -43,7 +43,7 @@ export const SeriesPage = () => {
       <h2 className={styles.readingOrderLabel}>Reading Order</h2>
       <div className={styles.bookList}>
         {seriesBookList.map((book) => (
-          <BookCard key={book.id} book={book} />
+          <BookRow key={book.id} bookId={book.id} />
         ))}
       </div>
     </Page>

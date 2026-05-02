@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { BookCard } from '../../component/book-card';
+import { BookRow } from '../../component/book-row';
 import { SeriesRow } from '../../component/series-row';
 import { useSeriesList, useStandaloneBookList } from '../../provider/book';
 
@@ -19,7 +19,7 @@ export const BookListPanel = () => {
     Array.isArray(book) ? (
       <SeriesRow key={book[0]} seriesName={book[0]} />
     ) : (
-      <BookCard key={book.id} book={book} />
+      <BookRow key={book.id} bookId={book.id} />
     )
   );
 };
