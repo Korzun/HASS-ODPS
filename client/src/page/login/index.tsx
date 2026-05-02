@@ -2,6 +2,7 @@ import { useCallback, useContext, useState } from 'react';
 
 import { Page } from '../../component/page';
 import { Button } from '../../control/button';
+import { BooksIcon } from '../../icon/books';
 import { Context as AuthContext } from '../../provider/auth/context';
 
 import { useStyle } from './style';
@@ -58,7 +59,9 @@ export const LoginPage = () => {
     <Page type="minimal">
       <div className={styles.root}>
         <div className={styles.form}>
-          <h1 className={styles.title}>HASS-ODPS</h1>
+          <h1 className={styles.title}>
+            <BooksIcon /> HASS-ODPS
+          </h1>
           {error && <p className={styles.error}>{error}</p>}
           <label className={styles.label} htmlFor="username">
             Username

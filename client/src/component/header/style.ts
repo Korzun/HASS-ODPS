@@ -10,8 +10,14 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  spacer: {
+    flexGrow: 1,
+  },
   title: {
     fontSize: '1.25rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '.5rem',
   },
   actions: {
     display: 'flex',
