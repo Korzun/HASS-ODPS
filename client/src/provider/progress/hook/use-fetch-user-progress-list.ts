@@ -1,5 +1,6 @@
 import { useCallback, useContext } from 'react';
 
+import { useIsAdmin } from '../../auth';
 import { Context } from '../context';
 import type { Progress, UserProgressList } from '../type';
 
@@ -8,10 +9,11 @@ export type FetchUserProgressList = (username: string) => Promise<void>;
 export const useFetchUserProgressList = (): FetchUserProgressList => {
   const { loadingByUsername, setLoadingForUsername, setErrorForUsername, setProgressForUsername } =
     useContext(Context);
+  const [isAdmin] = useIsAdmin();
 
   return useCallback(
     async (username: string) => {
-      if (loadingByUsername[username]) return;
+      if (isAdmin === true || loadingByUsername[username]) return;
 
       setLoadingForUsername(username, true);
       setErrorForUsername(username, undefined);
@@ -29,6 +31,6 @@ export const useFetchUserProgressList = (): FetchUserProgressList => {
         setLoadingForUsername(username, false);
       }
     },
-    [loadingByUsername, setLoadingForUsername, setErrorForUsername, setProgressForUsername]
+    [loadingByUsername, setLoadingForUsername, setErrorForUsername, setProgressForUsername, isAdmin]
   );
 };

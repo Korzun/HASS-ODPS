@@ -1,6 +1,6 @@
 import { useCallback, useContext } from 'react';
 
-import { useUsername } from '../../../provider/auth';
+import { useIsAdmin, useUsername } from '../../../provider/auth';
 import { Context } from '../context';
 import type { Progress, UserProgressList } from '../type';
 
@@ -10,9 +10,10 @@ export const useFetchMyProgressList = (): FetchMyProgressList => {
   const { loadingByUsername, setLoadingForUsername, setErrorForUsername, setProgressForUsername } =
     useContext(Context);
   const [username] = useUsername();
+  const [isAdmin] = useIsAdmin();
 
   return useCallback(async () => {
-    if (username === undefined) return;
+    if (isAdmin === true || username === undefined) return;
     if (loadingByUsername[username]) return;
 
     setLoadingForUsername(username, true);
