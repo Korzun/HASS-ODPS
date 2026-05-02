@@ -45,9 +45,9 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
         <CoverStack
           seriesName={seriesName}
           containerWidth={58}
-          containerHeight={74}
-          layerWidth={44}
-          layerHeight={62}
+          containerHeight={72}
+          layerWidth={43}
+          layerHeight={60}
         />
         <div className={styles.info}>
           <div className={styles.name}>{seriesName}</div>
