@@ -5,6 +5,7 @@ export const bookEdit = (bookId: string) => pathInternal.bookEdit(encodeURICompo
 export const library = () => pathInternal.library();
 export const series = (seriesName: string) => pathInternal.series(encodeURIComponent(seriesName));
 export const userList = () => pathInternal.userList();
+export const login = () => pathInternal.login();
 
 // Server
 export const cover = (bookId: string) => pathInternal.cover(encodeURIComponent(bookId));

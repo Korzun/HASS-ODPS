@@ -1,6 +1,12 @@
 import { createUseStyles } from '../../provider/theme';
 import type { Theme } from '../../provider/theme';
 
+export type PageTypeValue = 'default' | 'minimal';
+export enum PageType {
+  default = 'default',
+  minimal = 'minimal',
+}
+
 export const useStyle = createUseStyles((theme: Theme) => ({
   '@global': {
     body: {
@@ -10,9 +16,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       minHeight: '100vh',
     },
   },
-  root: {
+  [PageType.default]: {
     maxWidth: 800,
     margin: '2rem auto',
     padding: '0 1rem',
   },
+  [PageType.minimal]: {},
 }));

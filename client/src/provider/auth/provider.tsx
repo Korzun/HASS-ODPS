@@ -6,7 +6,7 @@ export type AuthProviderProps = { children: ReactNode };
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [username, setUsername] = useState<AuthContext['username']>();
   const [isAdmin, setIsAdmin] = useState<AuthContext['isAdmin']>(false);
-  const [loading, setLoading] = useState<AuthContext['loading']>(false);
+  const [loading, setLoading] = useState<AuthContext['loading']>(true);
   const [error, setError] = useState<AuthContext['error']>(false);
   const [errorMessage, setErrorMessage] = useState<AuthContext['errorMessage']>();
 

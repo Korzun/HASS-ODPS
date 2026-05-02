@@ -44,12 +44,20 @@ export const Button = ({
     [onClick]
   );
 
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.stopPropagation();
+      onClick();
+    }
+  }, []);
+
   return (
     <div
       role="button"
       tabIndex={tabIndex}
       className={className}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       title={title ?? text}
     >
       {loading && <LoadingSpinner />}

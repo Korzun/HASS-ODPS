@@ -12,8 +12,8 @@ export const Header = () => {
     <header className={styles.root}>
       <h1 className={styles.title}>HASS-ODPS Library</h1>
       <div className={styles.actions}>
-        <span className={styles.username}>{username}</span>
-        <Button onClick={logout} loading={loading} text="Sign Out" />
+        {username && <span className={styles.username}>{username}</span>}
+        {username && <Button onClick={logout} loading={loading} text="Sign Out" />}
       </div>
     </header>
   );

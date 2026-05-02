@@ -113,7 +113,7 @@ function makeEpub(
 async function adminAgent() {
   const agent = request.agent(app);
   await agent
-    .post('/login')
+    .post('/api/login')
     .send('username=admin&password=pass')
     .set('Content-Type', 'application/x-www-form-urlencoded');
   return agent;
@@ -122,7 +122,7 @@ async function adminAgent() {
 async function userAgent() {
   const agent = request.agent(app);
   await agent
-    .post('/login')
+    .post('/api/login')
     .send('username=alice&password=alicepass')
     .set('Content-Type', 'application/x-www-form-urlencoded');
   return agent;
@@ -161,28 +161,26 @@ describe('GET /', () => {
   });
 });
 
-describe('POST /login', () => {
-  it('redirects to / on correct admin credentials', async () => {
+describe('POST /api/login', () => {
+  it('returns 200 on correct admin credentials', async () => {
     const res = await request(app)
-      .post('/login')
+      .post('/api/login')
       .send('username=admin&password=pass')
       .set('Content-Type', 'application/x-www-form-urlencoded');
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/');
+    expect(res.status).toBe(200);
   });
 
-  it('redirects to / on correct regular user credentials', async () => {
+  it('returns 200 on correct regular user credentials', async () => {
     const res = await request(app)
-      .post('/login')
+      .post('/api/login')
       .send('username=alice&password=alicepass')
       .set('Content-Type', 'application/x-www-form-urlencoded');
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/');
+    expect(res.status).toBe(200);
   });
 
   it('returns 401 on wrong password', async () => {
     const res = await request(app)
-      .post('/login')
+      .post('/api/login')
       .send('username=admin&password=wrong')
       .set('Content-Type', 'application/x-www-form-urlencoded');
     expect(res.status).toBe(401);
@@ -190,7 +188,7 @@ describe('POST /login', () => {
 
   it('returns 401 for unknown user', async () => {
     const res = await request(app)
-      .post('/login')
+      .post('/api/login')
       .send('username=nobody&password=pass')
       .set('Content-Type', 'application/x-www-form-urlencoded');
     expect(res.status).toBe(401);

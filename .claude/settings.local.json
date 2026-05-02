@@ -25,7 +25,8 @@
       "Bash(python3 -c \"import sys,json; [print\\(f['path']\\) for f in json.load\\(sys.stdin\\)['tree'] if f['path'].endswith\\('.lua'\\)]\")",
       "Bash(npx vitest *)",
       "Bash(npx eslint *)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "Bash(npx jest *)"
     ]
   }
 }

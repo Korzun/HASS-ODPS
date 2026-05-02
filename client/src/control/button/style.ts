@@ -28,7 +28,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     borderWidth: '1px',
     borderRadius: theme.borderRadius.sm,
     padding: '.5rem 1rem',
-    margin: '2px',
+    // margin: '2px',
     cursor: 'pointer',
     fontSize: '0.80rem',
     userSelect: 'none',
