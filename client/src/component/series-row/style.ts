@@ -9,7 +9,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     // marginBottom: '.5rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '.9rem',
+    gap: '1rem',
     // boxShadow: theme.shadows.card,
     // cursor: 'pointer',
     // border: '1px solid transparent',
