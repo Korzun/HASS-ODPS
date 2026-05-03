@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { Page } from '../../component/page';
 import { Button } from '../../control/button';
-import { BreadcrumbList } from '../../panel/breadcrumb-list';
 import { useIsAdmin } from '../../provider/auth';
 import { useBook } from '../../provider/book';
 import * as path from '../../router/path';
@@ -29,10 +28,6 @@ export const BookPage = () => {
 
   return (
     <Page>
-      <BreadcrumbList
-        currentTitle={book.title}
-        previous={book.series ? [{ path: path.series(book.series), text: book.series }] : []}
-      />
       <div className={styles.detail}>
         {book.hasCover ? (
           <img
