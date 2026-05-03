@@ -10,6 +10,6 @@ export const UnprotectedRoute = () => {
   if (loading === true) {
     return <div>loading...</div>;
   }
-  const destination = location.state?.from?.pathname ?? path.library();
+  const destination = location.state?.from?.pathname ?? path.home();
   return username ? <Navigate to={destination} replace /> : <Outlet />;
 };

@@ -1,6 +1,7 @@
 export const book = (bookId: string) => `/book/${bookId}`;
 export const bookEdit = (bookId: string) => `/book/${bookId}/edit`;
-export const library = () => '/';
+export const home = () => '/';
+export const library = () => '/library';
 export const login = () => '/login';
 export const series = (seriesName: string) => `/series/${seriesName}`;
 export const userList = () => '/users';
