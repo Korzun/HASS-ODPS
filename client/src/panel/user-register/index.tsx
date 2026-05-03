@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { Button } from '../../control/button';
 import { useRegisterUser } from '../../provider/user';
 
 import { useStyle } from './style';
@@ -42,14 +43,12 @@ export const UserRegisterPanel = () => {
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button
-          type="button"
-          className={styles.btn}
+        <Button
+          type="primary"
+          loading={loading}
+          text={loading ? 'Registering…' : 'Register'}
           onClick={handleRegisterUser}
-          disabled={loading}
-        >
-          {loading ? 'Registering…' : 'Register'}
-        </button>
+        />
       </div>
       {(okay || error) && (
         <div className={okay ? styles.statusOk : styles.statusErr}>

@@ -1,7 +1,11 @@
 import { createUseStyles } from '../../provider/theme';
 import type { Theme } from '../../provider/theme';
 
-const statusBase = { marginTop: '.4rem', fontSize: '.8rem', minHeight: '1rem' };
+const statusBase = {
+  marginTop: '.4rem',
+  fontSize: '.8rem',
+  minHeight: '1rem',
+};
 
 export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
@@ -12,12 +16,11 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     boxShadow: theme.shadows.card,
   },
   title: {
-    fontSize: '.8rem',
-    fontWeight: 600,
-    color: theme.colors.text.secondary,
+    fontWeight: 500,
     marginBottom: '.5rem',
-    textTransform: 'uppercase',
-    letterSpacing: '.05em',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   row: {
     display: 'flex',
@@ -28,25 +31,13 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   input: {
     flex: 1,
     minWidth: 120,
-    padding: '.4rem .6rem',
+    padding: '.45rem .6rem',
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.sm,
     fontSize: '.875rem',
     fontFamily: 'inherit',
     background: theme.colors.bg.input,
     color: theme.colors.text.primary,
-  },
-  btn: {
-    background: theme.colors.primary,
-    color: '#fff',
-    border: 'none',
-    borderRadius: theme.borderRadius.sm,
-    padding: '.4rem .9rem',
-    fontSize: '.875rem',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap',
-    '&:disabled': { opacity: 0.6, cursor: 'not-allowed' },
   },
   statusOk: { ...statusBase, color: theme.colors.success },
   statusErr: { ...statusBase, color: theme.colors.danger },
