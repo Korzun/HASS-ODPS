@@ -8,6 +8,5 @@ export const LibraryPage = () => (
     {/*<LibraryScanPanel />
     <UploadZonePanel />*/}
     <BookListPanel />
-    <BookListPanel />
   </Page>
 );
