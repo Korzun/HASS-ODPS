@@ -26,7 +26,7 @@ export const Header = () => {
         <nav className={styles.navigation}>
           <Link
             className={cx(styles.navigationItem, {
-              [styles.active]: pathname === path.library(),
+              [styles.active]: pathname.startsWith(path.library()),
             })}
             to={path.library()}
           >
