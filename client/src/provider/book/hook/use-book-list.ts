@@ -12,14 +12,14 @@ export type UseBookList =
   | [Book[], false, true, string];
 
 export const useBookList = (): UseBookList => {
-  const { bookList, bookListLoading, bookListError } = useContext(Context);
+  const { bookList, bookListFetched, bookListLoading, bookListError } = useContext(Context);
   const fetchBookList = useFetchBookList();
 
   useEffect(() => {
-    if (!bookListLoading && bookListError === undefined && Object.keys(bookList).length === 0) {
+    if (!bookListLoading && bookListError === undefined && !bookListFetched) {
       void fetchBookList();
     }
-  }, [bookList, bookListLoading, bookListError, fetchBookList]);
+  }, [bookListFetched, bookListLoading, bookListError, fetchBookList]);
 
   return useMemo(
     () =>

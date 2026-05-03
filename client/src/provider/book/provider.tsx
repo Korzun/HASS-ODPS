@@ -6,6 +6,7 @@ import type { BookList } from './type';
 export type BookProviderProps = { children: ReactNode };
 export const BookProvider = ({ children }: BookProviderProps) => {
   const [bookList, setBookListRaw] = useState<BookList>({});
+  const [bookListFetched, setBookListFetched] = useState(false);
   const [bookListLoading, setBookListLoading] = useState(false);
   const [bookListError, setBookListError] = useState<string | undefined>();
   const [loadingByBookId, setLoadingByBookIdRaw] = useState<Record<string, boolean>>({});
@@ -28,11 +29,13 @@ export const BookProvider = ({ children }: BookProviderProps) => {
     <Context.Provider
       value={{
         bookList,
+        bookListFetched,
         bookListLoading,
         bookListError,
         loadingByBookId,
         errorByBookId,
         setBookList,
+        setBookListFetched,
         setBookListLoading,
         setBookListError,
         setLoadingForBook,

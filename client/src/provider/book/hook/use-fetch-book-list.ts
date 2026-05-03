@@ -6,7 +6,7 @@ import type { Book, BookList } from '../type';
 export type FetchBookList = () => Promise<void>;
 
 export const useFetchBookList = (): FetchBookList => {
-  const { bookListLoading, setBookList, setBookListLoading, setBookListError } =
+  const { bookListLoading, setBookList, setBookListFetched, setBookListLoading, setBookListError } =
     useContext(Context);
 
   return useCallback(async () => {
@@ -21,10 +21,11 @@ export const useFetchBookList = (): FetchBookList => {
       setBookList(() =>
         bookListArray.reduce((acc, book) => ({ ...acc, [book.id]: book }), {} as BookList)
       );
+      setBookListFetched(true);
     } catch (err) {
       setBookListError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setBookListLoading(false);
     }
-  }, [bookListLoading, setBookList, setBookListLoading, setBookListError]);
+  }, [bookListLoading, setBookList, setBookListFetched, setBookListLoading, setBookListError]);
 };
