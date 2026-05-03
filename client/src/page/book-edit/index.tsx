@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { Page } from '../../component/page';
-import { NavigationPanel } from '../../panel/navigation';
 import { useIsAdmin } from '../../provider/auth';
 import { useBook, usePatchBookMetadata } from '../../provider/book';
 
@@ -93,7 +92,6 @@ export const BookEditPage = () => {
 
   return (
     <Page>
-      <NavigationPanel active="library" />
       <div className={styles.topBar}>
         <button
           type="button"

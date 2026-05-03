@@ -4,7 +4,6 @@ import { BookRow } from '../../component/book-row';
 import { CoverStack } from '../../component/cover-stack';
 import { Page } from '../../component/page';
 import { BreadcrumbList } from '../../panel/breadcrumb-list';
-import { NavigationPanel } from '../../panel/navigation';
 import { useSeriesBookList } from '../../provider/book';
 
 import { useStyle } from './style';
@@ -23,7 +22,6 @@ export const SeriesPage = () => {
 
   return (
     <Page>
-      <NavigationPanel active="library" />
       <BreadcrumbList currentTitle={name} />
       <div className={styles.hero}>
         <CoverStack
