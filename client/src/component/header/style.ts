@@ -12,7 +12,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     justifyContent: 'space-between',
     position: 'sticky',
     top: '0px',
-    backdropFilter: 'blur(10px) saturate(0%)',
+    backdropFilter: 'blur(10px) saturate(10%)',
     zIndex: 1000,
   },
   title: {
