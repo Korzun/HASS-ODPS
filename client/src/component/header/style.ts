@@ -1,15 +1,19 @@
 import { createUseStyles } from '../../provider/theme';
 import type { Theme } from '../../provider/theme';
+import { applyTransparency } from '../../utils';
 
 export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
-    background: theme.colors.primary,
-    color: '#fff',
+    background: applyTransparency(theme.colors.bg.page, 0.5),
+    color: '#111111',
     padding: '1rem 1.5rem',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    position: 'relative',
+    position: 'sticky',
+    top: '0px',
+    backdropFilter: 'blur(10px) saturate(0%)',
+    zIndex: 1000,
   },
   title: {
     fontSize: '1.25rem',
@@ -33,7 +37,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   navigationItem: {
     gap: '0.5em',
-    color: '#FFFFFFFF',
+    color: '#111111FF',
     textDecoration: 'none',
     justifyContent: 'center',
     alignItems: 'center',
@@ -52,16 +56,13 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     outlineStyle: 'none',
     paddingBottom: '4px',
     marginTop: '6px',
-    '&:hover, &:focus': {
-      transitionDuration: '0s',
-    },
     '&:hover': {
-      color: '#FFFFFFAA',
-      // borderBottomColor: '#FFFFFF55',
+      transitionDuration: '0s',
+      color: '#11111177',
     },
     '&$active': {
-      color: '#FFFFFFFF',
-      borderBottomColor: '#FFF',
+      color: '#111111FF',
+      borderBottomColor: '#111111',
     },
   },
   actions: {

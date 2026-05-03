@@ -25,13 +25,17 @@ export const Header = () => {
       {isAdmin && (
         <nav className={styles.navigation}>
           <Link
-            className={cx(styles.navigationItem, { [styles.active]: pathname === path.library() })}
+            className={cx(styles.navigationItem, {
+              [styles.active]: pathname === path.library(),
+            })}
             to={path.library()}
           >
             <BookIcon height={14} width={14} /> Library
           </Link>
           <Link
-            className={cx(styles.navigationItem, { [styles.active]: pathname === path.userList() })}
+            className={cx(styles.navigationItem, {
+              [styles.active]: pathname === path.userList(),
+            })}
             to={path.userList()}
           >
             <UsersIcon height={14} width={14} /> Users
