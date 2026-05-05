@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 
-import { Button } from '../../control/button';
-import { ConfirmModal } from '../../control/confirm-modal';
-import { useBook } from '../../provider/book';
-import { useDeleteUserProgress, useUserProgress, type Progress } from '../../provider/progress';
-import { relativeTime } from '../../utils';
+import { Button, ConfirmModal } from '~/control';
+import { useBook } from '~/provider/book';
+import { useDeleteUserProgress, useUserProgress, type Progress } from '~/provider/progress';
+import { relativeTime } from '~/utils';
 
 import { useStyle } from './style';
 

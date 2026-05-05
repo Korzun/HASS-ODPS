@@ -69,6 +69,7 @@ export default tseslint.config(
           pathGroups: [
             { pattern: "@/**", group: "internal" },
             { pattern: "src/**", group: "internal" },
+            { pattern: "~/**", group: "internal" },
           ],
           pathGroupsExcludedImportTypes: ["builtin"],
           "newlines-between": "always",

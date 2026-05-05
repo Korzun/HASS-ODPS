@@ -1,9 +1,9 @@
 import { useCallback, useContext, useState } from 'react';
 
-import { Page } from '../../component/page';
-import { Button } from '../../control/button';
-import { BooksIcon } from '../../icon/books';
-import { Context as AuthContext } from '../../provider/auth/context';
+import { Page } from '~/component';
+import { Button } from '~/control';
+import { BooksIcon } from '~/icon';
+import { Context as AuthContext } from '~/provider/auth/context';
 
 import { useStyle } from './style';
 

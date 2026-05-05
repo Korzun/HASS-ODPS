@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Page } from '../../component/page';
-import { Button } from '../../control/button';
-import { useIsAdmin } from '../../provider/auth';
-import { useBook } from '../../provider/book';
-import * as path from '../../router/path';
-import { formatSize } from '../../utils';
+import { Page } from '~/component';
+import { Button } from '~/control';
+import { useIsAdmin } from '~/provider/auth';
+import { useBook } from '~/provider/book';
+import { path } from '~/router';
+import { formatSize } from '~/utils';
 
 import { useStyle } from './style';
 

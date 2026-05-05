@@ -1,9 +1,7 @@
 import { useParams } from 'react-router-dom';
 
-import { BookRow } from '../../component/book-row';
-import { CoverStack } from '../../component/cover-stack';
-import { Page } from '../../component/page';
-import { useSeriesBookList } from '../../provider/book';
+import { CoverStack, BookRow, Page } from '~/component';
+import { useSeriesBookList } from '~/provider/book';
 
 import { useStyle } from './style';
 

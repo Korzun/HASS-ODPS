@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { Button } from '../../control/button';
-import { useRegisterUser } from '../../provider/user';
+import { Button } from '~/control';
+import { useRegisterUser } from '~/provider/user';
 
 import { useStyle } from './style';
 

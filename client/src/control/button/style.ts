@@ -1,6 +1,5 @@
-import { createUseStyles } from '../../provider/theme';
-import type { Theme } from '../../provider/theme';
-import { applyTransparency } from '../../utils';
+import { createUseStyles, type Theme } from '~/provider/theme';
+import { applyTransparency } from '~/utils';
 
 export type ButtonTypeValue = 'default' | 'primary' | 'text' | 'link';
 export enum ButtonType {

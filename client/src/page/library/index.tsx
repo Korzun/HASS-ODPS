@@ -1,7 +1,4 @@
-import { Page } from '../../component/page';
-import { BookList } from '../../component/book-list';
-// import { LibraryScan } from '../../component/library-scan';
-// import { UploadZone } from '../../component/upload-zone';
+import { Page, BookList, LibraryScan, UploadZone } from '~/component';
 
 export const LibraryPage = () => (
   <Page>

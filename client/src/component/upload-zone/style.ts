@@ -1,5 +1,4 @@
-import { createUseStyles } from '../../provider/theme';
-import type { Theme } from '../../provider/theme';
+import { createUseStyles, type Theme } from '~/provider/theme';
 
 // Drag-over highlight colours (higher-saturation variants of primaryBorder/primaryLight)
 const DRAG_OVER_BORDER = '#3b82f6';

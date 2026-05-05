@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '../../control/button';
-import { useSeriesBookList } from '../../provider/book';
-import { useMySeriesProgress } from '../../provider/progress';
-import * as path from '../../router/path';
+import { Button } from '~/control/button';
+import { useSeriesBookList } from '~/provider/book';
+import { useMySeriesProgress } from '~/provider/progress';
+import { path } from '~/router';
+
 import { Card } from '../card';
 import { CoverStack } from '../cover-stack';
 

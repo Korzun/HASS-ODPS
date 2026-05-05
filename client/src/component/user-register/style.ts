@@ -1,5 +1,4 @@
-import { createUseStyles } from '../../provider/theme';
-import type { Theme } from '../../provider/theme';
+import { createUseStyles, type Theme } from '~/provider/theme';
 
 const statusBase = {
   marginTop: '.4rem',

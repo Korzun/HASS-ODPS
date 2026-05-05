@@ -1,9 +1,9 @@
 import { ReactNode, useCallback, useState } from 'react';
 
-import { Button } from '../../control/button';
-import { ConfirmModal } from '../../control/confirm-modal';
-import { useUserProgressList } from '../../provider/progress';
-import { useDeleteUser, useUser } from '../../provider/user';
+import { Button, ConfirmModal } from '~/control';
+import { useUserProgressList } from '~/provider/progress';
+import { useDeleteUser, useUser } from '~/provider/user';
+
 import { CollapsibleSection } from '../collapsible-section';
 import { UserBookRow } from '../user-book-row';
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useUploadBookList } from '../../provider/book';
+import { useUploadBookList } from '~/provider/book';
 
 import { useStyle } from './style';
 

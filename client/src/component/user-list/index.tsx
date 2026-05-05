@@ -1,5 +1,5 @@
-import { UserRow } from '../../component/user-row';
-import { useUserList } from '../../provider/user';
+import { UserRow } from '~/component';
+import { useUserList } from '~/provider/user';
 
 import { useStyle } from './style';
 

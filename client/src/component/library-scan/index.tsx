@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
-import { Button } from '../../control/button';
-import { useIsAdmin } from '../../provider/auth';
-import { useScanLibrary } from '../../provider/book';
+import { Button } from '~/control/button';
+import { useIsAdmin } from '~/provider/auth';
+import { useScanLibrary } from '~/provider/book';
 
 import { useStyle } from './style';
 

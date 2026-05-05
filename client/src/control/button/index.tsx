@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../loading-spinner';
 
 import { ButtonType, ButtonTypeValue, useStyle } from './style';
 
-export type ButtonProps = {
+type ButtonProps = {
   danger?: boolean;
   disabled?: boolean;
   loading?: boolean;

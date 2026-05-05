@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { Page } from '../../component/page';
-import { Button } from '../../control/button';
-import { useBook, usePatchBookMetadata } from '../../provider/book';
-import { path } from '../../router';
-import { areObjectArraysIdentical, areStringArraysIdentical } from '../../utils';
+import { Page } from '~/component';
+import { Button } from '~/control';
+import { useBook, usePatchBookMetadata } from '~/provider/book';
+import { path } from '~/router';
+import { areObjectArraysIdentical, areStringArraysIdentical } from '~/utils';
 
 import { useStyle } from './style';
 

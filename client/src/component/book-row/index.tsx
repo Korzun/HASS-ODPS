@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '../../control/button';
-import { ConfirmModal } from '../../control/confirm-modal';
-import { useIsAdmin } from '../../provider/auth';
-import { useBook, useDeleteBook } from '../../provider/book';
-import { useMyProgress } from '../../provider/progress';
-import * as path from '../../router/path';
-import { formatSize } from '../../utils';
+import { Button, ConfirmModal } from '~/control';
+import { useIsAdmin } from '~/provider/auth';
+import { useBook, useDeleteBook } from '~/provider/book';
+import { useMyProgress } from '~/provider/progress';
+import { path } from '~/router';
+import { formatSize } from '~/utils';
+
 import { Card } from '../card';
 
 import { useStyle } from './style';

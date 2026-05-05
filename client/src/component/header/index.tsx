@@ -1,12 +1,10 @@
 import cx from 'classnames';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Button } from '../../control/button';
-import { BookIcon } from '../../icon/book';
-import { BooksIcon } from '../../icon/books';
-import { UsersIcon } from '../../icon/users';
-import { useIsAdmin, useLogout, useUsername } from '../../provider/auth';
-import { path } from '../../router';
+import { Button } from '~/control';
+import { BookIcon, BooksIcon, UsersIcon } from '~/icon';
+import { useIsAdmin, useLogout, useUsername } from '~/provider/auth';
+import { path } from '~/router';
 
 import { useStyle } from './style';
 

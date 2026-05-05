@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
-import { BookRow } from '../../component/book-row';
-import { SeriesRow } from '../../component/series-row';
-import { useSeriesList, useStandaloneBookList } from '../../provider/book';
+import { useSeriesList, useStandaloneBookList } from '~/provider/book';
+
+import { BookRow } from '../book-row';
+import { SeriesRow } from '../series-row';
 
 export const BookList = () => {
   const [standaloneBookList] = useStandaloneBookList();

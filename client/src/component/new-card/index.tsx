@@ -2,10 +2,10 @@ import { PropsWithChildren, useCallback } from 'react';
 
 import { useStyle } from './style';
 
-type CardProps = PropsWithChildren<{
+export type Props = PropsWithChildren<{
   onClick?: () => void;
 }>;
-export const Card = ({ children, onClick = () => {} }: CardProps) => {
+export const Card = ({ children, onClick = () => {} }: Props) => {
   const styles = useStyle();
 
   const handleBookKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {

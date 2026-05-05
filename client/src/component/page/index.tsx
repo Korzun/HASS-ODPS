@@ -5,7 +5,7 @@ import { Header } from '../header';
 
 import { useStyle, PageType, PageTypeValue } from './style';
 
-export type PageProps = PropsWithChildren<{ type?: PageTypeValue }>;
+type PageProps = PropsWithChildren<{ type?: PageTypeValue }>;
 export const Page = ({ children, type = PageType.default as PageTypeValue }: PageProps) => {
   const styles = useStyle();
 

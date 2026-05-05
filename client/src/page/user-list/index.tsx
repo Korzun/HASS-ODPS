@@ -1,6 +1,4 @@
-import { Page } from '../../component/page';
-import { UserList } from '../../component/user-list';
-import { UserRegister } from '../../component/user-register';
+import { Page, UserList, UserRegister } from '~/component';
 
 export const UserListPage = () => (
   <Page>
