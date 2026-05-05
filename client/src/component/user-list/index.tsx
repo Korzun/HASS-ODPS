@@ -3,7 +3,7 @@ import { useUserList } from '../../provider/user';
 
 import { useStyle } from './style';
 
-export const UserListPanel = () => {
+export const UserList = () => {
   const styles = useStyle();
   const [userList, loading] = useUserList();
 

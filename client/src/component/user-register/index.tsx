@@ -5,7 +5,7 @@ import { useRegisterUser } from '../../provider/user';
 
 import { useStyle } from './style';
 
-export const UserRegisterPanel = () => {
+export const UserRegister = () => {
   const styles = useStyle();
 
   const [registerUser, loading, okay, error, errorMessage] = useRegisterUser();

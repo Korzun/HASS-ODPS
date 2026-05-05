@@ -9,7 +9,7 @@ type UploadStatus = {
   ok: boolean;
 };
 
-export const UploadZonePanel = () => {
+export const UploadZone = () => {
   const styles = useStyle();
 
   const [dragOver, setDragOver] = useState<boolean>(false);

@@ -5,7 +5,7 @@ import { getUsers } from '../../../api/users';
 import { renderWithProviders } from '../../../test-utils';
 import type { User } from '../../../types';
 
-import { UsersPanel } from './index';
+import { UserList } from './index';
 
 vi.mock('./register-user-form', () => ({
   RegisterUserForm: ({ onSuccess }: { onSuccess: () => void }) => (
@@ -29,7 +29,7 @@ beforeEach(() => {
 
 it('shows loading state initially', () => {
   vi.mocked(getUsers).mockReturnValue(new Promise(() => {}));
-  renderWithProviders(<UsersPanel books={[]} />);
+  renderWithProviders(<UserList books={[]} />);
   expect(screen.getByText(/loading/i)).toBeInTheDocument();
 });
 
@@ -38,20 +38,20 @@ it('renders a UserRow per user after data loads', async () => {
     { username: 'alice', progressCount: 2 },
     { username: 'bob', progressCount: 0 },
   ]);
-  renderWithProviders(<UsersPanel books={[]} />);
+  renderWithProviders(<UserList books={[]} />);
   await waitFor(() => expect(screen.getAllByTestId('user-row')).toHaveLength(2));
 });
 
 it('shows empty state when no users are registered', async () => {
   vi.mocked(getUsers).mockResolvedValue([]);
-  renderWithProviders(<UsersPanel books={[]} />);
+  renderWithProviders(<UserList books={[]} />);
   await waitFor(() => expect(screen.getByText(/no kosync users/i)).toBeInTheDocument());
 });
 
 it('re-fetches users when RegisterUserForm fires onSuccess', async () => {
   const u = userEvent.setup();
   vi.mocked(getUsers).mockResolvedValue([]);
-  renderWithProviders(<UsersPanel books={[]} />);
+  renderWithProviders(<UserList books={[]} />);
   await waitFor(() => expect(screen.getByTestId('reg-success')).toBeInTheDocument());
   await u.click(screen.getByTestId('reg-success'));
   expect(vi.mocked(getUsers)).toHaveBeenCalledTimes(2);

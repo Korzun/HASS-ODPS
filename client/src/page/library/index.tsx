@@ -1,12 +1,12 @@
 import { Page } from '../../component/page';
-import { BookListPanel } from '../../panel/book-list';
-// import { LibraryScanPanel } from '../../panel/library-scan';
-// import { UploadZonePanel } from '../../panel/upload-zone';
+import { BookList } from '../../component/book-list';
+// import { LibraryScan } from '../../component/library-scan';
+// import { UploadZone } from '../../component/upload-zone';
 
 export const LibraryPage = () => (
   <Page>
-    {/*<LibraryScanPanel />
-    <UploadZonePanel />*/}
-    <BookListPanel />
+    {/*<LibraryScan />
+    <UploadZone />*/}
+    <BookList />
   </Page>
 );

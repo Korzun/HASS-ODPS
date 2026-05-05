@@ -26,7 +26,13 @@
       "Bash(npx vitest *)",
       "Bash(npx eslint *)",
       "Bash(npm uninstall *)",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "Bash(xargs ls *)",
+      "Bash(mv panel/book-list component/book-list)",
+      "Bash(mv panel/library-scan component/library-scan)",
+      "Bash(mv panel/series-list component/series-list)",
+      "Bash(mv panel/standalone-book-list component/standalone-book-list)",
+      "Bash(mv panel/upload-zone component/upload-zone)"
     ]
   }
 }

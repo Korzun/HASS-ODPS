@@ -4,7 +4,7 @@ import { BookRow } from '../../component/book-row';
 import { SeriesRow } from '../../component/series-row';
 import { useSeriesList, useStandaloneBookList } from '../../provider/book';
 
-export const BookListPanel = () => {
+export const BookList = () => {
   const [standaloneBookList] = useStandaloneBookList();
   const [seriesBookList] = useSeriesList();
   const bookList = useMemo(() => {

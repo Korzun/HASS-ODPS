@@ -6,7 +6,7 @@ import { useScanLibrary } from '../../provider/book';
 
 import { useStyle } from './style';
 
-export const LibraryScanPanel = () => {
+export const LibraryScan = () => {
   const styles = useStyle();
   const [isAdmin] = useIsAdmin();
 

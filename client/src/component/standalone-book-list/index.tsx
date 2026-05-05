@@ -2,7 +2,7 @@ import { BookCard } from '../../component/book-card';
 import { CollapsibleSection } from '../../component/collapsible-section';
 import { useStandaloneBookList } from '../../provider/book/hook';
 
-export const StandaloneBookListPanel = () => {
+export const StandaloneBookList = () => {
   const [bookList] = useStandaloneBookList();
   const subTitle = `${bookList.length} book${bookList.length !== 1 ? 's' : ''}`;
 

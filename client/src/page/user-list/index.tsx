@@ -1,10 +1,10 @@
 import { Page } from '../../component/page';
-import { UserListPanel } from '../../panel/user-list';
-import { UserRegisterPanel } from '../../panel/user-register';
+import { UserList } from '../../component/user-list';
+import { UserRegister } from '../../component/user-register';
 
 export const UserListPage = () => (
   <Page>
-    <UserRegisterPanel />
-    <UserListPanel />
+    <UserRegister />
+    <UserList />
   </Page>
 );
