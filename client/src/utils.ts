@@ -54,3 +54,35 @@ export function applyTransparency(color: string, alpha: number): string {
 
   throw new Error(`Unsupported color format: "${color}"`);
 }
+
+export const areObjectArraysIdentical = <T extends Record<string, unknown>>(
+  arrayA: T[],
+  arrayB: T[]
+): boolean => {
+  if (arrayA === arrayB) return true;
+  if (arrayA == null || arrayB == null) return false;
+  if (arrayA.length !== arrayB.length) return false;
+
+  const serialize = (obj: T) => JSON.stringify(obj, Object.keys(obj).sort());
+  const sortedA = [...arrayA].map(serialize).sort();
+  const sortedB = [...arrayB].map(serialize).sort();
+
+  for (let index = 0; index < sortedA.length; ++index) {
+    if (sortedA[index] !== sortedB[index]) return false;
+  }
+  return true;
+};
+
+export const areStringArraysIdentical = (arrayA: string[], arrayB: string[]): boolean => {
+  if (arrayA === arrayB) return true;
+  if (arrayA == null || arrayB == null) return false;
+  if (arrayA.length !== arrayB.length) return false;
+
+  const sortedArrayA = [...arrayA].sort((stringA, stringB) => stringA.localeCompare(stringB));
+  const sortedArrayB = [...arrayB].sort((stringA, stringB) => stringA.localeCompare(stringB));
+
+  for (let index = 0; index < sortedArrayA.length; ++index) {
+    if (sortedArrayA[index] !== sortedArrayB[index]) return false;
+  }
+  return true;
+};

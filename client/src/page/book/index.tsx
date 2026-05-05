@@ -68,7 +68,7 @@ export const BookPage = () => {
       {book.identifiers.length > 0 && (
         <div className={styles.identifiers}>
           {book.identifiers.map(({ scheme, value }) => (
-            <div key={scheme} className={styles.identifier}>
+            <div key={value + scheme} className={styles.identifier}>
               <span className={styles.scheme}>{scheme}</span>: {value}
             </div>
           ))}

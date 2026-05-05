@@ -3,8 +3,21 @@ import { useCallback, useContext, useState, useMemo } from 'react';
 import { Context } from '../context';
 import { Book } from '../type';
 
+export type BookMetadataPatch = Partial<{
+  author: string;
+  cover: File;
+  description: string;
+  fileAs: string;
+  identifiers: { scheme: string; value: string }[];
+  publisher: string;
+  series: string;
+  seriesIndex: number;
+  subjects: string[];
+  title: string;
+}>;
+
 export type UsePatchBookMetadata = [
-  (bookId: string, data: FormData) => Promise<string | undefined>,
+  (bookId: string, patch: BookMetadataPatch) => Promise<string | undefined>,
   boolean,
   boolean,
   string | undefined,
@@ -16,7 +29,7 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const patchBookMetadata = useCallback(
-    async (bookId: string, data: FormData): Promise<string | undefined> => {
+    async (bookId: string, patch: BookMetadataPatch): Promise<string | undefined> => {
       // Prevent multiple parallel requests
       if (loading === true) {
         return;
@@ -27,9 +40,19 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
       setErrorMessage(undefined);
 
       try {
+        const fd = new FormData();
+        const { cover, identifiers, subjects, seriesIndex, ...scalars } = patch;
+        for (const [key, value] of Object.entries(scalars)) {
+          if (value !== undefined) fd.append(key, value as string);
+        }
+        if (seriesIndex !== undefined) fd.append('seriesIndex', String(seriesIndex));
+        if (subjects !== undefined) fd.append('subjects', JSON.stringify(subjects));
+        if (identifiers !== undefined) fd.append('identifiers', JSON.stringify(identifiers));
+        if (cover !== undefined) fd.append('cover', cover);
+
         const response = await fetch(`/api/books/${encodeURIComponent(bookId)}/metadata`, {
           method: 'PATCH',
-          body: data,
+          body: fd,
         });
         if (!response.ok) {
           const body = (await response.json().catch(() => ({}))) as { error?: string };
@@ -44,7 +67,9 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
         return updatedBook.id;
       } catch (err) {
         setError(true);
-        if (err instanceof Error) setErrorMessage(err.message);
+        if (err instanceof Error) {
+          setErrorMessage(err.message);
+        }
       } finally {
         setLoading(false);
       }

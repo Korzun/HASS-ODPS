@@ -1,36 +1,101 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { Page } from '../../component/page';
-import { useIsAdmin } from '../../provider/auth';
+import { Button } from '../../control/button';
 import { useBook, usePatchBookMetadata } from '../../provider/book';
+import { path } from '../../router';
+import { areObjectArraysIdentical, areStringArraysIdentical } from '../../utils';
 
 import { useStyle } from './style';
 
+type SubjectRow = { value: string; _key: string };
 type IdentifierRow = { scheme: string; value: string; _key: string };
 
 export const BookEditPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isAdmin, isAdminLoading] = useIsAdmin();
   const styles = useStyle();
 
   const [original, loading, error] = useBook(id!);
   const [patchBookMetadata, saving] = usePatchBookMetadata();
 
+  const [cover, setCover] = useState<File | undefined>(undefined);
+  const handleCoverChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setCover(event.target.files?.[0] ?? undefined);
+  }, []);
+
   const [title, setTitle] = useState('');
+  const handleTitleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(event.target.value);
+  }, []);
+
   const [author, setAuthor] = useState('');
+  const handleAuthorChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setAuthor(event.target.value);
+  }, []);
+
   const [fileAs, setFileAs] = useState('');
+  const handleFileAsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFileAs(event.target.value);
+  }, []);
+
   const [publisher, setPublisher] = useState('');
+  const handlePublisherChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setPublisher(event.target.value);
+  }, []);
+
+  const [isSeries, setIsSeries] = useState<boolean>();
+  // TODO: Figure out how to handle this better
+
   const [series, setSeries] = useState('');
+  const handleSeriesChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSeries(event.target.value);
+  }, []);
+
   const [seriesIndex, setSeriesIndex] = useState('');
+  const handleSeriesIndexChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSeriesIndex(event.target.value);
+  }, []);
+
   const [description, setDescription] = useState('');
-  const [subjects, setSubjects] = useState('');
+  const handleDescriptionChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(event.target.value);
+  }, []);
+
+  const [subjects, setSubjects] = useState<SubjectRow[]>([]);
+  const handleAddSubject = useCallback(() => {
+    setSubjects((prev) => [...prev, { value: '', _key: crypto.randomUUID() }]);
+  }, []);
+  const handleRemoveSubject = useCallback((index: number) => {
+    setSubjects((prev) => prev.filter((_, subjectIndex) => subjectIndex !== index));
+  }, []);
+  const handleUpdateSubject = useCallback((index: number, newValue: string) => {
+    setSubjects((prev) =>
+      prev.map((row, subjectIndex) => (subjectIndex === index ? { ...row, value: newValue } : row))
+    );
+  }, []);
+
   const [identifiers, setIdentifiers] = useState<IdentifierRow[]>([]);
-  const [cover, setCover] = useState<File | null>(null);
+  const handleAddIdentifier = useCallback(() => {
+    setIdentifiers((prev) => [...prev, { scheme: '', value: '', _key: crypto.randomUUID() }]);
+  }, []);
+  const handleRemoveIdentifier = useCallback((index: number) => {
+    setIdentifiers((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+  const handleUpdateIdentifier = useCallback(
+    (index: number, field: 'scheme' | 'value', val: string) => {
+      setIdentifiers((prev) =>
+        prev.map((identifier, identifierIndex) =>
+          identifierIndex === index ? { ...identifier, [field]: val } : identifier
+        )
+      );
+    },
+    []
+  );
 
   useEffect(() => {
-    if (original && isAdmin) {
+    if (original) {
       setTitle(original.title);
       setAuthor(original.author);
       setFileAs(original.fileAs);
@@ -38,171 +103,136 @@ export const BookEditPage = () => {
       setSeries(original.series);
       setSeriesIndex(original.seriesIndex !== 0 ? String(original.seriesIndex) : '');
       setDescription(original.description ?? '');
-      setSubjects(original.subjects.join(', '));
-      setIdentifiers(original.identifiers.map((row) => ({ ...row, _key: crypto.randomUUID() })));
+      setSubjects(
+        original.subjects.map((subject) => ({ value: subject, _key: crypto.randomUUID() }))
+      );
+      setIdentifiers(
+        original.identifiers.map((identifier) => ({ ...identifier, _key: crypto.randomUUID() }))
+      );
     }
-  }, [original, id, isAdmin]);
+  }, [original, id]);
 
-  if (isAdmin === false && isAdminLoading === false) {
-    console.log({ isAdmin, isAdminLoading });
-    return <Navigate to="/" replace />;
-  }
   if (loading) return <p className={styles.loading}>Loading…</p>;
   if (!original) return <p className={styles.error}>{error ?? 'Book not found.'}</p>;
 
   async function handleSave() {
-    if (!original || !id) return;
-    const trim = (s: string) => s.trim();
-    const fd = new FormData();
-    if (title.trim() !== original.title) fd.append('title', title.trim());
-    if (author.trim() !== original.author) fd.append('author', author.trim());
-    if (fileAs.trim() !== original.fileAs) fd.append('fileAs', fileAs.trim());
-    if (publisher.trim() !== original.publisher) fd.append('publisher', publisher.trim());
-    if (series.trim() !== original.series) fd.append('series', series.trim());
-    const origIdx = original.seriesIndex !== 0 ? String(original.seriesIndex) : '';
-    if (seriesIndex.trim() !== origIdx) fd.append('seriesIndex', seriesIndex.trim());
-    if (description.trim() !== (original.description ?? '')) {
-      fd.append('description', description.trim());
+    if (!original || !id) {
+      return;
     }
-    const newSubjects = subjects.split(',').map(trim).filter(Boolean);
-    if (JSON.stringify(newSubjects) !== JSON.stringify(original.subjects)) {
-      fd.append('subjects', JSON.stringify(newSubjects));
-    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const cleanIdentifiers = identifiers.map(({ _key: _, ...rest }) => rest);
-    if (JSON.stringify(cleanIdentifiers) !== JSON.stringify(original.identifiers)) {
-      fd.append('identifiers', JSON.stringify(cleanIdentifiers));
-    }
-    if (cover) fd.append('cover', cover);
-    await patchBookMetadata(id, fd);
-    navigate(`/books/${encodeURIComponent(id)}`);
-  }
+    const newIdentifiers = identifiers.map(({ _key: _, ...rest }) => rest);
+    const newSubjects = subjects.map((subject: SubjectRow) => subject.value.trim()).filter(Boolean);
+    const originalSeriesIndex = original.seriesIndex !== 0 ? String(original.seriesIndex) : '';
 
-  function addIdentifier() {
-    setIdentifiers((prev) => [...prev, { scheme: '', value: '', _key: crypto.randomUUID() }]);
-  }
-
-  function removeIdentifier(index: number) {
-    setIdentifiers((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateIdentifier(index: number, field: 'scheme' | 'value', val: string) {
-    setIdentifiers((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: val } : row)));
+    const newId = await patchBookMetadata(id, {
+      cover,
+      author: author.trim() !== original.author ? author.trim() : undefined,
+      title: title.trim() !== original.title ? title.trim() : undefined,
+      fileAs: fileAs.trim() !== original.fileAs ? fileAs.trim() : undefined,
+      publisher: publisher.trim() !== original.publisher ? publisher.trim() : undefined,
+      // isSeries: isSeries !== original.isSeries ? isSeries : undefined,
+      series: series.trim() !== original.series ? series.trim() : undefined,
+      seriesIndex:
+        seriesIndex.trim() !== originalSeriesIndex
+          ? Number.parseFloat(seriesIndex.trim())
+          : undefined,
+      description:
+        description.trim() !== (original.description ?? '') ? description.trim() : undefined,
+      subjects: !areStringArraysIdentical(newSubjects, original.subjects) ? newSubjects : undefined,
+      identifiers: !areObjectArraysIdentical(newIdentifiers, original.identifiers)
+        ? newIdentifiers
+        : undefined,
+    });
+    navigate(path.book(newId ?? id!));
   }
 
   return (
     <Page>
       <div className={styles.topBar}>
-        <button
-          type="button"
-          className={styles.cancelBtn}
-          onClick={() => navigate(`/books/${encodeURIComponent(id!)}`)}
-        >
-          Cancel
-        </button>
+        <Button disabled={saving} onClick={() => navigate(path.book(id!))} text="Cancel" />
         <h1 className={styles.heading}>Edit Metadata</h1>
-        <button
-          type="button"
-          className={styles.saveBtn}
+        <Button
+          type="primary"
+          text={saving ? 'Saving…' : 'Save'}
           onClick={() => void handleSave()}
-          disabled={saving}
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
+          loading={saving}
+        />
       </div>
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.form}>
+        <label className={styles.label}>Cover Image</label>
+        <input type="file" accept="image/*" onChange={handleCoverChange} />
+
         <label className={styles.label}>Title</label>
-        <input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input className={styles.input} value={title} onChange={handleTitleChange} />
 
         <label className={styles.label}>Author</label>
-        <input
-          className={styles.input}
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-        />
+        <input className={styles.input} value={author} onChange={handleAuthorChange} />
 
         <label className={styles.label}>File As</label>
-        <input
-          className={styles.input}
-          value={fileAs}
-          onChange={(e) => setFileAs(e.target.value)}
-        />
+        <input className={styles.input} value={fileAs} onChange={handleFileAsChange} />
 
         <label className={styles.label}>Publisher</label>
-        <input
-          className={styles.input}
-          value={publisher}
-          onChange={(e) => setPublisher(e.target.value)}
-        />
+        <input className={styles.input} value={publisher} onChange={handlePublisherChange} />
 
         <label className={styles.label}>Series</label>
-        <input
-          className={styles.input}
-          value={series}
-          onChange={(e) => setSeries(e.target.value)}
-        />
+        <input className={styles.input} value={series} onChange={handleSeriesChange} />
 
         <label className={styles.label}>Series #</label>
         <input
           className={styles.input}
           type="number"
           value={seriesIndex}
-          onChange={(e) => setSeriesIndex(e.target.value)}
+          onChange={handleSeriesIndexChange}
         />
 
         <label className={styles.label}>Description</label>
         <textarea
           className={styles.textarea}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={handleDescriptionChange}
           rows={4}
-        />
-
-        <label className={styles.label}>Subjects</label>
-        <input
-          className={styles.input}
-          value={subjects}
-          onChange={(e) => setSubjects(e.target.value)}
-          placeholder="comma-separated"
-        />
-
-        <label className={styles.label}>Cover Image</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setCover(e.target.files?.[0] ?? null)}
         />
 
         <div className={styles.identifierSection}>
           <div className={styles.identifierHeader}>
-            <span className={styles.label}>Identifiers</span>
-            <button type="button" className={styles.addBtn} onClick={addIdentifier}>
-              + Add
-            </button>
+            <span className={styles.label}>Subjects</span>
+            <Button onClick={handleAddSubject} text="+ Add" />
           </div>
-          {identifiers.map((row, i) => (
-            <div key={row._key} className={styles.identifierRow}>
+          {subjects.map((subject, index) => (
+            <div key={subject._key} className={styles.identifierRow}>
+              <input
+                className={styles.input}
+                placeholder="subject"
+                value={subject.value}
+                onChange={(event) => handleUpdateSubject(index, event.target.value)}
+              />
+              <Button type="text" danger onClick={() => handleRemoveSubject(index)} text="x" />
+            </div>
+          ))}
+        </div>
+
+        <div className={styles.identifierSection}>
+          <div className={styles.identifierHeader}>
+            <span className={styles.label}>Identifiers</span>
+            <Button onClick={handleAddIdentifier} text="+ Add" />
+          </div>
+          {identifiers.map((identifier, index) => (
+            <div key={identifier._key} className={styles.identifierRow}>
               <input
                 className={styles.input}
                 placeholder="scheme (e.g. isbn)"
-                value={row.scheme}
-                onChange={(e) => updateIdentifier(i, 'scheme', e.target.value)}
+                value={identifier.scheme}
+                onChange={(event) => handleUpdateIdentifier(index, 'scheme', event.target.value)}
               />
               <input
                 className={styles.input}
                 placeholder="value"
-                value={row.value}
-                onChange={(e) => updateIdentifier(i, 'value', e.target.value)}
+                value={identifier.value}
+                onChange={(event) => handleUpdateIdentifier(index, 'value', event.target.value)}
               />
-              <button
-                type="button"
-                className={styles.removeBtn}
-                aria-label={`Remove identifier ${i + 1}`}
-                onClick={() => removeIdentifier(i)}
-              >
-                ×
-              </button>
+              <Button type="text" danger onClick={() => handleRemoveIdentifier(index)} text="x" />
             </div>
           ))}
         </div>
