@@ -1,15 +1,15 @@
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Page } from '~/component';
 import { Button } from '~/control';
 import { BooksIcon } from '~/icon';
-import { Context as AuthContext } from '~/provider/auth/context';
+import { useAuthRefresh } from '~/provider/auth';
 
 import { useStyle } from './style';
 
 export const LoginPage = () => {
   const styles = useStyle();
-  const { refetch } = useContext(AuthContext);
+  const refetch = useAuthRefresh();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | undefined>();
