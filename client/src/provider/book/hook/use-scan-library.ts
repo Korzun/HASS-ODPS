@@ -1,4 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
+
+import { Context } from '../context';
 
 import { useFetchBookList } from './use-fetch-book-list';
 
@@ -15,6 +17,7 @@ export type UseScanLibrary =
   | [ScanLibrary, undefined, false, true, undefined] // There was an unspecified error while scanning
   | [ScanLibrary, undefined, false, true, string]; // There was a specified error while scanning
 export const useScanLibrary = (): UseScanLibrary => {
+  const { clearCompleteBookIds } = useContext(Context);
   const fetchBookList = useFetchBookList();
   const [scanResult, setScanResult] = useState<ScanResult | undefined>();
   const [loading, setLoading] = useState(false);
@@ -39,6 +42,7 @@ export const useScanLibrary = (): UseScanLibrary => {
       }
       const scanResult = await (response.json() as Promise<ScanResult>);
       setScanResult(scanResult);
+      clearCompleteBookIds();
       fetchBookList();
     } catch (err) {
       setError(true);
@@ -48,7 +52,7 @@ export const useScanLibrary = (): UseScanLibrary => {
     } finally {
       setLoading(false);
     }
-  }, [fetchBookList]);
+  }, [fetchBookList, clearCompleteBookIds]);
 
   return useMemo(
     () => [scanLibrary, scanResult, loading, error, errorMessage] as UseScanLibrary,
