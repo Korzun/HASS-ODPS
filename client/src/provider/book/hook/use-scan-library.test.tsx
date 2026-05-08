@@ -52,7 +52,8 @@ describe('useScanLibrary', () => {
     const mockClear = vi.fn();
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ imported: ['1'], removed: [] }),
