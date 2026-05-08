@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 
+import { Context } from '../context';
 import type { UploadResult } from '../type';
 
 import { useFetchBookList } from './use-fetch-book-list';
@@ -12,6 +13,7 @@ export type UseUploadBookList = [
   string | undefined,
 ];
 export const useUploadBookList = (): UseUploadBookList => {
+  const { clearCompleteBookIds } = useContext(Context);
   const fetchBookList = useFetchBookList();
   const [uploadResult, setUploadResult] = useState<UploadResult | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -43,7 +45,7 @@ export const useUploadBookList = (): UseUploadBookList => {
         }
         const uploadResult = await (response.json() as Promise<UploadResult>);
         setUploadResult(uploadResult);
-
+        clearCompleteBookIds();
         fetchBookList();
       } catch (error) {
         setError(true);
@@ -54,7 +56,7 @@ export const useUploadBookList = (): UseUploadBookList => {
         setLoading(false);
       }
     },
-    [fetchBookList]
+    [fetchBookList, clearCompleteBookIds]
   );
 
   return useMemo(
