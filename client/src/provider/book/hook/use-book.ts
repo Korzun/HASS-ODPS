@@ -13,17 +13,21 @@ export type UseBook =
   | [undefined, false, true, string];
 
 export const useBook = (bookId: string): UseBook => {
-  const { bookList, loadingByBookId, errorByBookId } = useContext(Context);
+  const { bookList, loadingByBookId, errorByBookId, completeBookIds } = useContext(Context);
   const fetchBook = useFetchBook();
 
   const loading = loadingByBookId[bookId] ?? false;
   const errorMessage = errorByBookId[bookId];
 
   useEffect(() => {
-    if (!loading && errorMessage === undefined && bookList[bookId] === undefined) {
+    if (
+      !loading &&
+      errorMessage === undefined &&
+      (bookList[bookId] === undefined || !completeBookIds.has(bookId))
+    ) {
       void fetchBook(bookId);
     }
-  }, [bookId, bookList, loading, errorMessage, fetchBook]);
+  }, [bookId, bookList, loading, errorMessage, fetchBook, completeBookIds]);
 
   return useMemo(() => {
     const book = bookList[bookId];
