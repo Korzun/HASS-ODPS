@@ -73,6 +73,7 @@ export const TextInputList = ({
       {onRowAdd && (
         <Button
           onClick={handleRowAdd}
+          type="dashed"
         >{`Add ${label ? depluralize(label).toLocaleLowerCase() : name}`}</Button>
       )}
     </div>

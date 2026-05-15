@@ -1,12 +1,13 @@
 import { createUseStyles, type Theme } from '~/provider/theme';
 import { applyTransparency } from '~/utils';
 
-export type ButtonTypeValue = 'default' | 'primary' | 'text' | 'link';
+export type ButtonTypeValue = 'default' | 'primary' | 'text' | 'link' | 'dashed';
 export enum ButtonType {
   Default = 'default',
   Primary = 'primary',
   Text = 'text',
   Link = 'link',
+  Dashed = 'dashed',
 }
 
 export type StyleProps = {
@@ -108,6 +109,89 @@ export const useStyle = createUseStyles((theme: Theme) => ({
         color: '#ff7874',
         outlineColor: 'transparent',
         boxShadow: `0px 2px 0px transparent`,
+        '&:focus': {
+          borderColor: '#ff7874',
+          color: '#ff7874',
+        },
+        '&:hover': {
+          borderColor: '#FFA8A6',
+          color: '#FFA8A6',
+        },
+        '&:active': {
+          borderColor: '#e98182',
+          color: '#e98182',
+        },
+      },
+      '&$disabled': {
+        cursor: 'not-allowed',
+        filter: 'saturate(0)',
+      },
+    },
+  },
+
+  [ButtonType.Dashed]: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D9D9D9',
+    borderStyle: 'dashed',
+    borderWidth: '1px',
+    color: '#1f1f1f',
+    '&:focus': {
+      borderColor: '#FFF',
+      outlineColor: '#91CAFF',
+    },
+    '&:hover': {
+      borderColor: '#3f96fe',
+      color: '#3f96fe',
+      outlineColor: 'transparent',
+    },
+    '&:active': {
+      borderColor: '#0758d9',
+      color: '#0758d9',
+    },
+    '&$loading': {
+      cursor: 'default',
+      borderColor: '#e6e6e6',
+      color: '#6d6d6d',
+      outlineColor: 'transparent',
+      '&:focus': {
+        borderColor: '#e6e6e6',
+        color: '#6d6d6d',
+      },
+      '&:hover': {
+        borderColor: '#87BAFF',
+        color: '#87BAFF',
+      },
+      '&:active': {
+        borderColor: '#6893e7',
+        color: '#6893e7',
+      },
+      '&$disabled': {
+        cursor: 'not-allowed',
+        filter: 'saturate(0)',
+      },
+    },
+    '&$danger': {
+      color: '#FF4D4F',
+      borderColor: '#FF4D4F',
+      '&:focus': {
+        color: '#ff7874',
+        borderColor: '#FFF',
+        outlineColor: applyTransparency('#ff7874', 0.5),
+      },
+      '&:hover': {
+        color: '#ff7874aa',
+        borderColor: '#ff7874aa',
+        outlineColor: 'transparent',
+      },
+      '&:active': {
+        color: '#D9373e',
+        borderColor: '#D9373e',
+      },
+      '&$loading': {
+        cursor: 'default',
+        borderColor: '#ff7874',
+        color: '#ff7874',
+        outlineColor: 'transparent',
         '&:focus': {
           borderColor: '#ff7874',
           color: '#ff7874',
