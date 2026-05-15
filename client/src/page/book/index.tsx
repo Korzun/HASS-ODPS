@@ -57,8 +57,25 @@ export const BookPage = () => {
       .map((paragraph) => <p key={hashString(paragraph.trim())}>{paragraph.trim()}</p>);
   }, [book]);
 
-  if (loading) return <p className={styles.loading}>Loading…</p>;
-  if (error) return <p className={styles.notFound}>Book not found.</p>;
+  if (loading) {
+    return (
+      <Page>
+        <NewCard>
+          <p className={styles.loading}>Loading…</p>
+        </NewCard>
+      </Page>
+    );
+  }
+
+  if (error) {
+    return (
+      <Page>
+        <NewCard>
+          <p className={styles.notFound}>Book not found.</p>
+        </NewCard>
+      </Page>
+    );
+  }
 
   return (
     <Page>

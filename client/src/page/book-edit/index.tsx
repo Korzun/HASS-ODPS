@@ -100,8 +100,21 @@ export const BookEditPage = () => {
     }
   }, [original, id]);
 
-  if (loading) return <p className={styles.loading}>Loading…</p>;
-  if (!original) return <p className={styles.error}>{error ?? 'Book not found.'}</p>;
+  if (loading) {
+    return (
+      <Page>
+        <h1 className={styles.heading}>Loading…</h1>
+      </Page>
+    );
+  }
+
+  if (!original) {
+    return (
+      <Page>
+        <h1 className={styles.heading}>{error ?? 'Book not found.'}</h1>
+      </Page>
+    );
+  }
 
   async function handleSave() {
     if (!original || !id) {
