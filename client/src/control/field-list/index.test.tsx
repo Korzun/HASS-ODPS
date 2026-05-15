@@ -139,3 +139,49 @@ it('forwards onValidChange when validate returns false', async () => {
   await user.clear(screen.getByDisplayValue('hello'));
   expect(onValidChange).toHaveBeenCalledWith('key-1.value', false);
 });
+
+it('calls onChange with undefined when a field is cleared', async () => {
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  const rows: FieldRow[] = [{ _key: 'key-1', value: 'hello' }];
+  renderWithProviders(
+    <FieldList
+      addLabel="Add subject"
+      columns={singleTextColumn}
+      rows={rows}
+      onAdd={vi.fn()}
+      onRemove={vi.fn()}
+      onChange={onChange}
+    />
+  );
+  await user.clear(screen.getByDisplayValue('hello'));
+  expect(onChange).toHaveBeenCalledWith('key-1', 'value', undefined);
+});
+
+it('forwards onValidChange with true when field recovers from invalid', async () => {
+  const user = userEvent.setup();
+  const onValidChange = vi.fn();
+  const columns = [
+    {
+      type: 'text' as const,
+      key: 'value',
+      placeholder: 'Subject',
+      validate: (v: string) => v.length > 0,
+    },
+  ];
+  const rows: FieldRow[] = [{ _key: 'key-1', value: 'hello' }];
+  renderWithProviders(
+    <FieldList
+      addLabel="Add subject"
+      columns={columns}
+      rows={rows}
+      onAdd={vi.fn()}
+      onRemove={vi.fn()}
+      onChange={vi.fn()}
+      onValidChange={onValidChange}
+    />
+  );
+  await user.clear(screen.getByDisplayValue('hello'));
+  await user.type(screen.getByPlaceholderText('Subject'), 'x');
+  expect(onValidChange).toHaveBeenCalledWith('key-1.value', true);
+});
