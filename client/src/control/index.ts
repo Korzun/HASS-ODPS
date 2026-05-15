@@ -6,4 +6,6 @@ export { NumberInput } from './number-input';
 export { Switch } from './switch';
 export { TextArea } from './text-area';
 export { TextInput } from './text-input';
+export { FieldList } from './field-list';
+export type { ColumnDescriptor, FieldRow } from './field-list';
 export { TextInputList } from './text-input-list';
