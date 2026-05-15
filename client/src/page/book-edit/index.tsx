@@ -109,7 +109,7 @@ export const BookEditPage = () => {
     }
 
     const newSubjects = subjects.map((r) => r.value).filter(Boolean);
-    const newIdentifiers = identifiers.map(({ _key: _, ...fields }) => fields);
+    const newIdentifiers = identifiers.map((row) => ({ scheme: row.scheme, value: row.value }));
     const originalSeriesIndex = original.seriesIndex !== 0 ? String(original.seriesIndex) : '';
 
     const newId = await patchBookMetadata(id, {
