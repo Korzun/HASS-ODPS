@@ -1,4 +1,3 @@
-export { BookList } from './book-list';
 export { BookRow } from './book-row';
 export { Card } from './card';
 export { CollapsibleSection } from './collapsible-section';
