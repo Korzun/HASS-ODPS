@@ -2,15 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { NewCard, Page } from '~/component';
-import { Button, NumberInput, Switch, TextArea, TextInput, TextInputList } from '~/control';
+import { Button, FieldList, NumberInput, Switch, TextArea, TextInput } from '~/control';
+import type { FieldRow } from '~/control';
 import { useBook, usePatchBookMetadata } from '~/provider/book';
 import { path } from '~/router';
 import { areObjectArraysIdentical, areStringArraysIdentical } from '~/utils';
 
 import { useStyle } from './style';
 
-type SubjectRow = { values: [string]; _key: string };
-type IdentifierRow = { values: [string, string]; _key: string };
+type SubjectRow = { _key: string; value: string };
+type IdentifierRow = { _key: string; scheme: string; value: string };
 
 export const BookEditPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,54 +74,8 @@ export const BookEditPage = () => {
   }, []);
 
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
-  const handleSubjectAdd = useCallback(() => {
-    setSubjects((prev) => [...prev, { values: [''], _key: crypto.randomUUID() }]);
-  }, []);
-  const handleRemoveSubject = useCallback((removeKey: string) => {
-    setSubjects((prev) => prev.filter(({ _key }) => removeKey !== _key));
-  }, []);
-  const handleSubjectUpdate = useCallback(
-    (subjectKey: string, valueIndex: number, newValue: string) => {
-      setSubjects((prev) =>
-        prev.map((row) =>
-          subjectKey === row._key
-            ? {
-                ...row,
-                values: row.values.map((value, index) =>
-                  index === valueIndex ? newValue : value
-                ) as [string],
-              }
-            : row
-        )
-      );
-    },
-    []
-  );
 
   const [identifiers, setIdentifiers] = useState<IdentifierRow[]>([]);
-  const handleIdentifierAdd = useCallback(() => {
-    setIdentifiers((prev) => [...prev, { values: ['', ''], _key: crypto.randomUUID() }]);
-  }, []);
-  const handleIdentifierRemove = useCallback((removeKey: string) => {
-    setIdentifiers((prev) => prev.filter(({ _key }) => removeKey !== _key));
-  }, []);
-  const handleIdentifierChange = useCallback(
-    (identifierKey: string, valueIndex: number, newValue: string) => {
-      setIdentifiers((prev) =>
-        prev.map((row) =>
-          identifierKey === row._key
-            ? {
-                ...row,
-                values: row.values.map((value, index) =>
-                  index === valueIndex ? newValue : value
-                ) as [string, string],
-              }
-            : row
-        )
-      );
-    },
-    []
-  );
 
   useEffect(() => {
     if (original) {
@@ -133,11 +88,12 @@ export const BookEditPage = () => {
       setSeriesIndex(original.seriesIndex);
       setDescription(original.description ?? '');
       setSubjects(
-        original.subjects.map((subject) => ({ values: [subject], _key: crypto.randomUUID() }))
+        original.subjects.map((subject) => ({ value: subject, _key: crypto.randomUUID() }))
       );
       setIdentifiers(
         original.identifiers.map((identifier) => ({
-          values: [identifier.scheme, identifier.value],
+          scheme: identifier.scheme,
+          value: identifier.value,
           _key: crypto.randomUUID(),
         }))
       );
@@ -152,9 +108,8 @@ export const BookEditPage = () => {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const newIdentifiers = identifiers.map(({ _key: _, ...rest }) => rest);
-    const newSubjects = subjects.map((subject: SubjectRow) => subject.value.trim()).filter(Boolean);
+    const newSubjects = subjects.map((r) => r.value).filter(Boolean);
+    const newIdentifiers = identifiers.map(({ _key, ...fields }) => fields);
     const originalSeriesIndex = original.seriesIndex !== 0 ? String(original.seriesIndex) : '';
 
     const newId = await patchBookMetadata(id, {
@@ -173,9 +128,9 @@ export const BookEditPage = () => {
           ? description.trim()
           : undefined,
       subjects: !areStringArraysIdentical(newSubjects, original.subjects) ? newSubjects : undefined,
-      // identifiers: !areObjectArraysIdentical(newIdentifiers, original.identifiers)
-      //   ? newIdentifiers
-      //   : undefined,
+      identifiers: !areObjectArraysIdentical(newIdentifiers, original.identifiers)
+        ? newIdentifiers
+        : undefined,
     });
     navigate(path.book(newId ?? id!));
   }
@@ -236,66 +191,36 @@ export const BookEditPage = () => {
       </NewCard>
 
       <NewCard title="Subjects">
-        <TextInputList
-          name="subjects"
-          label="Subjects"
-          valueList={subjects}
-          onRowAdd={handleSubjectAdd}
+        <FieldList
+          addLabel="Add subject"
+          columns={[{ type: 'text', key: 'value', placeholder: 'Subject' }]}
+          rows={subjects as FieldRow[]}
+          onAdd={() => setSubjects((prev) => [...prev, { _key: crypto.randomUUID(), value: '' }])}
+          onRemove={(key) => setSubjects((prev) => prev.filter((r) => r._key !== key))}
+          onChange={(key, field, val) =>
+            setSubjects((prev) => prev.map((r) => r._key === key ? { ...r, [field]: val } : r))
+          }
         />
       </NewCard>
-
-      {/*<NewCard>
-        <div className={styles.identifierSection}>
-          <span className={styles.label}>Subjects</span>
-          {subjects.map((subject, index) => (
-            <div key={subject._key} className={styles.identifierRow}>
-              <Button danger onClick={() => handleRemoveSubject(index)}>
-                x
-              </Button>
-              <input
-                className={styles.input}
-                placeholder="subject"
-                value={subject.value}
-                onChange={(event) => handleSubjectUpdate(index, event.target.value)}
-              />
-            </div>
-          ))}
-          <Button onClick={handleSubjectAdd}>Add</Button>
-        </div>
-      </NewCard>*/}
 
       <NewCard title="Identifiers">
-        <TextInputList
-          name="identifiers"
-          label="Identifiers"
-          valueList={identifiers}
-          onRowAdd={handleIdentifierAdd}
-          onFieldChange={handleIdentifierChange}
+        <FieldList
+          addLabel="Add identifier"
+          columns={[
+            { type: 'text', key: 'scheme', placeholder: 'Scheme (e.g. isbn)' },
+            { type: 'text', key: 'value', placeholder: 'Value' },
+          ]}
+          rows={identifiers as FieldRow[]}
+          onAdd={() =>
+            setIdentifiers((prev) => [...prev, { _key: crypto.randomUUID(), scheme: '', value: '' }])
+          }
+          onRemove={(key) => setIdentifiers((prev) => prev.filter((r) => r._key !== key))}
+          onChange={(key, field, val) =>
+            setIdentifiers((prev) => prev.map((r) => r._key === key ? { ...r, [field]: val } : r))
+          }
+          onValidChange={handleIsValidChange}
         />
       </NewCard>
-      {/*<NewCard>
-        <div className={styles.identifierSection}>
-          <span className={styles.label}>Identifiers</span>
-          {identifiers.map((identifier, index) => (
-            <div key={identifier._key} className={styles.identifierRow}>
-              <Button danger onClick={() => handleIdentifierRemove(index)} text="x" />
-              <input
-                className={styles.input}
-                placeholder="scheme (e.g. isbn)"
-                value={identifier.scheme}
-                onChange={(event) => handleIdentifierChange(index, 'scheme', event.target.value)}
-              />
-              <input
-                className={styles.input}
-                placeholder="value"
-                value={identifier.value}
-                onChange={(event) => handleIdentifierChange(index, 'value', event.target.value)}
-              />
-            </div>
-          ))}
-          <Button onClick={handleIdentifierAdd} text="Add" />
-        </div>
-      </NewCard>*/}
       <div className={styles.buttonContainer}>
         <div className={styles.spacer} />
         <Button disabled={saving} onClick={() => navigate(path.book(id!))}>
