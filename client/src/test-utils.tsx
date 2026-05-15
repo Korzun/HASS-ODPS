@@ -2,11 +2,11 @@ import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { AuthContext, type AuthState } from './provider/auth/auth-provider';
-import { ThemeProvider } from './provider/theme/theme-provider';
+import { Context as AuthContext, type AuthContext as AuthContextType } from './provider/auth/context';
+import { ThemeProvider } from './provider/theme/provider';
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
-  user?: Omit<AuthState, 'loading'>;
+  user?: { username: string; isAdmin: boolean };
   initialEntries?: string[];
 }
 
@@ -18,7 +18,15 @@ export function renderWithProviders(
     ...options
   }: RenderWithProvidersOptions = {}
 ) {
-  const authState: AuthState = { ...user, loading: false };
+  const authState: AuthContextType = {
+    ...user,
+    loading: false,
+    error: false,
+    errorMessage: undefined,
+    setUsername: () => {},
+    setIsAdmin: () => {},
+    refetch: () => Promise.resolve(),
+  };
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
