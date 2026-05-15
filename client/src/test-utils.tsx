@@ -2,7 +2,10 @@ import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { Context as AuthContext, type AuthContext as AuthContextType } from './provider/auth/context';
+import {
+  Context as AuthContext,
+  type AuthContext as AuthContextType,
+} from './provider/auth/context';
 import { ThemeProvider } from './provider/theme/provider';
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {

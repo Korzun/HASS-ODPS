@@ -1,6 +1,7 @@
+import { RowRemoveIcon } from '~/icon';
+
 import { Button } from '../button';
 import { NumberInput } from '../number-input';
-import { RowRemoveIcon } from '~/icon';
 import { TextInput } from '../text-input';
 
 import { useStyle } from './style';
@@ -61,12 +62,7 @@ export const FieldList = ({
                 )}
               </div>
             ))}
-            <Button
-              type="link"
-              danger
-              title="Remove row"
-              onClick={() => onRemove(row._key)}
-            >
+            <Button type="link" danger title="Remove row" onClick={() => onRemove(row._key)}>
               <RowRemoveIcon height={20} width={20} strokeWidth={2} />
             </Button>
           </div>
