@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { NewCard, Page } from '~/component';
+import { Card, Page } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
 import { Button, DeleteBookButton } from '~/control';
 import { useIsAdmin } from '~/provider/auth';
@@ -60,9 +60,9 @@ export const BookPage = () => {
   if (loading) {
     return (
       <Page>
-        <NewCard>
+        <Card>
           <p className={styles.loading}>Loading…</p>
-        </NewCard>
+        </Card>
       </Page>
     );
   }
@@ -70,16 +70,16 @@ export const BookPage = () => {
   if (error) {
     return (
       <Page>
-        <NewCard>
+        <Card>
           <p className={styles.notFound}>Book not found.</p>
-        </NewCard>
+        </Card>
       </Page>
     );
   }
 
   return (
     <Page>
-      <NewCard>
+      <Card>
         <div className={styles.cardContainer}>
           <div className={styles.detail}>
             {book.hasCover ? (
@@ -108,11 +108,11 @@ export const BookPage = () => {
             <MetadataList metadata={metadata} />
           </div>
         </div>
-      </NewCard>
-      <NewCard title="Description">
+      </Card>
+      <Card title="Description">
         <div className={styles.description}>{description}</div>
-      </NewCard>
-      <NewCard title="Subjects">
+      </Card>
+      <Card title="Subjects">
         {book.subjects.length > 0 && (
           <div className={styles.subjects}>
             {book.subjects.map((subject, index) => (
@@ -122,8 +122,8 @@ export const BookPage = () => {
             ))}
           </div>
         )}
-      </NewCard>
-      {/*<NewCard>
+      </Card>
+      {/*<Card>
           <div className={styles.cardTitle}>Identifiers</div>
           {book.identifiers.length > 0 && (
             <div className={styles.identifiers}>
@@ -134,7 +134,7 @@ export const BookPage = () => {
               ))}
             </div>
           )}
-        </NewCard>*/}
+        </Card>*/}
       {isAdmin && (
         <div className={styles.buttonContainer}>
           <div className={styles.spacer} />

@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 
-import { NewCard, CoverStack, BookRow, Page } from '~/component';
+import { Card, CoverStack, BookRow, Page } from '~/component';
 import { useSeriesBookList } from '~/provider/book';
 
 import { useStyle } from './style';
@@ -19,7 +19,7 @@ export const SeriesPage = () => {
 
   return (
     <Page>
-      <NewCard>
+      <Card>
         <div className={style.hero}>
           <CoverStack
             seriesName={name}
@@ -36,14 +36,14 @@ export const SeriesPage = () => {
             </div>*/}
           </div>
         </div>
-      </NewCard>
-      <NewCard title="Reading Order">
+      </Card>
+      <Card title="Reading Order">
         <div className={style.bookList}>
           {seriesBookList.map((book) => (
             <BookRow key={book.id} bookId={book.id} showAuthor={false} />
           ))}
         </div>
-      </NewCard>
+      </Card>
     </Page>
   );
 };

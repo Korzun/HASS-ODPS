@@ -8,7 +8,6 @@ import { useMyProgress } from '~/provider/progress';
 import { path } from '~/router';
 import { formatSize } from '~/utils';
 
-import { Card } from '../card';
 import { CardRow } from '../card-row';
 
 import { useStyle } from './style';

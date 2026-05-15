@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { NewCard, Page } from '~/component';
+import { Card, Page } from '~/component';
 import { Button, FieldList, NumberInput, Switch, TextArea, TextInput } from '~/control';
 import type { FieldRow } from '~/control';
 import { useBook, usePatchBookMetadata } from '~/provider/book';
@@ -153,7 +153,7 @@ export const BookEditPage = () => {
       <h1 className={styles.heading}>Edit Metadata — {original?.title}</h1>
       {error && <p className={styles.error}>{error}</p>}
 
-      <NewCard>
+      <Card>
         <div className={styles.cardContainer}>
           <TextInput value={title} label="Title" name="title" onChange={handleTitleChange} />
           <TextInput value={author} label="Author" name="author" onChange={handleAuthorChange} />
@@ -165,22 +165,22 @@ export const BookEditPage = () => {
             onChange={handlePublisherChange}
           />
         </div>
-      </NewCard>
+      </Card>
 
-      <NewCard title="Cover Image">
+      <Card title="Cover Image">
         <input type="file" accept="image/*" onChange={handleCoverChange} />
-      </NewCard>
+      </Card>
 
-      <NewCard title="Description">
+      <Card title="Description">
         <TextArea
           value={description}
           name="description"
           layout="vertical"
           onChange={handleDescriptionChange}
         />
-      </NewCard>
+      </Card>
 
-      <NewCard
+      <Card
         title="Series"
         headerAction={<Switch name="isSeries" checked={isSeries} onChange={handleIsSeriesChange} />}
       >
@@ -201,9 +201,9 @@ export const BookEditPage = () => {
             />
           </div>
         )}
-      </NewCard>
+      </Card>
 
-      <NewCard title="Subjects">
+      <Card title="Subjects">
         <FieldList
           addLabel="Add subject"
           columns={[{ type: 'text', key: 'value', placeholder: 'Subject' }]}
@@ -214,9 +214,9 @@ export const BookEditPage = () => {
             setSubjects((prev) => prev.map((r) => (r._key === key ? { ...r, [field]: val } : r)))
           }
         />
-      </NewCard>
+      </Card>
 
-      <NewCard title="Identifiers">
+      <Card title="Identifiers">
         <FieldList
           addLabel="Add identifier"
           columns={[
@@ -236,7 +236,7 @@ export const BookEditPage = () => {
           }
           onValidChange={handleIsValidChange}
         />
-      </NewCard>
+      </Card>
       <div className={styles.buttonContainer}>
         <div className={styles.spacer} />
         <Button disabled={saving} onClick={() => navigate(path.book(id!))}>

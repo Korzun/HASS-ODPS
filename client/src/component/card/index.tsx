@@ -1,28 +1,43 @@
-import { PropsWithChildren, useCallback } from 'react';
+import cx from 'classnames';
+import { PropsWithChildren, ReactNode, useCallback } from 'react';
 
 import { useStyle } from './style';
 
-type CardProps = PropsWithChildren<{
+export type Props = PropsWithChildren<{
+  headerAction?: ReactNode;
   onClick?: () => void;
+  subTitle?: string;
+  title?: string;
 }>;
-export const Card = ({ children, onClick = () => {} }: CardProps) => {
-  const styles = useStyle();
+export const Card = ({ children, headerAction, subTitle, title, onClick }: Props) => {
+  const style = useStyle();
 
-  const handleBookKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      onClick();
-    }
-  }, []);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        if (onClick) {
+          onClick();
+        }
+      }
+    },
+    [onClick]
+  );
 
   return (
     <div
-      className={styles.root}
-      role="button"
-      tabIndex={0}
+      className={cx(style.root, { [style.clickable]: onClick !== undefined })}
       onClick={onClick}
-      onKeyDown={handleBookKeyDown}
+      onKeyDown={handleKeyDown}
     >
-      <div className={styles.contentContainer}>{children}</div>
+      {(title || subTitle || headerAction) && (
+        <div className={cx(style.header, { [style.collapsed]: !children })}>
+          {title && <div className={style.title}>{title}</div>}
+          {subTitle && <div className={style.subTitle}>{subTitle}</div>}
+          <div className={style.spacer} />
+          {headerAction}
+        </div>
+      )}
+      {children && <div className={style.content}>{children}</div>}
     </div>
   );
 };

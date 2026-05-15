@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { NewCard } from '~/component';
+import { Card } from '~/component';
 import { Button, TextInput } from '~/control';
 import { useRegisterUser } from '~/provider/user';
 
@@ -40,7 +40,7 @@ export const UserRegister = () => {
   );
 
   return (
-    <NewCard title="Register new User">
+    <Card title="Register new User">
       <div className={styles.inputContainer}>
         <TextInput
           name="username"
@@ -68,6 +68,6 @@ export const UserRegister = () => {
           {error ? `✗ ${errorMessage}` : '✓ User registered'}
         </div>
       )}
-    </NewCard>
+    </Card>
   );
 };

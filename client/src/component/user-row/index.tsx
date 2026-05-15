@@ -5,7 +5,7 @@ import { useUserProgressList } from '~/provider/progress';
 import { useDeleteUser, useUser } from '~/provider/user';
 
 import { CollapsibleSection } from '../collapsible-section';
-import { NewCard } from '../new-card';
+import { Card } from '../card';
 import { UserBookRow } from '../user-book-row';
 
 import { useStyle } from './style';
@@ -35,7 +35,7 @@ export const UserRow = ({ username }: UserRowProps) => {
 
   return (
     <Fragment>
-      <NewCard
+      <Card
         title={username}
         subTitle={user ? `${user.progressCount} synced` : undefined}
         headerAction={
@@ -43,7 +43,7 @@ export const UserRow = ({ username }: UserRowProps) => {
             Delete
           </Button>
         }
-      ></NewCard>
+      ></Card>
       <ConfirmModal
         isOpen={showDeleteUserModal}
         onCancel={handleDeleteUserCancel}
