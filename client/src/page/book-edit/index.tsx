@@ -109,7 +109,7 @@ export const BookEditPage = () => {
     }
 
     const newSubjects = subjects.map((r) => r.value).filter(Boolean);
-    const newIdentifiers = identifiers.map(({ _key, ...fields }) => fields);
+    const newIdentifiers = identifiers.map(({ _key: _, ...fields }) => fields);
     const originalSeriesIndex = original.seriesIndex !== 0 ? String(original.seriesIndex) : '';
 
     const newId = await patchBookMetadata(id, {
@@ -198,7 +198,7 @@ export const BookEditPage = () => {
           onAdd={() => setSubjects((prev) => [...prev, { _key: crypto.randomUUID(), value: '' }])}
           onRemove={(key) => setSubjects((prev) => prev.filter((r) => r._key !== key))}
           onChange={(key, field, val) =>
-            setSubjects((prev) => prev.map((r) => r._key === key ? { ...r, [field]: val } : r))
+            setSubjects((prev) => prev.map((r) => (r._key === key ? { ...r, [field]: val } : r)))
           }
         />
       </NewCard>
@@ -212,11 +212,14 @@ export const BookEditPage = () => {
           ]}
           rows={identifiers as FieldRow[]}
           onAdd={() =>
-            setIdentifiers((prev) => [...prev, { _key: crypto.randomUUID(), scheme: '', value: '' }])
+            setIdentifiers((prev) => [
+              ...prev,
+              { _key: crypto.randomUUID(), scheme: '', value: '' },
+            ])
           }
           onRemove={(key) => setIdentifiers((prev) => prev.filter((r) => r._key !== key))}
           onChange={(key, field, val) =>
-            setIdentifiers((prev) => prev.map((r) => r._key === key ? { ...r, [field]: val } : r))
+            setIdentifiers((prev) => prev.map((r) => (r._key === key ? { ...r, [field]: val } : r)))
           }
           onValidChange={handleIsValidChange}
         />
