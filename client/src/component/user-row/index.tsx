@@ -1,10 +1,11 @@
-import { ReactNode, useCallback, useState } from 'react';
+import { Fragment, ReactNode, useCallback, useState } from 'react';
 
 import { Button, ConfirmModal } from '~/control';
 import { useUserProgressList } from '~/provider/progress';
 import { useDeleteUser, useUser } from '~/provider/user';
 
 import { CollapsibleSection } from '../collapsible-section';
+import { NewCard } from '../new-card';
 import { UserBookRow } from '../user-book-row';
 
 import { useStyle } from './style';
@@ -33,32 +34,16 @@ export const UserRow = ({ username }: UserRowProps) => {
   }, [deleteUser, username]);
 
   return (
-    <li className={styles.root}>
-      <CollapsibleSection
+    <Fragment>
+      <NewCard
         title={username}
         subTitle={user ? `${user.progressCount} synced` : undefined}
-        actions={[
-          <Button type="link" danger text="Delete" onClick={handleDeleteUser} loading={deleting} />,
-        ]}
-      >
-        <ul className={styles.progressList}>
-          {loading ? (
-            <li className={styles.progressEmpty}>Loading…</li>
-          ) : error ? (
-            <li className={styles.progressEmpty}>Error loading user's progress</li>
-          ) : userProgressList && Object.keys(userProgressList).length === 0 ? (
-            <li className={styles.progressEmpty}>No progress records.</li>
-          ) : (
-            (Object.values(userProgressList ?? {}).map((progress) => {
-              <UserBookRow
-                key={progress.document}
-                bookId={progress.document}
-                username={username}
-              />;
-            }) as ReactNode[])
-          )}
-        </ul>
-      </CollapsibleSection>
+        headerAction={
+          <Button type="link" danger onClick={handleDeleteUser} loading={deleting}>
+            Delete
+          </Button>
+        }
+      ></NewCard>
       <ConfirmModal
         isOpen={showDeleteUserModal}
         onCancel={handleDeleteUserCancel}
@@ -70,6 +55,47 @@ export const UserRow = ({ username }: UserRowProps) => {
         This action will delete the user and all their reading progress. This action cannot be
         undone.
       </ConfirmModal>
-    </li>
+    </Fragment>
+
+    // <li className={styles.root}>
+    //   <CollapsibleSection
+    //     title={username}
+    //     subTitle={user ? `${user.progressCount} synced` : undefined}
+    //     actions={[
+    //       <Button type="link" danger onClick={handleDeleteUser} loading={deleting}>
+    //         Delete
+    //       </Button>,
+    //     ]}
+    //   >
+    //     <ul className={styles.progressList}>
+    //       {loading ? (
+    //         <li className={styles.progressEmpty}>Loading…</li>
+    //       ) : error ? (
+    //         <li className={styles.progressEmpty}>Error loading user's progress</li>
+    //       ) : userProgressList && Object.keys(userProgressList).length === 0 ? (
+    //         <li className={styles.progressEmpty}>No progress records.</li>
+    //       ) : (
+    //         (Object.values(userProgressList ?? {}).map((progress) => {
+    //           <UserBookRow
+    //             key={progress.document}
+    //             bookId={progress.document}
+    //             username={username}
+    //           />;
+    //         }) as ReactNode[])
+    //       )}
+    //     </ul>
+    //   </CollapsibleSection>
+    //   <ConfirmModal
+    //     isOpen={showDeleteUserModal}
+    //     onCancel={handleDeleteUserCancel}
+    //     onConfirm={handleDeleteUserConfirm}
+    //     danger
+    //     title={`Delete “${username}” permanently?`}
+    //     confirmText="Delete"
+    //   >
+    //     This action will delete the user and all their reading progress. This action cannot be
+    //     undone.
+    //   </ConfirmModal>
+    // </li>
   );
 };

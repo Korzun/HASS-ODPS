@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import importX from "eslint-plugin-import-x";
 import eslintPluginPrettier from "eslint-plugin-prettier";
+import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
@@ -43,6 +44,7 @@ export default tseslint.config(
     plugins: {
       import: importX,
       prettier: eslintPluginPrettier,
+      "react-hooks": reactHooks,
     },
     settings: {
       "import-x/resolver": {
@@ -77,6 +79,7 @@ export default tseslint.config(
         },
       ],
       "import/newline-after-import": "error",
+      ...reactHooks.configs.recommended.rules,
     },
   },
 );

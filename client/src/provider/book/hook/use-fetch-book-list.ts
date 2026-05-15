@@ -19,7 +19,17 @@ export const useFetchBookList = (): FetchBookList => {
       if (!response.ok) throw new Error('Failed to fetch books');
       const bookListArray = await (response.json() as Promise<Book[]>);
       setBookList(() =>
-        bookListArray.reduce((acc, book) => ({ ...acc, [book.id]: book }), {} as BookList)
+        bookListArray.reduce(
+          (acc, book) => ({
+            ...acc,
+            [book.id]: {
+              ...book,
+              identifiers: book.identifiers ?? [],
+              subjects: book.subjects ?? [],
+            },
+          }),
+          {} as BookList
+        )
       );
       setBookListFetched(true);
     } catch (err) {

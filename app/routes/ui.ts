@@ -120,7 +120,15 @@ export function createUiRouter(
   router.get('/api/books', sessionAuth, (_req: Request, res: Response) => {
     res.json(
       bookStore.listBooks().map((b) => {
-        const { path: _path, description: _description, ...rest } = b;
+        const {
+          path: _path,
+          description: _description,
+          publisher: _publisher,
+          identifiers: _identifiers,
+          subjects: _subjects,
+          addedAt: _addedAt,
+          ...rest
+        } = b;
         return rest;
       })
     );

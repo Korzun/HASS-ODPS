@@ -12,7 +12,7 @@ export type UseBook =
   | [undefined, false, true, undefined]
   | [undefined, false, true, string];
 
-export const useBook = (bookId: string): UseBook => {
+export const useBook = (bookId: string, completeBook: boolean = false): UseBook => {
   const { bookList, loadingByBookId, errorByBookId, completeBookIds } = useContext(Context);
   const fetchBook = useFetchBook();
 
@@ -23,7 +23,7 @@ export const useBook = (bookId: string): UseBook => {
     if (
       !loading &&
       errorMessage === undefined &&
-      (bookList[bookId] === undefined || !completeBookIds.has(bookId))
+      (bookList[bookId] === undefined || (completeBook === true && !completeBookIds.has(bookId)))
     ) {
       void fetchBook(bookId);
     }

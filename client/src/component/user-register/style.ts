@@ -14,6 +14,12 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     marginBottom: '1rem',
     boxShadow: theme.shadows.card,
   },
+  inputContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '.5rem',
+    marginBottom: '1rem',
+  },
   title: {
     fontWeight: 500,
     marginBottom: '.5rem',
@@ -23,9 +29,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   row: {
     display: 'flex',
+    flexDirection: 'column',
     gap: '.5rem',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
+    // flexWrap: 'wrap',
+    // alignItems: 'flex-start',
   },
   input: {
     flex: 1,

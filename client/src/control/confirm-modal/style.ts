@@ -10,16 +10,17 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     marginLeft: 'auto',
     marginRight: 'auto',
     marginBottom: '50px',
+    outline: 'none',
     '&::backdrop': {
-      backgroundColor: applyTransparency('#000', 0.8),
-      backdropFilter: 'saturate(0%)',
+      backgroundColor: applyTransparency('#000', 0.7),
+      backdropFilter: 'blur(2px) saturate(0%)',
     },
   },
   dialog: {
     display: 'flex',
     flexDirection: 'column',
     maxWidth: '500px',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
     boxShadow: '0px 2px 0px #D9D9D9',
   },
   header: {

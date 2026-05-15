@@ -8,7 +8,7 @@ const removeBookById = (bookId: string, { [bookId]: _, ...rest }: BookList) => r
 
 export type UseDeleteBook = [(id: string) => Promise<void>, boolean, boolean, string | undefined];
 export const useDeleteBook = (): UseDeleteBook => {
-  const { bookList, setBookList } = useContext(Context);
+  const { bookList, setBookList, clearCompleteBookIds } = useContext(Context);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -37,6 +37,7 @@ export const useDeleteBook = (): UseDeleteBook => {
     } catch (err) {
       setError(true);
       setBookList((prev) => ({ ...prev, [book.id]: book }));
+      clearCompleteBookIds();
       if (err instanceof Error) setErrorMessage(err.message);
     } finally {
       setLoading(false);

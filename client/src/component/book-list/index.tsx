@@ -5,7 +5,10 @@ import { useSeriesList, useStandaloneBookList } from '~/provider/book';
 import { BookRow } from '../book-row';
 import { SeriesRow } from '../series-row';
 
+import { useStyle } from './style';
+
 export const BookList = () => {
+  const style = useStyle();
   const [standaloneBookList] = useStandaloneBookList();
   const [seriesBookList] = useSeriesList();
   const bookList = useMemo(() => {
@@ -16,11 +19,15 @@ export const BookList = () => {
     });
   }, [standaloneBookList, seriesBookList]);
 
-  return bookList.map((book) =>
-    Array.isArray(book) ? (
-      <SeriesRow key={book[0]} seriesName={book[0]} />
-    ) : (
-      <BookRow key={book.id} bookId={book.id} />
-    )
+  return (
+    <div className={style.root}>
+      {bookList.map((book) =>
+        Array.isArray(book) ? (
+          <SeriesRow key={book[0]} seriesName={book[0]} />
+        ) : (
+          <BookRow key={book.id} bookId={book.id} />
+        )
+      )}
+    </div>
   );
 };

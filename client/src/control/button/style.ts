@@ -25,7 +25,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     borderColor: 'transparent',
     borderStyle: 'solid',
     borderWidth: '1px',
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: '8px',
     padding: '.5rem 1rem',
     cursor: 'pointer',
     fontSize: '0.80rem',
@@ -34,7 +34,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     transitionProperty: 'color, background-color',
     transitionDuration: '0.1s',
     transitionTimingFunction: 'ease-in',
-    '&:hover, &:focus': {
+    '&:hover, &:focus, &:active': {
       transitionDuration: '0s',
     },
   },
@@ -78,6 +78,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
         borderColor: '#6893e7',
         color: '#6893e7',
       },
+      '&$disabled': {
+        cursor: 'not-allowed',
+        filter: 'saturate(0)',
+      },
     },
     '&$danger': {
       color: '#FF4D4F',
@@ -90,8 +94,8 @@ export const useStyle = createUseStyles((theme: Theme) => ({
         boxShadow: `0px 2px 0px transparent`,
       },
       '&:hover': {
-        color: '#ff7874',
-        borderColor: '#ff7874',
+        color: '#ff7874aa',
+        borderColor: '#ff7874aa',
         outlineColor: 'transparent',
       },
       '&:active': {
@@ -116,6 +120,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
           borderColor: '#e98182',
           color: '#e98182',
         },
+      },
+      '&$disabled': {
+        cursor: 'not-allowed',
+        filter: 'saturate(0)',
       },
     },
   },
@@ -156,6 +164,11 @@ export const useStyle = createUseStyles((theme: Theme) => ({
         backgroundColor: '#6893e7',
       },
     },
+    '&$disabled': {
+      cursor: 'not-allowed',
+      filter: 'saturate(0)',
+    },
+
     '&$danger': {
       backgroundColor: '#FF4D4F',
       boxShadow: `0px 2px 0px ${applyTransparency('#FF4D4F', 0.1)}`,
@@ -189,6 +202,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
         '&:focus': {
           outlineColor: 'transparent',
         },
+      },
+      '&$disabled': {
+        cursor: 'not-allowed',
+        filter: 'saturate(0)',
       },
     },
   },

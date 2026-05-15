@@ -15,7 +15,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     width: 43,
     height: 60,
     objectFit: 'cover',
-    borderRadius: 2,
+    borderRadius: '8px',
     display: 'block',
   },
   coverPlaceholder: {

@@ -123,4 +123,16 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     padding: '0 0.25rem',
     flexShrink: 0,
   },
+  buttonContainer: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  spacer: {
+    flexGrow: 1,
+  },
+  cardContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  },
 }));

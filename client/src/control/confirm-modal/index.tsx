@@ -9,6 +9,7 @@ type ConfirmModalProps = PropsWithChildren<{
   confirmText?: string;
   danger?: boolean;
   isOpen?: boolean;
+  loading?: boolean;
   onCancel?: () => void;
   onConfirm?: () => void;
   title?: string;
@@ -20,6 +21,7 @@ export function ConfirmModal({
   confirmText = 'Confirm',
   danger = false,
   isOpen = false,
+  loading = false,
   onCancel = () => {},
   onConfirm = () => {},
   title = 'Confirm action',
@@ -52,12 +54,9 @@ export function ConfirmModal({
     },
     [handleCancel]
   );
-  const handleClickDialog = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      event.stopPropagation();
-    },
-    [handleCancel]
-  );
+  const handleClickDialog = useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.stopPropagation();
+  }, []);
 
   return (
     <dialog ref={modalRef} className={styles.root} closedby="none" onClick={handleClickBackground}>
@@ -65,8 +64,12 @@ export function ConfirmModal({
         <div className={styles.header}>{title}</div>
         <div className={styles.body}>{children}</div>
         <div className={styles.footer}>
-          <Button onClick={handleCancel} text={cancelText} type="text" />
-          <Button onClick={handleConfirm} text={confirmText} type="primary" danger={danger} />
+          <Button onClick={handleCancel} loading={loading} type="text">
+            {cancelText}
+          </Button>
+          <Button onClick={handleConfirm} loading={loading} type="primary" danger={danger}>
+            {confirmText}
+          </Button>
         </div>
       </div>
     </dialog>

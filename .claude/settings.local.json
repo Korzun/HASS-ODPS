@@ -32,7 +32,8 @@
       "Bash(mv panel/library-scan component/library-scan)",
       "Bash(mv panel/series-list component/series-list)",
       "Bash(mv panel/standalone-book-list component/standalone-book-list)",
-      "Bash(mv panel/upload-zone component/upload-zone)"
+      "Bash(mv panel/upload-zone component/upload-zone)",
+      "Bash(npm run *)"
     ]
   }
 }

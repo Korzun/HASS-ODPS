@@ -5,15 +5,15 @@ export type Book = {
   title: string;
   author: string;
   fileAs: string;
-  publisher: string;
+  publisher?: string;
   series: string;
   seriesIndex: number;
-  description?: string; // stripped from GET /api/books (list), present on GET /api/books/:id
+  description?: string;
   subjects: string[];
   identifiers: Identifier[];
   hasCover: boolean;
   size: number;
-  addedAt: string;
+  addedAt?: string;
 };
 
 export type Identifier = { scheme: string; value: string };

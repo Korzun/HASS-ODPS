@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { Button } from '~/control';
+import { NewCard } from '~/component';
+import { Button, TextInput } from '~/control';
 import { useRegisterUser } from '~/provider/user';
 
 import { useStyle } from './style';
@@ -13,48 +14,60 @@ export const UserRegister = () => {
   const [password, setPassword] = useState<string>('');
   const handleRegisterUser = useCallback(() => {
     registerUser(username, password);
-  }, [username, password]);
+  }, [registerUser, username, password]);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleRegisterUser();
-    }
-  }, []);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        handleRegisterUser();
+      }
+    },
+    [handleRegisterUser]
+  );
+
+  const handleUsernameChange = useCallback(
+    (newValue: string | undefined) => {
+      setUsername(newValue ?? '');
+    },
+    [setUsername]
+  );
+
+  const handlePasswordChange = useCallback(
+    (newValue: string | undefined) => {
+      setPassword(newValue ?? '');
+    },
+    [setPassword]
+  );
 
   return (
-    <div className={styles.root}>
-      <div className={styles.title}>Register new User</div>
-      <div className={styles.row}>
-        <input
-          type="text"
-          className={styles.input}
-          placeholder="Username"
-          autoComplete="off"
+    <NewCard title="Register new User">
+      <div className={styles.inputContainer}>
+        <TextInput
+          name="username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onChange={handleUsernameChange}
+          layout="horizontal"
+          label="Username"
+          autoComplete="off"
         />
-        <input
-          type="password"
-          className={styles.input}
-          placeholder="Password"
-          autoComplete="new-password"
+        <TextInput
+          name="password"
+          password
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <Button
-          type="primary"
-          loading={loading}
-          text={loading ? 'Registering…' : 'Register'}
-          onClick={handleRegisterUser}
+          onChange={handlePasswordChange}
+          layout="horizontal"
+          label="Password"
+          autoComplete="off"
         />
       </div>
+      <Button type="primary" loading={loading} onClick={handleRegisterUser}>
+        {loading ? 'Registering…' : 'Register'}
+      </Button>
       {(okay || error) && (
         <div className={okay ? styles.statusOk : styles.statusErr}>
           {error ? `✗ ${errorMessage}` : '✓ User registered'}
         </div>
       )}
-    </div>
+    </NewCard>
   );
 };

@@ -5,23 +5,22 @@ import { LoadingSpinner } from '../loading-spinner';
 
 import { ButtonType, ButtonTypeValue, useStyle } from './style';
 
-type ButtonProps = {
+type ButtonProps = React.PropsWithChildren<{
   danger?: boolean;
   disabled?: boolean;
   loading?: boolean;
   onClick?: () => void;
   tabIndex?: number;
-  text: string;
   title?: string;
   type?: ButtonTypeValue;
-};
+}>;
 export const Button = ({
+  children,
   danger = false,
   disabled = false,
   loading = false,
   onClick = () => {},
   tabIndex,
-  text,
   title,
   type = ButtonType.Default as ButtonTypeValue,
 }: ButtonProps) => {
@@ -41,15 +40,18 @@ export const Button = ({
         onClick();
       }
     },
-    [onClick]
+    [loading, disabled, onClick]
   );
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.stopPropagation();
-      onClick();
-    }
-  }, []);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.stopPropagation();
+        onClick();
+      }
+    },
+    [onClick]
+  );
 
   return (
     <div
@@ -58,10 +60,10 @@ export const Button = ({
       className={className}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      title={title ?? text}
+      title={title}
     >
       {loading && <LoadingSpinner />}
-      {text}
+      {children}
     </div>
   );
 };

@@ -1,45 +1,49 @@
 import { useParams } from 'react-router-dom';
 
-import { CoverStack, BookRow, Page } from '~/component';
+import { NewCard, CoverStack, BookRow, Page } from '~/component';
 import { useSeriesBookList } from '~/provider/book';
 
 import { useStyle } from './style';
 
 export const SeriesPage = () => {
   const { name } = useParams<{ name: string }>();
-  const styles = useStyle();
+  const style = useStyle();
 
   const [seriesBookList, loading, error] = useSeriesBookList(name!);
 
-  if (loading && seriesBookList === undefined) return <p className={styles.loading}>Loading…</p>;
+  if (loading && seriesBookList === undefined) return <p className={style.loading}>Loading…</p>;
   if (!name || error || seriesBookList.length === 0)
-    return <p className={styles.notFound}>Series not found.</p>;
+    return <p className={style.notFound}>Series not found.</p>;
 
   const author = seriesBookList[0].author;
 
   return (
     <Page>
-      <div className={styles.hero}>
-        <CoverStack
-          seriesName={name}
-          containerWidth={68}
-          containerHeight={86}
-          layerWidth={52}
-          layerHeight={72}
-        />
-        <div>
-          <h1 className={styles.title}>{name}</h1>
-          <div className={styles.meta}>
-            {author} · {seriesBookList.length} book{seriesBookList.length !== 1 ? 's' : ''}
+      <NewCard>
+        <div className={style.hero}>
+          <CoverStack
+            seriesName={name}
+            containerWidth={100}
+            containerHeight={130}
+            layerWidth={80}
+            layerHeight={118}
+          />
+          <div>
+            <h1 className={style.title}>{name}</h1>
+            <div className={style.author}>{author}</div>
+            {/*<div className={style.meta}>
+              {author} · {seriesBookList.length} book{seriesBookList.length !== 1 ? 's' : ''}
+            </div>*/}
           </div>
         </div>
-      </div>
-      <h2 className={styles.readingOrderLabel}>Reading Order</h2>
-      <div className={styles.bookList}>
-        {seriesBookList.map((book) => (
-          <BookRow key={book.id} bookId={book.id} />
-        ))}
-      </div>
+      </NewCard>
+      <NewCard title="Reading Order">
+        <div className={style.bookList}>
+          {seriesBookList.map((book) => (
+            <BookRow key={book.id} bookId={book.id} showAuthor={false} />
+          ))}
+        </div>
+      </NewCard>
     </Page>
   );
 };

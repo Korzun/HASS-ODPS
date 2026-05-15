@@ -91,12 +91,9 @@ export const LoginPage = () => {
             onKeyDown={handleKeyDown}
           />
           <div className={styles.login}>
-            <Button
-              loading={loading}
-              type="primary"
-              text={loading ? 'Signing in…' : 'Sign In'}
-              onClick={handleLogin}
-            />
+            <Button loading={loading} type="primary" onClick={handleLogin}>
+              {loading ? 'Signing in…' : 'Sign In'}
+            </Button>
           </div>
         </div>
       </div>

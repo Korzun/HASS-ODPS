@@ -6,13 +6,13 @@ import { useSeriesBookList } from '~/provider/book';
 import { useMySeriesProgress } from '~/provider/progress';
 import { path } from '~/router';
 
-import { Card } from '../card';
+import { CardRow } from '../card-row';
 import { CoverStack } from '../cover-stack';
 
 import { useStyle } from './style';
 
 type SeriesRowProps = {
-  seriesName: string; // sorted ascending by seriesIndex; books[0] = front cover
+  seriesName: string;
 };
 export function SeriesRow({ seriesName }: SeriesRowProps) {
   const styles = useStyle();
@@ -22,13 +22,13 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
 
   const handleNavigate = useCallback(() => {
     navigate(path.series(seriesName));
-  }, []);
+  }, [seriesName, navigate]);
 
   if (loading === true) {
-    return <Card>Loading...</Card>;
+    return <CardRow>Loading...</CardRow>;
   }
   if (error === true) {
-    return <Card>Error</Card>;
+    return <CardRow>Error</CardRow>;
   }
 
   const meta: string[] = [];
@@ -41,7 +41,7 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
   }
 
   return (
-    <Card onClick={handleNavigate}>
+    <CardRow onClick={handleNavigate}>
       <div className={styles.root}>
         <CoverStack
           seriesName={seriesName}
@@ -53,9 +53,9 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
         <div className={styles.info}>
           <div className={styles.name}>{seriesName}</div>
           <div className={styles.meta}>{meta.join(' · ')}</div>
-          <Button type="link" text="View series →" />
+          {/*<Button type="link">View series →</Button>*/}
         </div>
       </div>
-    </Card>
+    </CardRow>
   );
 }

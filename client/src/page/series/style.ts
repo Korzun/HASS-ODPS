@@ -29,21 +29,24 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   hero: {
     display: 'flex',
     gap: '1.25rem',
-    alignItems: 'center',
-    marginBottom: '2rem',
   },
   title: {
-    margin: '0 0 0.375rem',
-    fontSize: '1.5rem',
+    margin: '0 0 0.25rem',
+    fontSize: '1.25rem',
     fontWeight: 700,
     color: theme.colors.text.primary,
+  },
+  author: {
+    color: theme.colors.text.secondary,
+    marginBottom: '0.375rem',
   },
   meta: {
     color: theme.colors.text.muted,
     fontSize: '0.875rem',
   },
   readingOrderLabel: {
-    margin: '0 0 0.75rem',
+    marginBottom: '.2rem',
+    // margin: '0 0 0.2rem',
     fontSize: '1rem',
     fontWeight: 600,
     color: theme.colors.text.secondary,
@@ -53,4 +56,5 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     flexDirection: 'column',
     gap: '0.5rem',
   },
+  bookListContainer: {},
 }));

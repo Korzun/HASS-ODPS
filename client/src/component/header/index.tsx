@@ -42,7 +42,11 @@ export const Header = () => {
       )}
       <div className={styles.actions}>
         {username && <span className={styles.username}>{username}</span>}
-        {username && <Button onClick={logout} loading={loading} text="Sign Out" />}
+        {username && (
+          <Button onClick={logout} loading={loading}>
+            Sign out
+          </Button>
+        )}
       </div>
     </header>
   );

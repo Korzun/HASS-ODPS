@@ -19,19 +19,11 @@ export function CoverStack({
   layerWidth,
   layerHeight,
 }: CoverStackProps) {
-  const style = useStyle();
+  const style = useStyle({ containerHeight, containerWidth });
   const [bookList] = useSeriesBookList(seriesName);
 
   return (
-    <figure
-      className={style.figure}
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        width: containerWidth,
-        height: containerHeight,
-      }}
-    >
+    <figure className={style.figure}>
       <div className={style.wrapper}>
         {([3, 2, 1] as const).map((seq) => {
           const book = bookList ? (bookList[3 - seq] ?? null) : null;

@@ -19,6 +19,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     maxWidth: 800,
     margin: '2rem auto',
     padding: '0 1rem',
+    display: 'flex',
+    gap: '0.875rem',
+    flexDirection: 'column',
   },
   [PageType.minimal]: {},
 }));

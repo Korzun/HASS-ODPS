@@ -10,10 +10,10 @@ export const UserList = () => {
   if (loading) return <p className={styles.loading}>Loading…</p>;
 
   return (
-    <ul className={styles.root}>
+    <div className={styles.root}>
       {userList.map((user) => (
         <UserRow key={user.username} username={user.username} />
       ))}
-    </ul>
+    </div>
   );
 };

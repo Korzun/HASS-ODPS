@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button, ConfirmModal } from '~/control';
@@ -9,14 +9,16 @@ import { path } from '~/router';
 import { formatSize } from '~/utils';
 
 import { Card } from '../card';
+import { CardRow } from '../card-row';
 
 import { useStyle } from './style';
 
 interface BookRowdProps {
   bookId: string;
+  showAuthor?: boolean;
 }
 
-export function BookRow({ bookId }: BookRowdProps) {
+export function BookRow({ bookId, showAuthor = true }: BookRowdProps) {
   const styles = useStyle();
   const navigate = useNavigate();
   const [isAdmin] = useIsAdmin();
@@ -31,7 +33,7 @@ export function BookRow({ bookId }: BookRowdProps) {
       return;
     }
     setShowDeleteModal(true);
-  }, [deleteBook]);
+  }, [book]);
   const handleDeleteCancel = useCallback(() => {
     setShowDeleteModal(false);
   }, []);
@@ -49,7 +51,7 @@ export function BookRow({ bookId }: BookRowdProps) {
       return;
     }
     setShowDeleteProgressModal(true);
-  }, [deleteBook, book]);
+  }, [book]);
   const handleDeleteProgressCancel = useCallback(() => {
     setShowDeleteProgressModal(false);
   }, []);
@@ -58,60 +60,63 @@ export function BookRow({ bookId }: BookRowdProps) {
     if (!book) {
       return;
     }
-    deleteBook(book.id);
-  }, [deleteBook]);
+    // deleteBook(book.id);
+  }, [book]);
 
   const handleNavigate = useCallback(() => {
     if (!book) {
       return;
     }
     navigate(path.book(book.id));
-  }, [book]);
+  }, [book, navigate]);
 
   if (loading) {
     return (
-      <Card onClick={handleNavigate}>
+      <CardRow onClick={handleNavigate}>
         <div className={styles.root}>Loading...</div>
-      </Card>
+      </CardRow>
     );
   }
 
   if (error) {
     return (
-      <Card onClick={handleNavigate}>
+      <CardRow onClick={handleNavigate}>
         <div className={styles.root}>Error loading book</div>
-      </Card>
+      </CardRow>
     );
   }
 
   return (
-    <Card onClick={handleNavigate}>
-      <div className={styles.root}>
-        <div className={styles.cover}>
-          {book.hasCover ? (
-            <img
-              src={`/api/books/${encodeURIComponent(book.id)}/cover`}
-              alt={book.title}
-              className={styles.coverImg}
-            />
-          ) : (
-            <div className={styles.coverPlaceholder} />
-          )}
-        </div>
-        <div className={styles.info}>
-          <div className={styles.title}>{book.title}</div>
-          {book.author.length > 0 && <div className={styles.meta}>{book.author}</div>}
-          <div className={styles.format}>EPUB · {formatSize(book.size)}</div>
-        </div>
-        {progress != null && (
+    <Fragment>
+      <CardRow onClick={handleNavigate}>
+        <div className={styles.root}>
+          <div className={styles.cover}>
+            {book.hasCover ? (
+              <img
+                src={`/api/books/${encodeURIComponent(book.id)}/cover`}
+                alt={book.title}
+                className={styles.coverImg}
+              />
+            ) : (
+              <div className={styles.coverPlaceholder} />
+            )}
+          </div>
+          <div className={styles.info}>
+            <div className={styles.title}>{book.title}</div>
+            {showAuthor && book.author && <div className={styles.meta}>{book.author}</div>}
+            {book.seriesIndex > 0 && <div className={styles.meta}>Book {book.seriesIndex}</div>}
+            {/*<div className={styles.format}>EPUB · {formatSize(book.size)}</div>*/}
+          </div>
+          {/*{progress != null && (
           <span className={styles.progress}>{Math.round((progress.percentage ?? 0) * 100)}%</span>
         )}
 
         {progress != null && !isAdmin && (
           <Button text="Clear progress" onClick={handleDeleteProgress} type="link" danger />
         )}
-        {isAdmin && <Button text="Delete book" onClick={handleDelete} type="link" danger />}
-      </div>
+        {isAdmin && <Button text="Delete book" onClick={handleDelete} type="link" danger />}*/}
+        </div>
+      </CardRow>
       <ConfirmModal
         isOpen={showDeleteProgressModal}
         onCancel={handleDeleteProgressCancel}
@@ -133,6 +138,6 @@ export function BookRow({ bookId }: BookRowdProps) {
       >
         This book will be removed from all user libraries. This action cannot be undone.
       </ConfirmModal>
-    </Card>
+    </Fragment>
   );
 }

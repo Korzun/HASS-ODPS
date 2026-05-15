@@ -1,3 +1,9 @@
 export { Button } from './button';
 export { ConfirmModal } from './confirm-modal';
+export { DeleteBookButton } from './delete-book-button';
 export { LoadingSpinner } from './loading-spinner';
+export { NumberInput } from './number-input';
+export { Switch } from './switch';
+export { TextArea } from './text-area';
+export { TextInput } from './text-input';
+export { TextInputList } from './text-input-list';

@@ -61,10 +61,11 @@ export const UserBookRow = ({ bookId, username }: UserBookRowProps) => {
         type="link"
         danger
         onClick={handleDeleteProgress}
-        text="Delete progress"
         loading={deleting}
         title={`Delete progress for ${bookTitle}`}
-      />
+      >
+        Delete progress
+      </Button>
       <span className={styles.progMeta}>{progressMeta(progress)}</span>
 
       <ConfirmModal

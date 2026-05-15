@@ -1,9 +1,7 @@
-import { Page, BookList, LibraryScan, UploadZone } from '~/component';
+import { Page, BookList } from '~/component';
 
 export const LibraryPage = () => (
   <Page>
-    {/*<LibraryScan />
-    <UploadZone />*/}
     <BookList />
   </Page>
 );

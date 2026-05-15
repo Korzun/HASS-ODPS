@@ -34,18 +34,16 @@ export const LibraryScan = () => {
       text: `✓ Scan complete: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`,
       ok: true,
     };
-  }, [scanResult]);
+  }, [error, scanResult]);
   if (!isAdmin) {
     return null;
   }
 
   return (
     <div className={styles.root}>
-      <Button
-        text={scanning ? 'Scanning…' : 'Scan Library'}
-        loading={scanning}
-        onClick={handleScanLibrary}
-      />
+      <Button loading={scanning} onClick={handleScanLibrary}>
+        {scanning ? 'Scanning…' : 'Scan Library'}
+      </Button>
       {scanStatus && (
         <span className={scanStatus.ok ? styles.statusOk : styles.statusErr}>
           {scanStatus.text}
