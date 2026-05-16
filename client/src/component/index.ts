@@ -4,6 +4,7 @@ export { Cover } from './cover';
 export { CoverStack } from './cover-stack';
 export { Header } from './header';
 export { LibraryScan } from './library-scan';
+export { Toast } from './toast';
 export { Card } from './card';
 export { Page } from './page';
 export { SeriesRow } from './series-row';
