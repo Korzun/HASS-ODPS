@@ -3,9 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { Card, Page } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
-import { Button, DeleteBookButton } from '~/control';
+import { Button, ChapterProgress, DeleteBookButton, BookProgress } from '~/control';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook } from '~/provider/book';
+import { useMyProgress } from '~/provider/progress';
 import { path } from '~/router';
 import { formatSize, hashString } from '~/utils';
 
@@ -19,8 +20,12 @@ export const BookPage = () => {
   const [isAdmin] = useIsAdmin();
 
   const [book, loading, error] = useBook(id!, true);
+  const [progress] = useMyProgress(id!);
 
-  const handleEditMetadata = useCallback(() => navigate(path.bookEdit(book?.id ?? '')), [book]);
+  const handleEditMetadata = useCallback(
+    () => navigate(path.bookEdit(book?.id ?? '')),
+    [book, navigate]
+  );
 
   const handleSeriesNavigate = useCallback(() => {
     if (book?.series) {
@@ -104,7 +109,9 @@ export const BookPage = () => {
               )}
             </div>
           </div>
-          <div>
+          <div className={styles.metadata}>
+            <BookProgress value={progress ? progress.percentage : 0} size={12} />
+            {progress && progress.percentage && <ChapterProgress current={5} total={20} />}
             <MetadataList metadata={metadata} />
           </div>
         </div>

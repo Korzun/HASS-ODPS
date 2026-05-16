@@ -1,6 +1,5 @@
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { Context } from '../context';
 import type { Progress } from '../type';
 
 import { useMyProgressList } from './use-my-progress-list';
@@ -13,7 +12,6 @@ export type UseMyProgress =
   | [undefined, false, true, undefined] // There was an unspecified error while loading progress
   | [undefined, false, true, string]; // There was a specified error while loading progress
 export const useMyProgress = (bookId: string): UseMyProgress => {
-  const { progressList } = useContext(Context);
   const [myProgressList, loading, error, errorMessage] = useMyProgressList();
 
   return useMemo((): UseMyProgress => {
@@ -25,5 +23,5 @@ export const useMyProgress = (bookId: string): UseMyProgress => {
       return [undefined, loading, false, undefined];
     }
     return [myProgressList[bookId], loading, false, undefined];
-  }, [progressList, loading, error, errorMessage]);
+  }, [bookId, myProgressList, loading, error, errorMessage]);
 };

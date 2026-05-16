@@ -68,6 +68,8 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     // boxShadow: '0 2px 8px rgba(0,0,0,.15)',
   },
   metadata: {
+    display: 'flex',
+    gap: '1rem',
     // position: 'absolute',
     // bottom: 0,
     // height: '100%',
