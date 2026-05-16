@@ -366,6 +366,8 @@ export class BookStore {
       size: r.size,
       mtime: new Date(r.mtime),
       addedAt: new Date(r.added_at),
+      chapterCount: 0,
+      chapterSpineMap: [],
     };
   }
 }

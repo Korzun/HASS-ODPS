@@ -230,5 +230,7 @@ export function parseEpub(filePath: string): EpubMeta {
     seriesIndex,
     coverData,
     coverMime,
+    chapterCount: 0,
+    chapterSpineMap: [],
   };
 }

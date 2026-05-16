@@ -43,6 +43,8 @@ const FAKE_META: EpubMeta = {
   subjects: ['Fiction'],
   coverData: Buffer.from('fake-cover'),
   coverMime: 'image/jpeg',
+  chapterCount: 0,
+  chapterSpineMap: [],
 };
 
 let db: InstanceType<typeof Database>;
@@ -253,6 +255,8 @@ function makeMockImporter(): ScanImporter {
       subjects: [],
       coverData: null,
       coverMime: null,
+      chapterCount: 0,
+      chapterSpineMap: [],
     }),
     partialMD5: (filePath: string): string =>
       crypto.createHash('md5').update(filePath).digest('hex'),
@@ -302,6 +306,8 @@ describe('BookStore.scan()', () => {
       subjects: [],
       coverData: null,
       coverMime: null,
+      chapterCount: 0,
+      chapterSpineMap: [],
     });
     expect(bookStore.listBooks()).toHaveLength(1);
     const result = bookStore.scan(makeMockImporter());
@@ -328,6 +334,8 @@ describe('BookStore.scan()', () => {
           subjects: [],
           coverData: null,
           coverMime: null,
+          chapterCount: 0,
+          chapterSpineMap: [],
         };
       },
       partialMD5: (filePath: string): string =>

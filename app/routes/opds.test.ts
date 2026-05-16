@@ -23,6 +23,8 @@ const FAKE_META: EpubMeta = {
   subjects: [],
   coverData: null,
   coverMime: null,
+  chapterCount: 0,
+  chapterSpineMap: [],
 };
 
 let booksDir: string;

@@ -15,6 +15,8 @@ export interface Book {
   size: number;
   mtime: Date;
   addedAt: Date;
+  chapterCount: number;
+  chapterSpineMap: number[];
 }
 
 export interface EpubMeta {
@@ -29,6 +31,8 @@ export interface EpubMeta {
   subjects: string[];
   coverData: Buffer | null;
   coverMime: string | null;
+  chapterCount: number;
+  chapterSpineMap: number[];
 }
 
 export interface Progress {
