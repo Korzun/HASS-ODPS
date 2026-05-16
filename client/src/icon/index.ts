@@ -1,3 +1,4 @@
+export { AlertOctagon } from './alert-octagon';
 export { BookIcon } from './book';
 export { BooksIcon } from './books';
 export { CircleXIcon } from './circle-x';

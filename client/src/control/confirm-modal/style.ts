@@ -2,9 +2,14 @@ import { createUseStyles, type Theme } from '~/provider/theme';
 import { applyTransparency } from '~/utils';
 
 export const useStyle = createUseStyles((theme: Theme) => ({
+  '@global': {
+    'body:has(dialog[open])': {
+      overflow: 'hidden',
+    },
+  },
   root: {
     cursor: 'default',
-    borderRadius: theme.borderRadius.md,
+    borderRadius: '16px',
     border: 'none',
     marginTop: '100px',
     marginLeft: 'auto',
@@ -20,31 +25,41 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     display: 'flex',
     flexDirection: 'column',
     maxWidth: '500px',
-    backgroundColor: '#FFFFFF',
-    boxShadow: '0px 2px 0px #D9D9D9',
+    backgroundColor: '#FAFAFA',
   },
   header: {
     fontWeight: '600',
     fontSize: '1.25rem',
     padding: '1rem',
   },
+  icon: {
+    color: '#FF4D4F',
+    height: '24px',
+    display: 'inline',
+    paddingRight: '0.25rem',
+    '& svg': {
+      position: 'relative',
+      top: '5px',
+    },
+  },
   body: {
     paddingLeft: '1rem',
     paddingRight: '1rem',
-    paddingBottom: '1rem',
+    paddingBottom: '2rem',
     color: '#5A6375',
   },
   footer: {
+    backgroundColor: '#EEEEEE',
     borderTopStyle: 'solid',
     borderTopColor: '#D0D0D0',
     borderTopWidth: '1px',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'end',
-    gap: '0.25rem',
-    paddingTop: '0.5rem',
-    paddingBottom: '0.5rem',
-    paddingLeft: '0.5rem',
-    paddingRight: '0.5rem',
+    gap: '0.5rem',
+    paddingTop: '0.75rem',
+    paddingBottom: '0.75rem',
+    paddingLeft: '0.75rem',
+    paddingRight: '0.75rem',
   },
 }));
