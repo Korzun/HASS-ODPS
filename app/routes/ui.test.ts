@@ -835,6 +835,7 @@ describe('PATCH /api/books/:id/metadata', () => {
     expect(res.status).toBe(200);
     expect(res.body.title).toBe('Updated Title');
     expect(res.body.path).toBeUndefined(); // path must not be exposed
+    expect(res.body.chapterSpineMap).toBeUndefined();
     // Verify the returned book ID is now in the DB (ID may have shifted)
     const newId: string = res.body.id;
     expect(bookStore.getBookById(newId)).not.toBeNull();

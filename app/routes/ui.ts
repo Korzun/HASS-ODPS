@@ -286,7 +286,7 @@ export function createUiRouter(
       }
 
       log.info(`Book metadata updated: "${updated.filename}"`);
-      const { path: _path, ...rest } = updated;
+      const { path: _path, chapterSpineMap: _chapterSpineMap, ...rest } = updated;
       res.json(rest);
     }
   );
