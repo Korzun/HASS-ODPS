@@ -74,6 +74,130 @@ function makeEpub(
   return zip.toBuffer();
 }
 
+function makeEpubWithNav(chapters: Array<{ title: string; href: string }>): Buffer {
+  const zip = new AdmZip();
+  zip.addFile(
+    'META-INF/container.xml',
+    Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+  );
+
+  const manifestItems = [
+    `<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>`,
+    `<item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>`,
+    ...chapters.map(
+      (c, i) => `<item id="ch${i}" href="${c.href}" media-type="application/xhtml+xml"/>`
+    ),
+  ].join('\n    ');
+
+  const spineRefs = [
+    `<itemref idref="cover"/>`,
+    ...chapters.map((_, i) => `<itemref idref="ch${i}"/>`),
+  ].join('\n    ');
+
+  zip.addFile(
+    'OEBPS/content.opf',
+    Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Test Book</dc:title></metadata>
+  <manifest>${manifestItems}</manifest>
+  <spine>${spineRefs}</spine>
+</package>`)
+  );
+
+  const navItems = chapters
+    .map((c) => `<li><a href="${c.href}">${c.title}</a></li>`)
+    .join('\n        ');
+  zip.addFile(
+    'OEBPS/nav.xhtml',
+    Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        ${navItems}
+      </ol>
+    </nav>
+  </body>
+</html>`)
+  );
+
+  for (const chapter of chapters) {
+    zip.addFile(
+      `OEBPS/${chapter.href}`,
+      Buffer.from(`<html><body><p>${chapter.title}</p></body></html>`)
+    );
+  }
+  zip.addFile('OEBPS/cover.xhtml', Buffer.from('<html><body>Cover</body></html>'));
+
+  return zip.toBuffer();
+}
+
+function makeEpubWithNcx(chapters: Array<{ title: string; href: string }>): Buffer {
+  const zip = new AdmZip();
+  zip.addFile(
+    'META-INF/container.xml',
+    Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+  );
+
+  const manifestItems = [
+    `<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`,
+    `<item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>`,
+    ...chapters.map(
+      (c, i) => `<item id="ch${i}" href="${c.href}" media-type="application/xhtml+xml"/>`
+    ),
+  ].join('\n    ');
+
+  const spineRefs = [
+    `<itemref idref="cover"/>`,
+    ...chapters.map((_, i) => `<itemref idref="ch${i}"/>`),
+  ].join('\n    ');
+
+  zip.addFile(
+    'OEBPS/content.opf',
+    Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Test Book</dc:title></metadata>
+  <manifest>${manifestItems}</manifest>
+  <spine toc="ncx">${spineRefs}</spine>
+</package>`)
+  );
+
+  const navPoints = chapters
+    .map(
+      (c, i) => `<navPoint id="np${i}" playOrder="${i + 1}">
+      <navLabel><text>${c.title}</text></navLabel>
+      <content src="${c.href}"/>
+    </navPoint>`
+    )
+    .join('\n    ');
+
+  zip.addFile(
+    'OEBPS/toc.ncx',
+    Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <navMap>
+    ${navPoints}
+  </navMap>
+</ncx>`)
+  );
+
+  for (const chapter of chapters) {
+    zip.addFile(
+      `OEBPS/${chapter.href}`,
+      Buffer.from(`<html><body><p>${chapter.title}</p></body></html>`)
+    );
+  }
+  zip.addFile('OEBPS/cover.xhtml', Buffer.from('<html><body>Cover</body></html>'));
+
+  return zip.toBuffer();
+}
+
 let tmpDir: string;
 
 beforeEach(() => {
@@ -618,6 +742,154 @@ describe('parseEpub', () => {
       const meta = parseEpub(filePath);
       expect(meta.title).toBe('Normal Title');
       expect(meta.description).toBe('A plain book.');
+    });
+  });
+
+  describe('chapter detection', () => {
+    it('returns chapterCount 0 and empty chapterSpineMap when no nav document present', () => {
+      const filePath = path.join(tmpDir, 'no-nav.epub');
+      fs.writeFileSync(filePath, makeEpub({ title: 'No Nav' }));
+      const meta = parseEpub(filePath);
+      expect(meta.chapterCount).toBe(0);
+      expect(meta.chapterSpineMap).toEqual([]);
+    });
+
+    it('parses chapter count from EPUB 3 nav document', () => {
+      const filePath = path.join(tmpDir, 'epub3-nav.epub');
+      fs.writeFileSync(
+        filePath,
+        makeEpubWithNav([
+          { title: 'Chapter 1', href: 'ch1.xhtml' },
+          { title: 'Chapter 2', href: 'ch2.xhtml' },
+          { title: 'Chapter 3', href: 'ch3.xhtml' },
+        ])
+      );
+      const meta = parseEpub(filePath);
+      expect(meta.chapterCount).toBe(3);
+      // spine: cover(0), ch1(1), ch2(2), ch3(3) — nav entries map to indices 1, 2, 3
+      expect(meta.chapterSpineMap).toEqual([1, 2, 3]);
+    });
+
+    it('parses chapter count from EPUB 2 NCX document', () => {
+      const filePath = path.join(tmpDir, 'epub2-ncx.epub');
+      fs.writeFileSync(
+        filePath,
+        makeEpubWithNcx([
+          { title: 'Chapter 1', href: 'ch1.xhtml' },
+          { title: 'Chapter 2', href: 'ch2.xhtml' },
+        ])
+      );
+      const meta = parseEpub(filePath);
+      expect(meta.chapterCount).toBe(2);
+      expect(meta.chapterSpineMap).toEqual([1, 2]);
+    });
+
+    it('flattens nested nav entries', () => {
+      const zip = new AdmZip();
+      zip.addFile(
+        'META-INF/container.xml',
+        Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+      );
+      zip.addFile(
+        'OEBPS/content.opf',
+        Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>T</dc:title></metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch2" href="ch2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="sec2a" href="sec2a.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch3" href="ch3.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="cover"/>
+    <itemref idref="ch1"/>
+    <itemref idref="ch2"/>
+    <itemref idref="sec2a"/>
+    <itemref idref="ch3"/>
+  </spine>
+</package>`)
+      );
+      zip.addFile(
+        'OEBPS/nav.xhtml',
+        Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="ch1.xhtml">Chapter 1</a></li>
+        <li>
+          <a href="ch2.xhtml">Chapter 2</a>
+          <ol>
+            <li><a href="sec2a.xhtml">Section 2a</a></li>
+          </ol>
+        </li>
+        <li><a href="ch3.xhtml">Chapter 3</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>`)
+      );
+      ['cover.xhtml', 'ch1.xhtml', 'ch2.xhtml', 'sec2a.xhtml', 'ch3.xhtml'].forEach((f) =>
+        zip.addFile(`OEBPS/${f}`, Buffer.from('<html/>'))
+      );
+
+      const filePath = path.join(tmpDir, 'nested-nav.epub');
+      fs.writeFileSync(filePath, zip.toBuffer());
+      const meta = parseEpub(filePath);
+      // spine: cover(0) ch1(1) ch2(2) sec2a(3) ch3(4)
+      expect(meta.chapterCount).toBe(4);
+      expect(meta.chapterSpineMap).toEqual([1, 2, 3, 4]);
+    });
+
+    it('deduplicates nav entries that reference the same spine item', () => {
+      const zip = new AdmZip();
+      zip.addFile(
+        'META-INF/container.xml',
+        Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+      );
+      zip.addFile(
+        'OEBPS/content.opf',
+        Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>T</dc:title></metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="ch1"/></spine>
+</package>`)
+      );
+      // Two nav entries pointing to the same file (one with a fragment)
+      zip.addFile(
+        'OEBPS/nav.xhtml',
+        Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="ch1.xhtml">Chapter 1</a></li>
+        <li><a href="ch1.xhtml#section2">Section 2</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>`)
+      );
+      zip.addFile('OEBPS/ch1.xhtml', Buffer.from('<html/>'));
+
+      const filePath = path.join(tmpDir, 'dedup.epub');
+      fs.writeFileSync(filePath, zip.toBuffer());
+      const meta = parseEpub(filePath);
+      expect(meta.chapterCount).toBe(1);
+      expect(meta.chapterSpineMap).toEqual([0]);
     });
   });
 });
