@@ -22,9 +22,6 @@ export const BookPage = () => {
 
   const [book, loading, error] = useBook(id!, true);
   const [progress] = useMyProgress(id!);
-  const coverColors = useCoverColors(
-    book?.hasCover ? `/api/books/${encodeURIComponent(book.id)}/cover` : null
-  );
 
   const handleEditMetadata = useCallback(
     () => navigate(path.bookEdit(book?.id ?? '')),
@@ -90,7 +87,7 @@ export const BookPage = () => {
   }
 
   return (
-    <Page colors={coverColors}>
+    <Page>
       <Card>
         <div className={styles.cardContainer}>
           <div className={styles.detail}>
