@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { Card, Page } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
+import { useCoverColors } from '~/component/page/use-cover-colors';
 import { Button, ChapterProgress, DeleteBookButton, BookProgress } from '~/control';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook } from '~/provider/book';
@@ -21,6 +22,9 @@ export const BookPage = () => {
 
   const [book, loading, error] = useBook(id!, true);
   const [progress] = useMyProgress(id!);
+  const coverColors = useCoverColors(
+    book?.hasCover ? `/api/books/${encodeURIComponent(book.id)}/cover` : null
+  );
 
   const handleEditMetadata = useCallback(
     () => navigate(path.bookEdit(book?.id ?? '')),
@@ -43,6 +47,9 @@ export const BookPage = () => {
       metadataList.push({ title: 'publisher', value: book.publisher });
     }
     metadataList.push({ title: 'format', value: 'EPUB' });
+    if (book.chapterCount > 0) {
+      metadataList.push({ title: 'chapters', value: book.chapterCount.toString() });
+    }
     metadataList.push({ title: 'size', value: formatSize(book.size) });
     if (book.addedAt) {
       metadataList.push({ title: 'added', value: new Date(book.addedAt).toLocaleDateString() });
@@ -83,7 +90,7 @@ export const BookPage = () => {
   }
 
   return (
-    <Page>
+    <Page colors={coverColors}>
       <Card>
         <div className={styles.cardContainer}>
           <div className={styles.detail}>
@@ -111,7 +118,12 @@ export const BookPage = () => {
           </div>
           <div className={styles.metadata}>
             <BookProgress value={progress ? progress.percentage : 0} size={12} />
-            {progress && progress.percentage && <ChapterProgress current={5} total={20} />}
+            {progress &&
+              progress.percentage > 0 &&
+              book.chapterCount > 0 &&
+              progress.currentChapter != null && (
+                <ChapterProgress current={progress.currentChapter} total={book.chapterCount} />
+              )}
             <MetadataList metadata={metadata} />
           </div>
         </div>
