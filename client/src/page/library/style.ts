@@ -7,4 +7,11 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     flexDirection: 'column',
     gap: '0.25rem',
   },
+  buttonContainer: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  spacer: {
+    flexGrow: 1,
+  },
 }));

@@ -1,54 +1,46 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '~/control/button';
-import { useIsAdmin } from '~/provider/auth';
 import { useScanLibrary } from '~/provider/book';
+
+import { Toast } from '../toast';
 
 import { useStyle } from './style';
 
 export const LibraryScan = () => {
   const styles = useStyle();
-  const [isAdmin] = useIsAdmin();
 
   const [scanLibrary, scanResult, scanning, error] = useScanLibrary();
-  const handleScanLibrary = useCallback(() => {
-    scanLibrary();
-  }, [scanLibrary]);
-  const scanStatus = useMemo(() => {
+  const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const handleDismiss = useCallback(() => setToast(null), []);
+
+  useEffect(() => {
+    if (scanning) {
+      setToast(null);
+      return;
+    }
     if (error) {
-      return {
-        text: '✗ Scan failed',
-        ok: false,
-      };
+      setToast({ text: 'Scan failed', type: 'error' });
+      return;
     }
-    if (scanResult === undefined) {
-      return undefined;
+    if (scanResult !== undefined) {
+      const changed = scanResult.imported.length + scanResult.removed.length;
+      setToast({
+        text:
+          changed === 0
+            ? 'Library already up to date'
+            : `Scan complete: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`,
+        type: 'success',
+      });
     }
-    if (scanResult.imported.length + scanResult.removed.length === 0) {
-      return {
-        text: '✓ Library already up to date',
-        ok: true,
-      };
-    }
-    return {
-      text: `✓ Scan complete: ${scanResult.imported.length} imported, ${scanResult.removed.length} removed`,
-      ok: true,
-    };
-  }, [error, scanResult]);
-  if (!isAdmin) {
-    return null;
-  }
+  }, [scanning, error, scanResult]);
 
   return (
     <div className={styles.root}>
-      <Button loading={scanning} onClick={handleScanLibrary}>
+      <Button loading={scanning} onClick={scanLibrary}>
         {scanning ? 'Scanning…' : 'Scan Library'}
       </Button>
-      {scanStatus && (
-        <span className={scanStatus.ok ? styles.statusOk : styles.statusErr}>
-          {scanStatus.text}
-        </span>
-      )}
+      {toast && <Toast message={toast.text} type={toast.type} onDismiss={handleDismiss} />}
     </div>
   );
 };

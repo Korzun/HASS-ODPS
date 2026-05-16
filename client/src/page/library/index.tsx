@@ -1,14 +1,18 @@
 import { useMemo } from 'react';
 
-import { Page, BookRow, SeriesRow } from '~/component';
+import { Page, BookRow, SeriesRow, LibraryScan } from '~/component';
+import { useIsAdmin } from '~/provider/auth';
 import { useSeriesList, useStandaloneBookList } from '~/provider/book';
 
 import { useStyle } from './style';
 
 export const LibraryPage = () => {
   const style = useStyle();
+
+  const [isAdmin] = useIsAdmin();
   const [standaloneBookList] = useStandaloneBookList();
   const [seriesBookList] = useSeriesList();
+
   const bookList = useMemo(() => {
     return [...seriesBookList, ...standaloneBookList].sort((bookOrSeriesA, bookOrSeriesB) => {
       const titleA = Array.isArray(bookOrSeriesA) ? bookOrSeriesA[0] : bookOrSeriesA.title;
@@ -28,6 +32,12 @@ export const LibraryPage = () => {
           )
         )}
       </div>
+      {isAdmin && (
+        <div className={style.buttonContainer}>
+          <div className={style.spacer} />
+          <LibraryScan />
+        </div>
+      )}
     </Page>
   );
 };
