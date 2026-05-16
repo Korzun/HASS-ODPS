@@ -401,6 +401,43 @@ describe('publisher, identifiers, subjects', () => {
   });
 });
 
+describe('chapter data', () => {
+  it('DB migration adds chapter_count and chapter_spine_map columns', () => {
+    const cols = db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    const names = cols.map((c) => c.name);
+    expect(names).toContain('chapter_count');
+    expect(names).toContain('chapter_spine_map');
+  });
+
+  it('stores and retrieves chapterCount', () => {
+    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), {
+      ...FAKE_META,
+      chapterCount: 12,
+      chapterSpineMap: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    });
+    const book = bookStore.getBookById('id1');
+    expect(book?.chapterCount).toBe(12);
+  });
+
+  it('stores and retrieves chapterSpineMap (JSON round-trip)', () => {
+    const spineMap = [2, 4, 6, 8];
+    bookStore.addBook('id2', 'map.epub', '/books/map.epub', 100, new Date(), {
+      ...FAKE_META,
+      chapterCount: 4,
+      chapterSpineMap: spineMap,
+    });
+    const book = bookStore.getBookById('id2');
+    expect(book?.chapterSpineMap).toEqual(spineMap);
+  });
+
+  it('defaults to chapterCount 0 and empty chapterSpineMap', () => {
+    bookStore.addBook('id3', 'default.epub', '/books/default.epub', 100, new Date(), FAKE_META);
+    const book = bookStore.getBookById('id3');
+    expect(book?.chapterCount).toBe(0);
+    expect(book?.chapterSpineMap).toEqual([]);
+  });
+});
+
 const BOOKS_SCHEMA = `
   CREATE TABLE books (
     id TEXT PRIMARY KEY, filename TEXT NOT NULL UNIQUE, path TEXT NOT NULL,
@@ -461,7 +498,7 @@ describe('migrations', () => {
 
     const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
     expect(row.id).toBe(correctId);
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 3 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 4 });
 
     preDb.close();
   });
@@ -538,6 +575,32 @@ describe('migrations', () => {
 
     const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
     expect(row.id).toBe(pinnedId);
+
+    preDb.close();
+  });
+
+  it('migration v4: adds chapter_count and chapter_spine_map columns to existing table', () => {
+    const preDb = new Database(':memory:');
+    preDb.exec(`
+      CREATE TABLE books (
+        id TEXT PRIMARY KEY, filename TEXT NOT NULL UNIQUE, path TEXT NOT NULL,
+        title TEXT NOT NULL, file_as TEXT NOT NULL DEFAULT '', author TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '', publisher TEXT NOT NULL DEFAULT '',
+        series TEXT NOT NULL DEFAULT '', series_index REAL NOT NULL DEFAULT 0,
+        identifiers TEXT NOT NULL DEFAULT '[]', subjects TEXT NOT NULL DEFAULT '[]',
+        cover_data BLOB, cover_mime TEXT,
+        size INTEGER NOT NULL, mtime INTEGER NOT NULL, added_at INTEGER NOT NULL
+      )
+    `);
+    preDb.exec('PRAGMA user_version = 3');
+
+    new BookStore(booksDir, preDb);
+
+    const cols = preDb.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    const names = cols.map((c) => c.name);
+    expect(names).toContain('chapter_count');
+    expect(names).toContain('chapter_spine_map');
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 4 });
 
     preDb.close();
   });

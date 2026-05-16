@@ -21,6 +21,8 @@ interface BookRow {
   identifiers: string; // JSON string
   subjects: string; // JSON string
   has_cover: number;
+  chapter_count: number;
+  chapter_spine_map: string;
   size: number;
   mtime: number;
   added_at: number;
@@ -127,6 +129,18 @@ export class BookStore {
       }
       this.db.exec('PRAGMA user_version = 3');
     }
+
+    if (user_version < 4) {
+      const cols = this.db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+      const colNames = new Set(cols.map((c) => c.name));
+      if (!colNames.has('chapter_count')) {
+        this.db.exec(`ALTER TABLE books ADD COLUMN chapter_count INTEGER NOT NULL DEFAULT 0`);
+      }
+      if (!colNames.has('chapter_spine_map')) {
+        this.db.exec(`ALTER TABLE books ADD COLUMN chapter_spine_map TEXT NOT NULL DEFAULT '[]'`);
+      }
+      this.db.exec('PRAGMA user_version = 4');
+    }
   }
 
   addBook(
@@ -138,8 +152,8 @@ export class BookStore {
     meta: EpubMeta
   ): void {
     const stmt = this.db.prepare(`
-      INSERT INTO books (id, filename, path, title, file_as, author, description, publisher, series, series_index, identifiers, subjects, cover_data, cover_mime, size, mtime, added_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO books (id, filename, path, title, file_as, author, description, publisher, series, series_index, identifiers, subjects, cover_data, cover_mime, size, mtime, added_at, chapter_count, chapter_spine_map)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(filename) DO UPDATE SET
         id = excluded.id,
         path = excluded.path,
@@ -155,7 +169,9 @@ export class BookStore {
         cover_data = excluded.cover_data,
         cover_mime = excluded.cover_mime,
         size = excluded.size,
-        mtime = excluded.mtime
+        mtime = excluded.mtime,
+        chapter_count = excluded.chapter_count,
+        chapter_spine_map = excluded.chapter_spine_map
     `);
     const title = meta.title.trim() || path.basename(filename, path.extname(filename));
     const fileAs = (meta.fileAs || '').trim();
@@ -176,7 +192,9 @@ export class BookStore {
       meta.coverMime,
       size,
       mtime.getTime(),
-      Date.now()
+      Date.now(),
+      meta.chapterCount,
+      JSON.stringify(meta.chapterSpineMap)
     );
   }
 
@@ -185,7 +203,8 @@ export class BookStore {
       .prepare(
         `
       SELECT id, filename, path, title, file_as, author, description, publisher, series, series_index,
-             identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at
+             identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at,
+             chapter_count, chapter_spine_map
       FROM books
       ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, filename
     `
@@ -199,7 +218,8 @@ export class BookStore {
       .prepare(
         `
       SELECT id, filename, path, title, file_as, author, description, publisher, series, series_index,
-             identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at
+             identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at,
+             chapter_count, chapter_spine_map
       FROM books WHERE id = ?
     `
       )
@@ -244,7 +264,7 @@ export class BookStore {
           .prepare(
             `UPDATE books SET id=?, title=?, file_as=?, author=?, description=?, publisher=?,
              series=?, series_index=?, identifiers=?, subjects=?, cover_data=?, cover_mime=?,
-             size=?, mtime=? WHERE id=?`
+             size=?, mtime=?, chapter_count=?, chapter_spine_map=? WHERE id=?`
           )
           .run(
             newId,
@@ -261,6 +281,8 @@ export class BookStore {
             meta.coverMime,
             stat.size,
             stat.mtime.getTime(),
+            meta.chapterCount,
+            JSON.stringify(meta.chapterSpineMap),
             id
           );
         if (progressExists) {
@@ -271,7 +293,7 @@ export class BookStore {
           .prepare(
             `UPDATE books SET title=?, file_as=?, author=?, description=?, publisher=?,
              series=?, series_index=?, identifiers=?, subjects=?, cover_data=?, cover_mime=?,
-             size=?, mtime=? WHERE id=?`
+             size=?, mtime=?, chapter_count=?, chapter_spine_map=? WHERE id=?`
           )
           .run(
             meta.title.trim() || path.basename(row.filename, path.extname(row.filename)),
@@ -287,6 +309,8 @@ export class BookStore {
             meta.coverMime,
             stat.size,
             stat.mtime.getTime(),
+            meta.chapterCount,
+            JSON.stringify(meta.chapterSpineMap),
             id
           );
       }
@@ -366,8 +390,8 @@ export class BookStore {
       size: r.size,
       mtime: new Date(r.mtime),
       addedAt: new Date(r.added_at),
-      chapterCount: 0,
-      chapterSpineMap: [],
+      chapterCount: r.chapter_count,
+      chapterSpineMap: JSON.parse(r.chapter_spine_map) as number[],
     };
   }
 }
