@@ -38,7 +38,7 @@ export const LibraryScan = () => {
   return (
     <div className={styles.root}>
       <Button loading={scanning} onClick={scanLibrary}>
-        {scanning ? 'Scanning…' : 'Scan Library'}
+        {scanning ? 'Scanning…' : 'Library scan'}
       </Button>
       {toast && <Toast message={toast.text} type={toast.type} onDismiss={handleDismiss} />}
     </div>

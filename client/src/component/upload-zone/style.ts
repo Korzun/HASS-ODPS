@@ -45,7 +45,5 @@ export const useStyle = createUseStyles((theme: Theme) => {
     },
     dropText: { color: theme.colors.primaryHover, marginBottom: '.5rem' },
     dropSmall: { color: theme.colors.text.muted },
-    statusOk: { color: theme.colors.success, fontSize: '.875rem' },
-    statusErr: { color: theme.colors.danger, fontSize: '.875rem' },
   };
 });

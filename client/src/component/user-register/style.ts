@@ -1,11 +1,5 @@
 import { createUseStyles, type Theme } from '~/provider/theme';
 
-const statusBase = {
-  marginTop: '.4rem',
-  fontSize: '.8rem',
-  minHeight: '1rem',
-};
-
 export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
     background: theme.colors.bg.card,
@@ -45,6 +39,4 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     background: theme.colors.bg.input,
     color: theme.colors.text.primary,
   },
-  statusOk: { ...statusBase, color: theme.colors.success },
-  statusErr: { ...statusBase, color: theme.colors.danger },
 }));

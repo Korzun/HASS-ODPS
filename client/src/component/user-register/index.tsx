@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { Card } from '~/component';
+import { Card, Toast } from '~/component';
 import { Button, TextInput } from '~/control';
 import { useRegisterUser } from '~/provider/user';
 
@@ -12,6 +12,23 @@ export const UserRegister = () => {
   const [registerUser, loading, okay, error, errorMessage] = useRegisterUser();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const handleDismiss = useCallback(() => setToast(null), []);
+
+  useEffect(() => {
+    if (loading) {
+      setToast(null);
+      return;
+    }
+    if (error) {
+      setToast({ text: errorMessage ?? 'Registration failed', type: 'error' });
+      return;
+    }
+    if (okay) {
+      setToast({ text: 'User registered', type: 'success' });
+    }
+  }, [loading, okay, error, errorMessage]);
+
   const handleRegisterUser = useCallback(() => {
     registerUser(username, password);
   }, [registerUser, username, password]);
@@ -63,11 +80,7 @@ export const UserRegister = () => {
       <Button type="primary" loading={loading} onClick={handleRegisterUser}>
         {loading ? 'Registering…' : 'Register'}
       </Button>
-      {(okay || error) && (
-        <div className={okay ? styles.statusOk : styles.statusErr}>
-          {error ? `✗ ${errorMessage}` : '✓ User registered'}
-        </div>
-      )}
+      {toast && <Toast message={toast.text} type={toast.type} onDismiss={handleDismiss} />}
     </Card>
   );
 };

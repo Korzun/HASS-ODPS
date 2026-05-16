@@ -44,11 +44,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     '&:hover': { background: theme.colors.primaryHover },
     '&:disabled': { opacity: 0.6, cursor: 'default' },
   },
-  error: {
-    color: theme.colors.danger,
-    fontSize: '0.875rem',
-    marginBottom: '1rem',
-  },
   form: {
     display: 'grid',
     gridTemplateColumns: '140px 1fr',

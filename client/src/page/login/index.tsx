@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { Page } from '~/component';
+import { Page, Toast } from '~/component';
 import { Button } from '~/control';
 import { BooksIcon } from '~/icon';
 import { useAuthRefresh } from '~/provider/auth';
@@ -13,6 +13,7 @@ export const LoginPage = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | undefined>();
+  const handleDismissError = useCallback(() => setError(undefined), []);
 
   const [username, setUsername] = useState<string>('');
   const handleUsernameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +63,6 @@ export const LoginPage = () => {
           <h1 className={styles.title}>
             <BooksIcon /> HASS-ODPS
           </h1>
-          {error && <p className={styles.error}>{error}</p>}
           <label className={styles.label} htmlFor="username">
             Username
           </label>
@@ -97,6 +97,7 @@ export const LoginPage = () => {
           </div>
         </div>
       </div>
+      {error && <Toast message={error} type="error" onDismiss={handleDismissError} />}
     </Page>
   );
 };

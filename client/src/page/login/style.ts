@@ -51,9 +51,4 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   login: {
     marginTop: '0.5rem',
   },
-  error: {
-    color: theme.colors.danger,
-    fontSize: theme.text.size.md,
-    marginBottom: '1rem',
-  },
 }));

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Card, Page } from '~/component';
+import { Card, Page, Toast } from '~/component';
 import { Button, FieldList, NumberInput, Switch, TextArea, TextInput } from '~/control';
 import type { FieldRow } from '~/control';
 import { useBook, usePatchBookMetadata } from '~/provider/book';
@@ -23,8 +23,11 @@ export const BookEditPage = () => {
     setIsEditValid((previous) => ({ ...previous, [fieldName]: newValid }));
   }, []);
 
-  const [original, loading, error] = useBook(id!);
+  const [original, loading, hasError, errorMessage] = useBook(id!);
   const [patchBookMetadata, saving] = usePatchBookMetadata();
+  const [toastError, setToastError] = useState<string | undefined>();
+  const handleDismissError = useCallback(() => setToastError(undefined), []);
+  useEffect(() => { setToastError(errorMessage); }, [errorMessage]);
 
   const [cover, setCover] = useState<File | undefined>(undefined);
   const handleCoverChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,7 +114,7 @@ export const BookEditPage = () => {
   if (!original) {
     return (
       <Page>
-        <h1 className={styles.heading}>{error ?? 'Book not found.'}</h1>
+        <h1 className={styles.heading}>{hasError ? (errorMessage ?? 'Failed to load book.') : 'Book not found.'}</h1>
       </Page>
     );
   }
@@ -151,7 +154,7 @@ export const BookEditPage = () => {
   return (
     <Page>
       <h1 className={styles.heading}>Edit Metadata — {original?.title}</h1>
-      {error && <p className={styles.error}>{error}</p>}
+      {toastError && <Toast message={toastError} type="error" onDismiss={handleDismissError} />}
 
       <Card>
         <div className={styles.cardContainer}>
