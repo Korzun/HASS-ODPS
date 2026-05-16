@@ -14,6 +14,7 @@ export type Book = {
   hasCover: boolean;
   size: number;
   addedAt?: string;
+  chapterCount: number;
 };
 
 export type Identifier = { scheme: string; value: string };
