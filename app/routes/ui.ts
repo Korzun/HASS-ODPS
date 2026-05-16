@@ -9,6 +9,7 @@ import { sessionAuth, adminAuth } from '../middleware/auth';
 import { logger } from '../logger';
 import { parseEpub, partialMD5 } from '../services/epub-parser';
 import { writeMetadata, EpubChanges } from '../services/epub-writer';
+import { parseCfiSpineIndex, spineIndexToChapter } from '../utils/cfi';
 
 const log = logger('UI');
 
@@ -90,8 +91,22 @@ export function createUiRouter(
       res.json([]);
       return;
     }
-    const progress = userStore.getUserProgress(req.session.username!);
-    res.json(progress.map((p) => ({ document: p.document, percentage: p.percentage })));
+    const progressList = userStore.getUserProgress(req.session.username!);
+    res.json(
+      progressList.map((p) => {
+        const spineIndex = parseCfiSpineIndex(p.progress);
+        const book = bookStore.getBookById(p.document);
+        const currentChapter =
+          spineIndex !== null && book && book.chapterSpineMap.length > 0
+            ? (spineIndexToChapter(spineIndex, book.chapterSpineMap) ?? undefined)
+            : undefined;
+        return {
+          document: p.document,
+          percentage: p.percentage,
+          ...(currentChapter !== undefined ? { currentChapter } : {}),
+        };
+      })
+    );
   });
 
   router.delete('/api/my/progress/:document', sessionAuth, (req: Request, res: Response) => {
@@ -127,6 +142,7 @@ export function createUiRouter(
           identifiers: _identifiers,
           subjects: _subjects,
           addedAt: _addedAt,
+          chapterSpineMap: _chapterSpineMap,
           ...rest
         } = b;
         return rest;
@@ -174,7 +190,7 @@ export function createUiRouter(
       res.status(404).json({ error: 'Book not found' });
       return;
     }
-    const { path: _path, ...rest } = book;
+    const { path: _path, chapterSpineMap: _chapterSpineMap, ...rest } = book;
     res.json(rest);
   });
 

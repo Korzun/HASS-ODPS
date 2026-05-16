@@ -294,6 +294,26 @@ describe('GET /api/books', () => {
     expect(book.path).toBeUndefined();
     expect(book.description).toBeUndefined();
   });
+
+  it('includes chapterCount in the book list response', async () => {
+    bookStore.addBook(
+      'id-ch',
+      'chaptered.epub',
+      path.join(booksDir, 'chaptered.epub'),
+      100,
+      new Date(),
+      {
+        ...FAKE_META,
+        chapterCount: 7,
+        chapterSpineMap: [1, 2, 3, 4, 5, 6, 7],
+      }
+    );
+    const agent = await adminAgent();
+    const res = await agent.get('/api/books');
+    expect(res.status).toBe(200);
+    expect(res.body[0].chapterCount).toBe(7);
+    expect(res.body[0].chapterSpineMap).toBeUndefined();
+  });
 });
 
 describe('POST /api/books/upload', () => {
@@ -405,6 +425,19 @@ describe('GET /api/books/:id', () => {
   it('requires authentication', async () => {
     const res = await request(app).get('/api/books/anyid');
     expect(res.status).toBe(302);
+  });
+
+  it('includes chapterCount and excludes chapterSpineMap', async () => {
+    bookStore.addBook('bk1', 'book1.epub', path.join(booksDir, 'book1.epub'), 100, new Date(), {
+      ...FAKE_META,
+      chapterCount: 5,
+      chapterSpineMap: [1, 2, 3, 4, 5],
+    });
+    const agent = await adminAgent();
+    const res = await agent.get('/api/books/bk1');
+    expect(res.status).toBe(200);
+    expect(res.body.chapterCount).toBe(5);
+    expect(res.body.chapterSpineMap).toBeUndefined();
   });
 });
 
@@ -617,6 +650,99 @@ describe('GET /api/my/progress', () => {
     const res = await agent.get('/api/my/progress');
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(0);
+  });
+
+  it('includes currentChapter when a matching book has chapter data and CFI is valid', async () => {
+    // spine: cover(0) ch1(1) ch2(2) ch3(3); nav: ch1→1, ch2→2, ch3→3
+    bookStore.addBook(
+      'doc-with-chapters',
+      'chapters.epub',
+      path.join(booksDir, 'chapters.epub'),
+      100,
+      new Date(),
+      {
+        ...FAKE_META,
+        chapterCount: 3,
+        chapterSpineMap: [1, 2, 3],
+      }
+    );
+    // EPUB_CFI(/6/6...) → N=6 → spineIndex=(6-2)/2=2 → chapter 2 (ch2 is at spineIndex 2)
+    userStore.saveProgress('alice', {
+      document: 'doc-with-chapters',
+      progress: 'EPUB_CFI(/6/6[ch2]!/4/1:0)',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body[0].currentChapter).toBe(2);
+  });
+
+  it('omits currentChapter when the book is not in the DB', async () => {
+    userStore.saveProgress('alice', {
+      document: 'unknown-book-id',
+      progress: 'EPUB_CFI(/6/4!/4/1:0)',
+      percentage: 0.3,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body[0].currentChapter).toBeUndefined();
+  });
+
+  it('omits currentChapter when the CFI is not in KoReader EPUB_CFI format', async () => {
+    bookStore.addBook(
+      'doc-bad-cfi',
+      'bad-cfi.epub',
+      path.join(booksDir, 'bad-cfi.epub'),
+      100,
+      new Date(),
+      {
+        ...FAKE_META,
+        chapterCount: 3,
+        chapterSpineMap: [1, 2, 3],
+      }
+    );
+    userStore.saveProgress('alice', {
+      document: 'doc-bad-cfi',
+      progress: '/p[1]',
+      percentage: 0.1,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body[0].currentChapter).toBeUndefined();
+  });
+
+  it('does not expose chapterSpineMap on progress records', async () => {
+    bookStore.addBook(
+      'doc-no-expose',
+      'no-expose.epub',
+      path.join(booksDir, 'no-expose.epub'),
+      100,
+      new Date(),
+      {
+        ...FAKE_META,
+        chapterCount: 3,
+        chapterSpineMap: [1, 2, 3],
+      }
+    );
+    userStore.saveProgress('alice', {
+      document: 'doc-no-expose',
+      progress: 'EPUB_CFI(/6/4!/4/1:0)',
+      percentage: 0.3,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.body[0].chapterSpineMap).toBeUndefined();
   });
 });
 
