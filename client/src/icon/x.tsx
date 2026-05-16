@@ -1,7 +1,7 @@
 import { IconProps, defaultIconProps } from './props';
 
-// https://tabler.io/icons?icon=list-check
-export const ListCheckIcon = (props: IconProps) => {
+// https://tabler.io/icons?icon=x
+export const XIcon = (props: IconProps) => {
   const { height, width, strokeWidth } = { ...defaultIconProps, ...props };
 
   return (
@@ -17,12 +17,8 @@ export const ListCheckIcon = (props: IconProps) => {
       strokeLinejoin="round"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M3.5 5.5l1.5 1.5l2.5 -2.5" />
-      {/*<path d="M3.5 11.5l1.5 1.5l2.5 -2.5" />*/}
-      <path d="M3.5 17.5l1.5 1.5l2.5 -2.5" />
-      <path d="M11 6l9 0" />
-      <path d="M11 12l9 0" />
-      <path d="M11 18l9 0" />
+      <path d="M18 6l-12 12" />
+      <path d="M6 6l12 12" />
     </svg>
   );
 };

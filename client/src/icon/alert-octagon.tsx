@@ -1,7 +1,7 @@
 import { IconProps, defaultIconProps } from './props';
 
 // https://tabler.io/icons?icon=alert-octagon
-export const AlertOctagon = (props: IconProps) => {
+export const AlertOctagonIcon = (props: IconProps) => {
   const { height, width } = { ...defaultIconProps, ...props };
 
   return (

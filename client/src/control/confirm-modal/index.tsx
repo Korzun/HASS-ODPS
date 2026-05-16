@@ -1,6 +1,6 @@
 import { useEffect, PropsWithChildren, useRef, useCallback } from 'react';
 
-import { AlertOctagon } from '~/icon';
+import { AlertOctagonIcon } from '~/icon';
 
 import { Button } from '../button';
 
@@ -65,7 +65,7 @@ export function ConfirmModal({
       <div className={styles.dialog} onClick={handleClickDialog}>
         <div className={styles.header}>
           <div className={styles.icon}>
-            <AlertOctagon />
+            <AlertOctagonIcon />
           </div>
           {title}
         </div>

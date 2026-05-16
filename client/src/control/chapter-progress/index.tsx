@@ -1,4 +1,4 @@
-import { ListCheck } from '~/icon';
+import { ListCheckIcon } from '~/icon';
 
 import { useStyle } from './style';
 
@@ -13,7 +13,7 @@ export const ChapterProgress = ({ current, total }: ChapterProgressProps) => {
   return (
     <div className={style.root}>
       <span className={style.title}>Chapters:</span>
-      <ListCheck width={12} height={12} strokeWidth={2.5} />
+      <ListCheckIcon width={12} height={12} strokeWidth={2.5} />
       <span className={style.label}>
         {current} / {total}
       </span>
