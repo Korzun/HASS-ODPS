@@ -140,6 +140,7 @@ export function createUiRouter(
   router.get('/books/:id', sessionAuth, serveSpa);
   router.get('/books/:id/edit', sessionAuth, serveSpa);
   router.get('/series/:name', sessionAuth, serveSpa);
+  router.get('/upload', sessionAuth, serveSpa);
 
   router.get('/api/books', sessionAuth, (_req: Request, res: Response) => {
     res.json(

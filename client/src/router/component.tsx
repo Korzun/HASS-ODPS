@@ -5,6 +5,7 @@ import { BookEditPage } from '../page/book-edit';
 import { LibraryPage } from '../page/library';
 import { LoginPage } from '../page/login';
 import { SeriesPage } from '../page/series';
+import { UploadPage } from '../page/upload';
 import { UserListPage } from '../page/user-list';
 
 import * as path from './path-internal';
@@ -22,6 +23,7 @@ export const AppRouter = () => {
 
         <Route element={<ProtectedRoute />}>
           <Route path={path.library()} element={<LibraryPage />} />
+          <Route path={path.upload()} element={<UploadPage />} />
           <Route path={path.series(pathKey.seriesName)} element={<SeriesPage />} />
           <Route path={path.book(pathKey.bookId)} element={<BookPage />} />
           <Route path={path.bookEdit(pathKey.bookId)} element={<BookEditPage />} />

@@ -964,4 +964,17 @@ describe('SPA routes serve index.html', () => {
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe('/login');
   });
+
+  it('GET /upload returns 200 with HTML', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/upload');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<!DOCTYPE html>');
+  });
+
+  it('GET /upload redirects to /login without session', async () => {
+    const res = await request(app).get('/upload');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe('/login');
+  });
 });

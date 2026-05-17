@@ -2,7 +2,7 @@ import cx from 'classnames';
 import { Link, useLocation } from 'react-router-dom';
 
 import { Button } from '~/control';
-import { BookIcon, BooksIcon, UsersIcon } from '~/icon';
+import { BookIcon, BooksIcon, UploadIcon, UsersIcon } from '~/icon';
 import { useIsAdmin, useLogout, useUsername } from '~/provider/auth';
 import { path } from '~/router';
 
@@ -20,8 +20,8 @@ export const Header = () => {
       <h1 className={styles.title}>
         <BooksIcon /> HASS-ODPS Library
       </h1>
-      {isAdmin && (
-        <nav className={styles.navigation}>
+      <nav className={styles.navigation}>
+        {isAdmin && (
           <Link
             className={cx(styles.navigationItem, {
               [styles.active]: pathname.startsWith(path.library()),
@@ -30,6 +30,16 @@ export const Header = () => {
           >
             <BookIcon height={14} width={14} /> Library
           </Link>
+        )}
+        <Link
+          className={cx(styles.navigationItem, {
+            [styles.active]: pathname === path.upload(),
+          })}
+          to={path.upload()}
+        >
+          <UploadIcon height={14} width={14} /> Upload
+        </Link>
+        {isAdmin && (
           <Link
             className={cx(styles.navigationItem, {
               [styles.active]: pathname === path.userList(),
@@ -38,8 +48,8 @@ export const Header = () => {
           >
             <UsersIcon height={14} width={14} /> Users
           </Link>
-        </nav>
-      )}
+        )}
+      </nav>
       <div className={styles.actions}>
         {username && <span className={styles.username}>{username}</span>}
         {username && (

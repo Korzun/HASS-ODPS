@@ -4,6 +4,7 @@ export const home = () => '/';
 export const library = () => '/library';
 export const login = () => '/login';
 export const series = (seriesName: string) => `${library()}/series/${seriesName}`;
+export const upload = () => '/upload';
 export const userList = () => '/users';
 
 // Server
