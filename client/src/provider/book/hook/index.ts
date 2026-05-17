@@ -9,3 +9,4 @@ export { useSeriesBookList } from './use-series-book-list';
 export { useSeriesList } from './use-series-list';
 export { useStandaloneBookList } from './use-standalone-book-list';
 export { useUploadBookList } from './use-upload-book-list';
+export { useUploadQueue } from './use-upload-queue';
