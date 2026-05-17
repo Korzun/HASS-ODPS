@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { Context } from '../context';
 
@@ -33,9 +33,11 @@ export const useUploadQueue = (): UseUploadQueue => {
   const nextIdRef = useRef(0);
   // Stable refs to avoid stale closure captures inside xhr.onload
   const fetchBookListRef = useRef(fetchBookList);
-  fetchBookListRef.current = fetchBookList;
   const clearCompleteBookIdsRef = useRef(clearCompleteBookIds);
-  clearCompleteBookIdsRef.current = clearCompleteBookIds;
+  useLayoutEffect(() => {
+    fetchBookListRef.current = fetchBookList;
+    clearCompleteBookIdsRef.current = clearCompleteBookIds;
+  });
 
   // Fetch server config on mount
   useEffect(() => {
