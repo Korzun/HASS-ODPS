@@ -23,15 +23,24 @@ export const LibraryPage = () => {
 
   return (
     <Page>
-      <div className={style.root}>
-        {bookList.map((book) =>
-          Array.isArray(book) ? (
-            <SeriesRow key={book[0]} seriesName={book[0]} />
-          ) : (
-            <BookRow key={book.id} bookId={book.id} />
-          )
-        )}
-      </div>
+      {bookList.length === 0 ? (
+        <div className={style.emptyState}>
+          <div className={style.emptyStateTitle}>Your library is empty</div>
+          <div className={style.emptyStateSubtitle}>
+            {isAdmin ? 'Use the scan button below to add books' : 'No books have been added yet'}
+          </div>
+        </div>
+      ) : (
+        <div className={style.root}>
+          {bookList.map((book) =>
+            Array.isArray(book) ? (
+              <SeriesRow key={book[0]} seriesName={book[0]} />
+            ) : (
+              <BookRow key={book.id} bookId={book.id} />
+            )
+          )}
+        </div>
+      )}
       {isAdmin && (
         <div className={style.buttonContainer}>
           <div className={style.spacer} />
