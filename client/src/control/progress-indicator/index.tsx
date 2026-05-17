@@ -20,7 +20,7 @@ const sectorPath = (pct: number): string => {
 
 export const BookProgress = ({ value, size = 40 }: ProgressIndicatorProps) => {
   const style = useStyle();
-  const clamped = Math.min(100, Math.max(0, value));
+  const clamped = Math.min(100, Math.max(0, value * 100));
 
   return (
     <div className={style.root}>
