@@ -9,11 +9,15 @@ import { path } from '~/router';
 import { Button } from '../button';
 import { ConfirmModal } from '../confirm-modal';
 
+import { useStyle } from './style';
+
 interface DeleteBookButton {
   bookId: string;
 }
 
 export function DeleteBookButton({ bookId }: DeleteBookButton) {
+  const style = useStyle();
+
   const [isAdmin] = useIsAdmin();
   const navigate = useNavigate();
 
@@ -53,11 +57,13 @@ export function DeleteBookButton({ bookId }: DeleteBookButton) {
         onCancel={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
         danger
-        title={`Delete “${book?.title ?? 'book'}” permanently?`}
+        title={`Delete book permanently?`}
         confirmText="Delete"
         loading={deleting}
       >
-        This book will be removed from all user libraries. This action cannot be undone.
+        This action will delete “<span className={style.book}>{book?.title ?? 'book'}</span>” from
+        all user libraries, along with any synced progress, and{' '}
+        <span className={style.undone}>can not be undone</span>.
       </ConfirmModal>
     </Fragment>
   );
