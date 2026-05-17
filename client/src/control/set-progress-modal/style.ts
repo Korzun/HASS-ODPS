@@ -24,7 +24,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   dialog: {
     display: 'flex',
     flexDirection: 'column',
-    width: '360px',
+    width: '600px',
     backgroundColor: '#FAFAFA',
   },
   header: {

@@ -149,18 +149,6 @@ export const BookPage = () => {
           </div>
         )}
       </Card>
-      {/*<Card>
-          <div className={styles.cardTitle}>Identifiers</div>
-          {book.identifiers.length > 0 && (
-            <div className={styles.identifiers}>
-              {book.identifiers.map(({ scheme, value }) => (
-                <div key={value + scheme} className={styles.identifier}>
-                  <span className={styles.scheme}>{scheme}</span>: {value}
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>*/}
       {isAdmin && (
         <div className={styles.buttonContainer}>
           <div className={styles.spacer} />
@@ -171,7 +159,7 @@ export const BookPage = () => {
       {!isAdmin && book.chapterCount > 0 && (
         <div className={styles.buttonContainer}>
           <div className={styles.spacer} />
-          <Button onClick={() => setProgressModalOpen(true)}>Set Progress</Button>
+          <Button onClick={() => setProgressModalOpen(true)}>Set progress</Button>
         </div>
       )}
       <SetProgressModal

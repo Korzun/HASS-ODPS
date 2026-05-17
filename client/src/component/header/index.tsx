@@ -33,16 +33,14 @@ export const Header = () => {
         <BooksIcon /> HASS-ODPS Library
       </h1>
       <nav className={styles.navigation}>
-        {isAdmin && (
-          <Link
-            className={cx(styles.navigationItem, {
-              [styles.active]: pathname.startsWith(path.library()),
-            })}
-            to={path.library()}
-          >
-            <BookIcon height={14} width={14} /> Library
-          </Link>
-        )}
+        <Link
+          className={cx(styles.navigationItem, {
+            [styles.active]: pathname.startsWith(path.library()),
+          })}
+          to={path.library()}
+        >
+          <BookIcon height={14} width={14} /> Library
+        </Link>
         <Link
           className={cx(styles.navigationItem, {
             [styles.active]: pathname === path.upload(),
