@@ -36,6 +36,7 @@ export function SetProgressModal({
   }, [isOpen]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) setSelectedChapter(initialChapter);
     // Reset to current progress only when the modal opens, not on every render
     // eslint-disable-next-line react-hooks/exhaustive-deps

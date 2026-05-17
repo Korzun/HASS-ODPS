@@ -1,9 +1,15 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Card, Page, Tag } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
-import { Button, ChapterProgress, DeleteBookButton, BookProgress } from '~/control';
+import {
+  Button,
+  BookProgress,
+  ChapterProgress,
+  DeleteBookButton,
+  SetProgressModal,
+} from '~/control';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook } from '~/provider/book';
 import { useMyProgress } from '~/provider/progress';
@@ -21,6 +27,7 @@ export const BookPage = () => {
 
   const [book, loading, error] = useBook(id!, true);
   const [progress] = useMyProgress(id!);
+  const [progressModalOpen, setProgressModalOpen] = useState(false);
 
   const handleEditMetadata = useCallback(
     () => navigate(path.bookEdit(book?.id ?? '')),
@@ -161,6 +168,19 @@ export const BookPage = () => {
           <DeleteBookButton bookId={book.id} />
         </div>
       )}
+      {!isAdmin && book.chapterCount > 0 && (
+        <div className={styles.buttonContainer}>
+          <div className={styles.spacer} />
+          <Button onClick={() => setProgressModalOpen(true)}>Set Progress</Button>
+        </div>
+      )}
+      <SetProgressModal
+        isOpen={progressModalOpen}
+        bookId={book.id}
+        chapterCount={book.chapterCount}
+        initialChapter={progress?.currentChapter ?? 0}
+        onClose={() => setProgressModalOpen(false)}
+      />
     </Page>
   );
 };
