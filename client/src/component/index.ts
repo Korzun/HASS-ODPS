@@ -9,6 +9,7 @@ export { Page } from './page';
 export { SeriesRow } from './series-row';
 export { Tag } from './tag';
 export { Toast } from './toast';
+export { UploadItem } from './upload-item';
 export { UploadZone } from './upload-zone';
 export { UserBookRow } from './user-book-row';
 export { UserList } from './user-list';
