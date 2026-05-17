@@ -52,4 +52,5 @@ export interface AppConfig {
   booksDir: string;
   dataDir: string;
   port: number;
+  maxConcurrentUploads: number;
 }

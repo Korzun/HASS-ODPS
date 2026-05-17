@@ -39,6 +39,7 @@ const config: AppConfig = {
   booksDir: '',
   dataDir: '/tmp',
   port: 3000,
+  maxConcurrentUploads: 3,
 };
 
 const FAKE_META: EpubMeta = {
