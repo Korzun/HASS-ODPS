@@ -842,6 +842,105 @@ describe('DELETE /api/my/progress/:document', () => {
   });
 });
 
+describe('PUT /api/my/progress/:document', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app)
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 5, percentage: 0.25 });
+    expect(res.status).toBe(302);
+  });
+
+  it('returns 403 for admin', async () => {
+    const agent = await adminAgent();
+    const res = await agent
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 5, percentage: 0.25 });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Forbidden' });
+  });
+
+  it('returns 400 when currentChapter is missing', async () => {
+    const agent = await userAgent();
+    const res = await agent.put('/api/my/progress/doc1').send({ percentage: 0.25 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid body' });
+  });
+
+  it('returns 400 when percentage is missing', async () => {
+    const agent = await userAgent();
+    const res = await agent.put('/api/my/progress/doc1').send({ currentChapter: 5 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid body' });
+  });
+
+  it('returns 400 when currentChapter is less than 1', async () => {
+    const agent = await userAgent();
+    const res = await agent
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 0, percentage: 0.1 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid body' });
+  });
+
+  it('returns 400 when percentage is greater than 1', async () => {
+    const agent = await userAgent();
+    const res = await agent
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 5, percentage: 1.5 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid body' });
+  });
+
+  it('returns 400 when percentage is not positive', async () => {
+    const agent = await userAgent();
+    const res = await agent.put('/api/my/progress/doc1').send({ currentChapter: 5, percentage: 0 });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid body' });
+  });
+
+  it('saves progress and returns 200 for regular user', async () => {
+    const agent = await userAgent();
+    const res = await agent
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 5, percentage: 0.25 });
+    expect(res.status).toBe(200);
+    const saved = userStore.getProgress('alice', 'doc1');
+    expect(saved).not.toBeNull();
+    expect(saved!.percentage).toBe(0.25);
+  });
+
+  it('overwrites an existing progress record', async () => {
+    userStore.saveProgress('alice', {
+      document: 'doc1',
+      progress: '/p[1]',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 10, percentage: 0.75 });
+    expect(res.status).toBe(200);
+    expect(userStore.getProgress('alice', 'doc1')!.percentage).toBe(0.75);
+  });
+
+  it('synthesises an EPUB CFI when the book has a chapterSpineMap', async () => {
+    bookStore.addBook('cfidoc', 'cfidoc.epub', `${booksDir}/cfidoc.epub`, 100, new Date(), {
+      ...FAKE_META,
+      chapterCount: 10,
+      chapterSpineMap: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    });
+    const agent = await userAgent();
+    const res = await agent
+      .put('/api/my/progress/cfidoc')
+      .send({ currentChapter: 3, percentage: 0.3 });
+    expect(res.status).toBe(200);
+    // chapterSpineMap[2] = 3, so spineIndex = 3, CFI n = 3*2+2 = 8
+    expect(userStore.getProgress('alice', 'cfidoc')!.progress).toBe('EPUB_CFI(/6/8!/4/2:0)');
+  });
+});
+
 describe('PATCH /api/books/:id/metadata', () => {
   let bookId: string;
 

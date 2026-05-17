@@ -131,6 +131,40 @@ export function createUiRouter(
     res.status(204).send();
   });
 
+  router.put('/api/my/progress/:document', sessionAuth, (req: Request, res: Response) => {
+    if (req.session.isAdmin) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    const { currentChapter, percentage } = req.body as Record<string, unknown>;
+    if (
+      typeof currentChapter !== 'number' ||
+      !Number.isInteger(currentChapter) ||
+      currentChapter < 1 ||
+      typeof percentage !== 'number' ||
+      percentage <= 0 ||
+      percentage > 1
+    ) {
+      res.status(400).json({ error: 'Invalid body' });
+      return;
+    }
+    // Synthesise a minimal EPUB CFI so currentChapter persists through GET /api/my/progress
+    const book = bookStore.getBookById(req.params.document);
+    let progress = '';
+    if (book && book.chapterSpineMap.length > 0 && currentChapter <= book.chapterSpineMap.length) {
+      const spineIndex = book.chapterSpineMap[currentChapter - 1];
+      progress = `EPUB_CFI(/6/${spineIndex * 2 + 2}!/4/2:0)`;
+    }
+    userStore.saveProgress(req.session.username!, {
+      document: req.params.document,
+      progress,
+      percentage,
+      device: '',
+      device_id: '',
+    });
+    res.status(200).json({});
+  });
+
   // ── Static assets (no auth required) ──────────────────
   router.use('/assets', express.static(path.join(__dirname, '../../client/dist/assets')));
 
