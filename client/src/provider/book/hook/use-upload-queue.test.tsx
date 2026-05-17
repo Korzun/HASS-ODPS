@@ -236,6 +236,7 @@ describe('useUploadQueue', () => {
 
     // Third file should now be in flight
     expect(xhrInstances).toHaveLength(3);
+    expect(result.current.items[0].status).toBe('done');
     expect(result.current.items[2].status).toBe('uploading');
   });
 
@@ -261,5 +262,23 @@ describe('useUploadQueue', () => {
     expect(xhrInstances).toHaveLength(2);
     expect(result.current.items).toHaveLength(3);
     expect(result.current.items[2].status).toBe('queued');
+  });
+
+  it('aborts in-flight XHRs on unmount', async () => {
+    const { result, unmount } = renderHook(() => useUploadQueue(), { wrapper: makeWrapper() });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.addFiles(makeFileList('a.epub'));
+    });
+
+    expect(xhrInstances).toHaveLength(1);
+
+    unmount();
+
+    expect(xhrInstances[0].abort).toHaveBeenCalledTimes(1);
   });
 });

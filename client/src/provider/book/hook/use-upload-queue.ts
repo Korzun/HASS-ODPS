@@ -31,6 +31,11 @@ export const useUploadQueue = (): UseUploadQueue => {
   const xhrMapRef = useRef(new Map<string, XMLHttpRequest>());
   // Stable counter for generating unique IDs within this hook instance
   const nextIdRef = useRef(0);
+  // Stable refs to avoid stale closure captures inside xhr.onload
+  const fetchBookListRef = useRef(fetchBookList);
+  fetchBookListRef.current = fetchBookList;
+  const clearCompleteBookIdsRef = useRef(clearCompleteBookIds);
+  clearCompleteBookIdsRef.current = clearCompleteBookIds;
 
   // Fetch server config on mount
   useEffect(() => {
@@ -92,8 +97,8 @@ export const useUploadQueue = (): UseUploadQueue => {
                 : i
             )
           );
-          clearCompleteBookIds();
-          void fetchBookList();
+          clearCompleteBookIdsRef.current();
+          void fetchBookListRef.current();
         } else {
           let errorMessage: string | undefined;
           try {
@@ -123,7 +128,7 @@ export const useUploadQueue = (): UseUploadQueue => {
       formData.append('files', item.file);
       xhr.send(formData);
     }
-  }, [items, maxConcurrent, fetchBookList, clearCompleteBookIds]);
+  }, [items, maxConcurrent]);
 
   const addFiles = useCallback((files: FileList) => {
     const newItems: UploadItem[] = Array.from(files).map((file) => ({
