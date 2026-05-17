@@ -1,19 +1,23 @@
-import { IconProps, defaultIconProps } from './props';
+import { IconProps, defaultStrokeIconProps } from './props';
 
 // https://tabler.io/icons?icon=row-remove
 export const RowRemoveIcon = (props: IconProps) => {
-  const { height, width, strokeWidth } = { ...defaultIconProps, ...props };
+  const { className, fill, height, width, stroke, strokeWidth } = {
+    ...defaultStrokeIconProps,
+    ...props,
+  };
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      fill={fill}
       height={height}
-      width={width}
-      viewBox="0 0 24 24"
-      strokeWidth={strokeWidth}
-      fill="none"
-      stroke="currentColor"
+      stroke={stroke}
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      viewBox="0 0 24 24"
+      width={width}
+      xmlns="http://www.w3.org/2000/svg"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M20 6v4a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1" />

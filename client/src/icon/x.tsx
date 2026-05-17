@@ -1,20 +1,24 @@
-import { IconProps, defaultIconProps } from './props';
+import { IconProps, defaultStrokeIconProps } from './props';
 
 // https://tabler.io/icons?icon=x
 export const XIcon = (props: IconProps) => {
-  const { height, width, strokeWidth } = { ...defaultIconProps, ...props };
+  const { className, fill, height, width, stroke, strokeWidth } = {
+    ...defaultStrokeIconProps,
+    ...props,
+  };
 
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={width}
+      className={className}
+      fill={fill}
       height={height}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
+      stroke={stroke}
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      viewBox="0 0 24 24"
+      width={width}
+      xmlns="http://www.w3.org/2000/svg"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M18 6l-12 12" />

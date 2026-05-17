@@ -9,3 +9,4 @@ export { UsersIcon } from './users';
 export { XIcon } from './x';
 
 export type { IconProps } from './props';
+export { defaultFilledIconProps, defaultStrokeIconProps } from './props';
