@@ -102,7 +102,7 @@ export function createUiRouter(
             : undefined;
         const currentChapterName =
           currentChapter !== undefined && book && book.chapterNames.length > 0
-            ? (book.chapterNames[currentChapter - 1] || undefined)
+            ? book.chapterNames[currentChapter - 1] || undefined
             : undefined;
         return {
           document: p.document,
@@ -148,6 +148,7 @@ export function createUiRouter(
           subjects: _subjects,
           addedAt: _addedAt,
           chapterSpineMap: _chapterSpineMap,
+          chapterNames: _chapterNames,
           ...rest
         } = b;
         return rest;
@@ -195,7 +196,7 @@ export function createUiRouter(
       res.status(404).json({ error: 'Book not found' });
       return;
     }
-    const { path: _path, chapterSpineMap: _chapterSpineMap, ...rest } = book;
+    const { path: _path, chapterSpineMap: _chapterSpineMap, chapterNames: _chapterNames, ...rest } = book;
     res.json(rest);
   });
 
@@ -291,7 +292,7 @@ export function createUiRouter(
       }
 
       log.info(`Book metadata updated: "${updated.filename}"`);
-      const { path: _path, chapterSpineMap: _chapterSpineMap, ...rest } = updated;
+      const { path: _path, chapterSpineMap: _chapterSpineMap, chapterNames: _chapterNames, ...rest } = updated;
       res.json(rest);
     }
   );

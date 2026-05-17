@@ -681,6 +681,62 @@ describe('GET /api/my/progress', () => {
     expect(res.body[0].currentChapter).toBe(2);
   });
 
+  it('includes currentChapterName when the book has chapterNames and CFI resolves to a chapter', async () => {
+    bookStore.addBook(
+      'doc-with-names',
+      'named-chapters.epub',
+      path.join(booksDir, 'named-chapters.epub'),
+      100,
+      new Date(),
+      {
+        ...FAKE_META,
+        chapterCount: 3,
+        chapterSpineMap: [1, 2, 3],
+        chapterNames: ['Chapter 1', 'Chapter 2', 'Chapter 3'],
+      }
+    );
+    // EPUB_CFI(/6/6...) → spineIndex=2 → chapter 2 → chapterNames[1] = 'Chapter 2'
+    userStore.saveProgress('alice', {
+      document: 'doc-with-names',
+      progress: 'EPUB_CFI(/6/6[ch2]!/4/1:0)',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body[0].currentChapterName).toBe('Chapter 2');
+  });
+
+  it('omits currentChapterName when the book has no chapterNames', async () => {
+    bookStore.addBook(
+      'doc-no-names',
+      'no-named-chapters.epub',
+      path.join(booksDir, 'no-named-chapters.epub'),
+      100,
+      new Date(),
+      {
+        ...FAKE_META,
+        chapterCount: 3,
+        chapterSpineMap: [1, 2, 3],
+        chapterNames: [],
+      }
+    );
+    // Same CFI as above — resolves to chapter 2, but chapterNames is empty
+    userStore.saveProgress('alice', {
+      document: 'doc-no-names',
+      progress: 'EPUB_CFI(/6/6[ch2]!/4/1:0)',
+      percentage: 0.5,
+      device: 'Kobo',
+      device_id: 'd1',
+    });
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/progress');
+    expect(res.status).toBe(200);
+    expect(res.body[0].currentChapterName).toBeUndefined();
+  });
+
   it('omits currentChapter when the book is not in the DB', async () => {
     userStore.saveProgress('alice', {
       document: 'unknown-book-id',
