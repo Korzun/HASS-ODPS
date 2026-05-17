@@ -196,7 +196,12 @@ export function createUiRouter(
       res.status(404).json({ error: 'Book not found' });
       return;
     }
-    const { path: _path, chapterSpineMap: _chapterSpineMap, chapterNames: _chapterNames, ...rest } = book;
+    const {
+      path: _path,
+      chapterSpineMap: _chapterSpineMap,
+      chapterNames: _chapterNames,
+      ...rest
+    } = book;
     res.json(rest);
   });
 
@@ -292,7 +297,12 @@ export function createUiRouter(
       }
 
       log.info(`Book metadata updated: "${updated.filename}"`);
-      const { path: _path, chapterSpineMap: _chapterSpineMap, chapterNames: _chapterNames, ...rest } = updated;
+      const {
+        path: _path,
+        chapterSpineMap: _chapterSpineMap,
+        chapterNames: _chapterNames,
+        ...rest
+      } = updated;
       res.json(rest);
     }
   );
