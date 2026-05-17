@@ -45,7 +45,7 @@ const calculateSeriesProgressPercent = (
   }
   const avg =
     books.reduce((sum, book) => {
-      return sum + (progressMap[book.id].percentage ?? 0);
+      return sum + (progressMap[book.id]?.percentage ?? 0);
     }, 0) / books.length;
 
   return Math.round(avg * 100);
