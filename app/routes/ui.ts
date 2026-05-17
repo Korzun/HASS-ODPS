@@ -100,10 +100,15 @@ export function createUiRouter(
           spineIndex !== null && book && book.chapterSpineMap.length > 0
             ? (spineIndexToChapter(spineIndex, book.chapterSpineMap) ?? undefined)
             : undefined;
+        const currentChapterName =
+          currentChapter !== undefined && book && book.chapterNames.length > 0
+            ? (book.chapterNames[currentChapter - 1] || undefined)
+            : undefined;
         return {
           document: p.document,
           percentage: p.percentage,
           ...(currentChapter !== undefined ? { currentChapter } : {}),
+          ...(currentChapterName !== undefined ? { currentChapterName } : {}),
         };
       })
     );
