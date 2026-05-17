@@ -891,5 +891,83 @@ describe('parseEpub', () => {
       expect(meta.chapterCount).toBe(1);
       expect(meta.chapterSpineMap).toEqual([0]);
     });
+
+    it('returns chapterNames from EPUB 3 nav document', () => {
+      const filePath = path.join(tmpDir, 'epub3-names.epub');
+      fs.writeFileSync(
+        filePath,
+        makeEpubWithNav([
+          { title: 'The Beginning', href: 'ch1.xhtml' },
+          { title: 'The Middle', href: 'ch2.xhtml' },
+          { title: 'The End', href: 'ch3.xhtml' },
+        ])
+      );
+      const meta = parseEpub(filePath);
+      expect(meta.chapterNames).toEqual(['The Beginning', 'The Middle', 'The End']);
+    });
+
+    it('returns chapterNames from EPUB 2 NCX document', () => {
+      const filePath = path.join(tmpDir, 'epub2-names.epub');
+      fs.writeFileSync(
+        filePath,
+        makeEpubWithNcx([
+          { title: 'Part One', href: 'ch1.xhtml' },
+          { title: 'Part Two', href: 'ch2.xhtml' },
+        ])
+      );
+      const meta = parseEpub(filePath);
+      expect(meta.chapterNames).toEqual(['Part One', 'Part Two']);
+    });
+
+    it('returns empty chapterNames when no nav document present', () => {
+      const filePath = path.join(tmpDir, 'no-nav-names.epub');
+      fs.writeFileSync(filePath, makeEpub({ title: 'No Nav' }));
+      const meta = parseEpub(filePath);
+      expect(meta.chapterNames).toEqual([]);
+    });
+
+    it('deduplicates chapterNames to match deduplication of chapterSpineMap', () => {
+      // Two nav entries pointing to the same spine item — only the first name is kept
+      const zip = new AdmZip();
+      zip.addFile(
+        'META-INF/container.xml',
+        Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+      );
+      zip.addFile(
+        'OEBPS/content.opf',
+        Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>T</dc:title></metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="ch1"/></spine>
+</package>`)
+      );
+      zip.addFile(
+        'OEBPS/nav.xhtml',
+        Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <body>
+    <nav epub:type="toc">
+      <ol>
+        <li><a href="ch1.xhtml">Chapter 1</a></li>
+        <li><a href="ch1.xhtml#section2">Section 2</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>`)
+      );
+      zip.addFile('OEBPS/ch1.xhtml', Buffer.from('<html/>'));
+      const filePath = path.join(tmpDir, 'dedup-names.epub');
+      fs.writeFileSync(filePath, zip.toBuffer());
+      const meta = parseEpub(filePath);
+      expect(meta.chapterCount).toBe(1);
+      expect(meta.chapterNames).toEqual(['Chapter 1']);
+    });
   });
 });
