@@ -916,6 +916,27 @@ describe('PATCH /api/books/:id/metadata', () => {
   });
 });
 
+describe('GET /api/config', () => {
+  it('redirects to /login without session', async () => {
+    const res = await request(app).get('/api/config');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns maxConcurrentUploads for authenticated user', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/api/config');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ maxConcurrentUploads: 3 });
+  });
+
+  it('returns maxConcurrentUploads for regular user', async () => {
+    const agent = await userAgent();
+    const res = await agent.get('/api/config');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ maxConcurrentUploads: 3 });
+  });
+});
+
 describe('SPA routes serve index.html', () => {
   it('GET /books/:id returns 200 with HTML', async () => {
     const agent = await adminAgent();

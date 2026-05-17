@@ -86,6 +86,10 @@ export function createUiRouter(
     res.json({ username: req.session.username, isAdmin: req.session.isAdmin });
   });
 
+  router.get('/api/config', sessionAuth, (_req: Request, res: Response) => {
+    res.json({ maxConcurrentUploads: config.maxConcurrentUploads });
+  });
+
   router.get('/api/my/progress', sessionAuth, (req: Request, res: Response) => {
     if (req.session.isAdmin) {
       res.json([]);
