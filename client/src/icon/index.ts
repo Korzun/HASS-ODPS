@@ -3,8 +3,10 @@ export { BookIcon } from './book';
 export { BooksIcon } from './books';
 export { CheckIcon } from './check';
 export { CircleXIcon } from './circle-x';
+export { ClockIcon } from './clock';
 export { ListCheckIcon } from './list-check';
 export { RowRemoveIcon } from './row-remove';
+export { UploadIcon } from './upload';
 export { UsersIcon } from './users';
 export { XIcon } from './x';
 
