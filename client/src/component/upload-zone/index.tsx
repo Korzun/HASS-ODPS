@@ -53,10 +53,7 @@ export const UploadZone = ({ addFiles }: Props) => {
         />
         <div className={styles.dropText}>
           Drop books or{' '}
-          <label
-            htmlFor="upload-file-input"
-            style={{ textDecoration: 'underline', cursor: 'pointer' }}
-          >
+          <label htmlFor="upload-file-input" className={styles.clickLabel}>
             click here
           </label>{' '}
           to upload

@@ -13,11 +13,6 @@ export const useStyle = createUseStyles((theme: Theme) => {
   };
 
   return {
-    scanRow: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '.75rem',
-    },
     dropZone: {
       ...dropZoneBase,
       background: theme.colors.primaryLight,
@@ -28,6 +23,10 @@ export const useStyle = createUseStyles((theme: Theme) => {
     },
     dropText: {
       color: theme.colors.primaryHover,
+    },
+    clickLabel: {
+      textDecoration: 'underline',
+      cursor: 'pointer',
     },
   };
 });
