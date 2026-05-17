@@ -1,9 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Card, Page } from '~/component';
+import { Card, Page, Tag } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
-import { useCoverColors } from '~/component/page/use-cover-colors';
 import { Button, ChapterProgress, DeleteBookButton, BookProgress } from '~/control';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook } from '~/provider/book';
@@ -107,8 +106,10 @@ export const BookPage = () => {
               {book.author.length > 0 && <div className={styles.author}>{book.author}</div>}
               {book.series.length > 0 && (
                 <div className={styles.series} onClick={handleSeriesNavigate}>
-                  {book.series}
-                  {book.seriesIndex > 0 ? ` #${book.seriesIndex}` : ''}
+                  <Tag>
+                    {book.series}
+                    {book.seriesIndex > 0 ? ` #${book.seriesIndex}` : ''}
+                  </Tag>
                 </div>
               )}
             </div>
@@ -119,7 +120,11 @@ export const BookPage = () => {
               progress.percentage > 0 &&
               book.chapterCount > 0 &&
               progress.currentChapter != null && (
-                <ChapterProgress current={progress.currentChapter} total={book.chapterCount} />
+                <ChapterProgress
+                  current={progress.currentChapter}
+                  total={book.chapterCount}
+                  name={progress.currentChapterName}
+                />
               )}
             <MetadataList metadata={metadata} />
           </div>
@@ -132,9 +137,7 @@ export const BookPage = () => {
         {book.subjects.length > 0 && (
           <div className={styles.subjects}>
             {book.subjects.map((subject, index) => (
-              <span key={subject + index} className={styles.pill}>
-                {subject}
-              </span>
+              <Tag key={subject + index}>{subject}</Tag>
             ))}
           </div>
         )}

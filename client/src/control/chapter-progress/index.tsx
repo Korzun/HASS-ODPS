@@ -5,9 +5,10 @@ import { useStyle } from './style';
 type ChapterProgressProps = {
   current: number;
   total: number;
+  name?: string;
 };
 
-export const ChapterProgress = ({ current, total }: ChapterProgressProps) => {
+export const ChapterProgress = ({ current, total, name }: ChapterProgressProps) => {
   const style = useStyle();
 
   return (
@@ -15,7 +16,7 @@ export const ChapterProgress = ({ current, total }: ChapterProgressProps) => {
       <span className={style.title}>Chapters:</span>
       <ListCheckIcon width={12} height={12} strokeWidth={2.5} />
       <span className={style.label}>
-        {current} / {total}
+        {name ? `Ch ${current}: ${name} / ${total}` : `Ch ${current} / ${total}`}
       </span>
     </div>
   );
