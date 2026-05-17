@@ -60,6 +60,22 @@ function flattenNcxNavPoints(navPoints: unknown[]): { href: string; title: strin
   return result;
 }
 
+const EXCLUDED_EPUB_TYPES = new Set([
+  'cover', 'frontmatter', 'dedication', 'halftitle', 'titlepage',
+  'backmatter', 'acknowledgments', 'copyright-page', 'afterword',
+  'appendix', 'index', 'colophon',
+]);
+
+function getDocumentEpubTypes(zip: AdmZip, absHref: string): string[] {
+  const entry = zip.getEntry(absHref);
+  if (!entry) return [];
+  const text = entry.getData().toString('utf8');
+  const match =
+    /<body(?:\s[^>]*)?\bepub:type="([^"]+)"/.exec(text) ??
+    /<section(?:\s[^>]*)?\bepub:type="([^"]+)"/.exec(text);
+  return match ? match[1].split(/\s+/) : [];
+}
+
 function hrefsToSpineMap(
   entries: { href: string; title: string }[],
   fileDir: string,
@@ -98,6 +114,26 @@ function parseNavChapters(
     isArray: (name) => ['li', 'nav', 'navPoint'].includes(name),
   });
 
+  const spineIndexToAbsHref = new Map<number, string>();
+  for (const [href, idx] of spineHrefToIndex) {
+    spineIndexToAbsHref.set(idx, href);
+  }
+
+  const filterByEpubType = (spineMap: number[], names: string[]): { spineMap: number[]; names: string[] } => {
+    const filteredSpineMap: number[] = [];
+    const filteredNames: string[] = [];
+    for (let i = 0; i < spineMap.length; i++) {
+      const href = spineIndexToAbsHref.get(spineMap[i]);
+      if (href) {
+        const types = getDocumentEpubTypes(zip, href);
+        if (types.some((t) => EXCLUDED_EPUB_TYPES.has(t))) continue;
+      }
+      filteredSpineMap.push(spineMap[i]);
+      filteredNames.push(names[i]);
+    }
+    return { spineMap: filteredSpineMap, names: filteredNames };
+  };
+
   // Try EPUB 3 nav document
   const navItem = manifest.find((i) => i['@_properties']?.split(' ').includes('nav'));
   if (navItem) {
@@ -116,8 +152,9 @@ function parseNavChapters(
       if (tocNav) {
         const entries = flattenNavOl(tocNav.ol);
         const { spineMap, names } = hrefsToSpineMap(entries, navDir, spineHrefToIndex);
-        if (spineMap.length > 0)
-          return { chapterCount: spineMap.length, chapterSpineMap: spineMap, chapterNames: names };
+        const filtered = filterByEpubType(spineMap, names);
+        if (filtered.spineMap.length > 0)
+          return { chapterCount: filtered.spineMap.length, chapterSpineMap: filtered.spineMap, chapterNames: filtered.names };
       }
     }
   }
@@ -137,8 +174,9 @@ function parseNavChapters(
           ?.navPoint as unknown[]) ?? [];
       const entries = flattenNcxNavPoints(navPoints);
       const { spineMap, names } = hrefsToSpineMap(entries, ncxDir, spineHrefToIndex);
-      if (spineMap.length > 0)
-        return { chapterCount: spineMap.length, chapterSpineMap: spineMap, chapterNames: names };
+      const filtered = filterByEpubType(spineMap, names);
+      if (filtered.spineMap.length > 0)
+        return { chapterCount: filtered.spineMap.length, chapterSpineMap: filtered.spineMap, chapterNames: filtered.names };
     }
   }
 
