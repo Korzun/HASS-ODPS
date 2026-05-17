@@ -20,4 +20,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fontSize: '.875rem',
     padding: '.4rem 0',
   },
+  username: {
+    color: '#FF4D4F',
+  },
+  undone: {
+    fontWeight: 600,
+  },
 }));

@@ -1,11 +1,12 @@
 import { Fragment, ReactNode, useCallback, useState } from 'react';
 
 import { Button, ConfirmModal } from '~/control';
+import { AlertOctagonIcon } from '~/icon';
 import { useUserProgressList } from '~/provider/progress';
 import { useDeleteUser, useUser } from '~/provider/user';
 
-import { CollapsibleSection } from '../collapsible-section';
 import { Card } from '../card';
+import { CollapsibleSection } from '../collapsible-section';
 import { UserBookRow } from '../user-book-row';
 
 import { useStyle } from './style';
@@ -48,12 +49,13 @@ export const UserRow = ({ username }: UserRowProps) => {
         isOpen={showDeleteUserModal}
         onCancel={handleDeleteUserCancel}
         onConfirm={handleDeleteUserConfirm}
+        icon={AlertOctagonIcon}
         danger
-        title={`Delete “${username}” permanently?`}
+        title={`Delete user permanently?`}
         confirmText="Delete"
       >
-        This action will delete the user and all their reading progress. This action cannot be
-        undone.
+        This action will delete “<span className={styles.username}>{username}</span>”, all their
+        reading progress, and <span className={styles.undone}>can not be undone</span>.
       </ConfirmModal>
     </Fragment>
 
