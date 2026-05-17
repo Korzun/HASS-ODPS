@@ -6,6 +6,7 @@ export {
   useMyProgress,
   useMyProgressList,
   useMySeriesProgress,
+  useSetMyProgress,
   useUserProgress,
   useUserProgressList,
   useUserSeriesProgress,
