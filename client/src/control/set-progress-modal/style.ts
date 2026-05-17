@@ -67,6 +67,11 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     color: theme.colors.text.faint,
     marginTop: '0.25rem',
   },
+  error: {
+    color: theme.colors.danger,
+    fontSize: '0.8rem',
+    padding: '0 1rem 0.75rem',
+  },
   footer: {
     backgroundColor: '#EEEEEE',
     borderTopStyle: 'solid',
