@@ -55,6 +55,7 @@ const FAKE_META: EpubMeta = {
   coverMime: null,
   chapterCount: 0,
   chapterSpineMap: [],
+  chapterNames: [],
 };
 
 // Helper: build a minimal EPUB zip as a Buffer

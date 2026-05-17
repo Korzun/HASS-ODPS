@@ -25,6 +25,7 @@ const FAKE_META: EpubMeta = {
   coverMime: null,
   chapterCount: 0,
   chapterSpineMap: [],
+  chapterNames: [],
 };
 
 let booksDir: string;

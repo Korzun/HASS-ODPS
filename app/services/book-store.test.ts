@@ -45,6 +45,7 @@ const FAKE_META: EpubMeta = {
   coverMime: 'image/jpeg',
   chapterCount: 0,
   chapterSpineMap: [],
+  chapterNames: [],
 };
 
 let db: InstanceType<typeof Database>;
@@ -173,6 +174,27 @@ describe('addBook and listBooks', () => {
     expect(books[0].title).toBe('Alpha');
     expect(books[1].title).toBe('Bravo');
   });
+
+  it('stores and retrieves chapterNames (JSON round-trip)', () => {
+    bookStore.addBook('ch1', 'named.epub', '/books/named.epub', 100, new Date(), {
+      ...FAKE_META,
+      chapterCount: 2,
+      chapterSpineMap: [1, 2],
+      chapterNames: ['The Storm', 'The Calm'],
+    });
+    const book = bookStore.getBookById('ch1');
+    expect(book?.chapterNames).toEqual(['The Storm', 'The Calm']);
+  });
+
+  it('returns empty chapterNames array when column is NULL (pre-migration books)', () => {
+    // Simulate a pre-migration book: insert a row without chapter_names
+    db.prepare(
+      `INSERT INTO books (id, filename, path, title, size, mtime, added_at, chapter_count, chapter_spine_map)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run('old-book', 'old.epub', '/books/old.epub', 'Old Book', 100, 0, 0, 0, '[]');
+    const book = bookStore.getBookById('old-book');
+    expect(book?.chapterNames).toEqual([]);
+  });
 });
 
 describe('getBookById', () => {
@@ -257,6 +279,7 @@ function makeMockImporter(): ScanImporter {
       coverMime: null,
       chapterCount: 0,
       chapterSpineMap: [],
+      chapterNames: [],
     }),
     partialMD5: (filePath: string): string =>
       crypto.createHash('md5').update(filePath).digest('hex'),
@@ -308,6 +331,7 @@ describe('BookStore.scan()', () => {
       coverMime: null,
       chapterCount: 0,
       chapterSpineMap: [],
+      chapterNames: [],
     });
     expect(bookStore.listBooks()).toHaveLength(1);
     const result = bookStore.scan(makeMockImporter());
@@ -336,6 +360,7 @@ describe('BookStore.scan()', () => {
           coverMime: null,
           chapterCount: 0,
           chapterSpineMap: [],
+          chapterNames: [],
         };
       },
       partialMD5: (filePath: string): string =>
@@ -498,7 +523,7 @@ describe('migrations', () => {
 
     const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
     expect(row.id).toBe(correctId);
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 4 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 5 });
 
     preDb.close();
   });
@@ -600,9 +625,15 @@ describe('migrations', () => {
     const names = cols.map((c) => c.name);
     expect(names).toContain('chapter_count');
     expect(names).toContain('chapter_spine_map');
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 4 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 5 });
 
     preDb.close();
+  });
+
+  it('migration v5: adds chapter_names column with NULL default', () => {
+    const cols = db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    const names = cols.map((c) => c.name);
+    expect(names).toContain('chapter_names');
   });
 });
 
