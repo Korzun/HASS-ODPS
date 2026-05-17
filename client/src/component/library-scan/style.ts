@@ -1,6 +1,6 @@
-import { createUseStyles, type Theme } from '~/provider/theme';
+import { createUseStyles } from '~/provider/theme';
 
-export const useStyle = createUseStyles((theme: Theme) => ({
+export const useStyle = createUseStyles({
   root: {
     marginBottom: '1rem',
     display: 'flex',
@@ -8,12 +8,4 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     alignItems: 'flex-end',
     gap: '0.375rem',
   },
-  result: {
-    fontSize: theme.text.size.md,
-    color: theme.colors.text.muted,
-  },
-  resultError: {
-    fontSize: theme.text.size.md,
-    color: theme.colors.danger,
-  },
-}));
+});
