@@ -1,6 +1,6 @@
 import { useEffect, PropsWithChildren, useRef, useCallback } from 'react';
 
-import { AlertOctagonIcon } from '~/icon';
+import { IconProps } from '~/icon';
 
 import { Button } from '../button';
 
@@ -10,6 +10,7 @@ type ConfirmModalProps = PropsWithChildren<{
   cancelText?: string;
   confirmText?: string;
   danger?: boolean;
+  icon?: React.ComponentType<IconProps>;
   isOpen?: boolean;
   loading?: boolean;
   onCancel?: () => void;
@@ -22,6 +23,7 @@ export function ConfirmModal({
   children,
   confirmText = 'Confirm',
   danger = false,
+  icon: Icon,
   isOpen = false,
   loading = false,
   onCancel = () => {},
@@ -64,9 +66,11 @@ export function ConfirmModal({
     <dialog ref={modalRef} className={styles.root} closedby="none" onClick={handleClickBackground}>
       <div className={styles.dialog} onClick={handleClickDialog}>
         <div className={styles.header}>
-          <div className={styles.icon}>
-            <AlertOctagonIcon />
-          </div>
+          {Icon && (
+            <div className={styles.icon}>
+              <Icon className={danger ? styles.iconDanger : undefined} />
+            </div>
+          )}
           {title}
         </div>
         <div className={styles.body}>{children}</div>

@@ -33,19 +33,21 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     padding: '1rem',
   },
   icon: {
-    color: '#FF4D4F',
     height: '24px',
     display: 'inline',
-    paddingRight: '0.25rem',
+    paddingRight: '0.5rem',
     '& svg': {
       position: 'relative',
       top: '5px',
     },
   },
+  iconDanger: {
+    color: '#FF4D4F',
+  },
   body: {
     paddingLeft: '1rem',
     paddingRight: '1rem',
-    paddingBottom: '2rem',
+    paddingBottom: '1.5rem',
     color: '#5A6375',
   },
   footer: {

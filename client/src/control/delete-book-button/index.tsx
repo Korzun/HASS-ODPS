@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { AlertOctagonIcon } from '~/icon';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook, useDeleteBook } from '~/provider/book';
 import { path } from '~/router';
@@ -47,6 +48,7 @@ export function DeleteBookButton({ bookId }: DeleteBookButton) {
         Delete book
       </Button>
       <ConfirmModal
+        icon={AlertOctagonIcon}
         isOpen={showDeleteModal}
         onCancel={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
