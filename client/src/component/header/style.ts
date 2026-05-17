@@ -1,9 +1,8 @@
 import { createUseStyles, type Theme } from '~/provider/theme';
-import { applyTransparency } from '~/utils';
 
 export const useStyle = createUseStyles((theme: Theme) => ({
   root: {
-    background: applyTransparency(theme.colors.bg.page, 0.5),
+    backgroundColor: theme.colors.bg.page,
     color: '#111111',
     padding: '1rem 1.5rem',
     display: 'flex',
@@ -13,6 +12,17 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     top: '0px',
     backdropFilter: 'blur(10px) saturate(10%)',
     zIndex: 1000,
+    overflow: 'hidden',
+  },
+  noise: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+    zIndex: -1,
+    opacity: 0.2,
   },
   title: {
     fontSize: '1.25rem',

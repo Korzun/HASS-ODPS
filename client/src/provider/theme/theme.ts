@@ -55,7 +55,7 @@ export const defaultTheme: Theme = {
       faint: '#9ca3af',
     },
     bg: {
-      page: '#F1F1F1',
+      page: '#FFFFFF',
       card: '#fff',
       input: '#fff',
     },

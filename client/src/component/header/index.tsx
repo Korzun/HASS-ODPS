@@ -17,6 +17,18 @@ export const Header = () => {
 
   return (
     <header className={styles.root}>
+      <svg className={styles.noise} aria-hidden="true">
+        <filter id="header-noise">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.75"
+            numOctaves="4"
+            stitchTiles="stitch"
+          />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#header-noise)" />
+      </svg>
       <h1 className={styles.title}>
         <BooksIcon /> HASS-ODPS Library
       </h1>

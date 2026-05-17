@@ -10,7 +10,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   '@global': {
     body: {
       fontFamily: 'system-ui, sans-serif',
-      background: theme.colors.bg.page,
+      backgroundColor: theme.colors.bg.page,
       color: theme.colors.text.primary,
       minHeight: '100vh',
     },
@@ -24,4 +24,14 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     flexDirection: 'column',
   },
   [PageType.minimal]: {},
+  noise: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+    pointerEvents: 'none',
+    zIndex: -1,
+  },
 }));
