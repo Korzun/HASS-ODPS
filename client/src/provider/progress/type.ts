@@ -7,4 +7,5 @@ export type Progress = {
   device?: string; // present on GET /api/users/:username/progress (admin), absent on GET /api/my/progress
   timestamp?: number; // present on GET /api/users/:username/progress (admin), absent on GET /api/my/progress
   currentChapter?: number;
+  currentChapterName?: string;
 };
