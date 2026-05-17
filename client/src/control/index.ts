@@ -3,6 +3,7 @@ export { ConfirmModal } from './confirm-modal';
 export { DeleteBookButton } from './delete-book-button';
 export { LoadingSpinner } from './loading-spinner';
 export { NumberInput } from './number-input';
+export { SetProgressModal } from './set-progress-modal';
 export { Switch } from './switch';
 export { TextArea } from './text-area';
 export { TextInput } from './text-input';
