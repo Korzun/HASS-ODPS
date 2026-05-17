@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
-import { Page, BookRow, SeriesRow, LibraryScan } from '~/component';
-import { useIsAdmin } from '~/provider/auth';
+import { Page, BookRow, SeriesRow } from '~/component';
 import { useSeriesList, useStandaloneBookList } from '~/provider/book';
 
 import { useStyle } from './style';
@@ -9,7 +8,6 @@ import { useStyle } from './style';
 export const LibraryPage = () => {
   const style = useStyle();
 
-  const [isAdmin] = useIsAdmin();
   const [standaloneBookList] = useStandaloneBookList();
   const [seriesBookList] = useSeriesList();
 
@@ -26,9 +24,7 @@ export const LibraryPage = () => {
       {bookList.length === 0 ? (
         <div className={style.emptyState}>
           <div className={style.emptyStateTitle}>Your library is empty</div>
-          <div className={style.emptyStateSubtitle}>
-            {isAdmin ? 'Use the scan button below to add books' : 'No books have been added yet'}
-          </div>
+          <div className={style.emptyStateSubtitle}>No books have been added yet</div>
         </div>
       ) : (
         <div className={style.root}>
@@ -39,12 +35,6 @@ export const LibraryPage = () => {
               <BookRow key={book.id} bookId={book.id} />
             )
           )}
-        </div>
-      )}
-      {isAdmin && (
-        <div className={style.buttonContainer}>
-          <div className={style.spacer} />
-          <LibraryScan />
         </div>
       )}
     </Page>

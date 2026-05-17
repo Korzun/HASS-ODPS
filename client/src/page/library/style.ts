@@ -24,11 +24,4 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fontSize: theme.text.size.md,
     color: theme.colors.text.faint,
   },
-  buttonContainer: {
-    display: 'flex',
-    gap: '0.5rem',
-  },
-  spacer: {
-    flexGrow: 1,
-  },
 }));
