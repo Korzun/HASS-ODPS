@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { Page, Toast } from '~/component';
-import { Button } from '~/control';
+import { Card, Page, Toast } from '~/component';
+import { Button, TextInput } from '~/control';
 import { BooksIcon } from '~/icon';
 import { useAuthRefresh } from '~/provider/auth';
 
@@ -15,14 +15,14 @@ export const LoginPage = () => {
   const [error, setError] = useState<string | undefined>();
   const handleDismissError = useCallback(() => setError(undefined), []);
 
-  const [username, setUsername] = useState<string>('');
-  const handleUsernameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(event.target.value);
+  const [username, setUsername] = useState<string | undefined>();
+  const handleUsernameChange = useCallback((newUsername: string | undefined) => {
+    setUsername(newUsername);
   }, []);
 
-  const [password, setPassword] = useState<string>('');
-  const handlePasswordChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
+  const [password, setPassword] = useState<string | undefined>();
+  const handlePasswordChange = useCallback((newPassword: string | undefined) => {
+    setPassword(newPassword);
   }, []);
 
   const handleLogin = useCallback(async () => {
@@ -59,43 +59,30 @@ export const LoginPage = () => {
   return (
     <Page type="minimal">
       <div className={styles.root}>
-        <div className={styles.form}>
+        <Card>
           <h1 className={styles.title}>
             <BooksIcon /> HASS-ODPS
           </h1>
-          <label className={styles.label} htmlFor="username">
-            Username
-          </label>
-          <input
-            className={styles.input}
-            name="username"
-            type="text"
-            value={username}
-            required
-            autoFocus
-            autoComplete="username"
-            onChange={handleUsernameChange}
-            onKeyDown={handleKeyDown}
-          />
-          <label className={styles.label} htmlFor="password">
-            Password
-          </label>
-          <input
-            className={styles.input}
-            name="password"
-            type="password"
-            value={password}
-            required
-            autoComplete="current-password"
-            onChange={handlePasswordChange}
-            onKeyDown={handleKeyDown}
-          />
-          <div className={styles.login}>
-            <Button loading={loading} type="primary" onClick={handleLogin}>
-              {loading ? 'Signing in…' : 'Sign In'}
-            </Button>
+          <div className={styles.inputContainer}>
+            <TextInput
+              placeholder="Username"
+              name="username"
+              onChange={handleUsernameChange}
+              value={username}
+            />
+            <TextInput
+              placeholder="Password"
+              name="password"
+              onChange={handlePasswordChange}
+              onKeyDown={handleKeyDown}
+              password
+              value={password}
+            />
           </div>
-        </div>
+          <Button loading={loading} type="primary" onClick={handleLogin}>
+            Sign In
+          </Button>
+        </Card>
       </div>
       {error && <Toast message={error} type="error" onDismiss={handleDismissError} />}
     </Page>

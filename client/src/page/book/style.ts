@@ -70,9 +70,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   metadata: {
     display: 'flex',
     gap: '1rem',
-    // position: 'absolute',
-    // bottom: 0,
-    // height: '100%',
   },
   info: {
     flex: 1,
@@ -90,14 +87,8 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     marginBottom: '0.375rem',
   },
   series: {
-    display: 'block',
-    padding: '7px 23px',
-    background: '#EFF6FF',
-    color: '#1D4ED8',
-    borderRadius: '8px',
-    fontSize: '0.75rem',
     position: 'absolute',
-    top: 0,
+    top: '8px',
     right: 0,
     cursor: 'pointer',
   },

@@ -13,9 +13,11 @@ export const UserRegister = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [submitCount, setSubmitCount] = useState(0);
   const handleDismiss = useCallback(() => setToast(null), []);
 
   useEffect(() => {
+    if (submitCount === 0) return;
     if (loading) {
       setToast(null);
       return;
@@ -27,9 +29,10 @@ export const UserRegister = () => {
     if (okay) {
       setToast({ text: 'User registered', type: 'success' });
     }
-  }, [loading, okay, error, errorMessage]);
+  }, [submitCount, loading, okay, error, errorMessage]);
 
   const handleRegisterUser = useCallback(() => {
+    setSubmitCount((c) => c + 1);
     registerUser(username, password);
   }, [registerUser, username, password]);
 
@@ -80,7 +83,9 @@ export const UserRegister = () => {
       <Button type="primary" loading={loading} onClick={handleRegisterUser}>
         {loading ? 'Registering…' : 'Register'}
       </Button>
-      {toast && <Toast message={toast.text} type={toast.type} onDismiss={handleDismiss} />}
+      {toast && (
+        <Toast key={submitCount} message={toast.text} type={toast.type} onDismiss={handleDismiss} />
+      )}
     </Card>
   );
 };

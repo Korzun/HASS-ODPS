@@ -8,13 +8,12 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     minHeight: '100vh',
     backgroundColor: theme.colors.bg.page,
   },
-  form: {
-    backgroundColor: theme.colors.bg.card,
-    padding: '2rem',
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.cover,
-    width: '320px',
-    border: `1px solid ${theme.colors.border}`,
+  inputContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    marginBottom: '1rem',
+    minWidth: '400px',
   },
   title: {
     margin: '0 0 1.5rem',

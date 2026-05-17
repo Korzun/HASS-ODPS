@@ -12,12 +12,13 @@ type Action = {
   danger?: boolean;
 };
 export type TextInputProps = {
-  autoComplete?: React.HTMLInputAutoCompleteAttribute | undefined;
   action?: Action;
+  autoComplete?: React.HTMLInputAutoCompleteAttribute | undefined;
   label?: string;
   layout?: 'horizontal' | 'vertical' | 'inline';
   name: string;
   onChange?: (newValue: string | undefined) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   onValidChange?: (fieldName: string, newValid: boolean) => void;
   password?: boolean;
   placeholder?: string;
@@ -32,6 +33,7 @@ export const TextInput = ({
   layout = 'horizontal',
   name,
   onChange = () => {},
+  onKeyDown,
   onValidChange = () => {},
   password = false,
   placeholder,
@@ -74,13 +76,14 @@ export const TextInput = ({
       {label && <label className={cx(style.label, { [style.danger]: !isValid })}>{label}</label>}
       <div className={style.inputContainer}>
         <input
-          name={name}
-          className={cx(style.input, { [style.isAction]: action !== undefined })}
-          onChange={handleValueChange}
-          placeholder={placeholder}
-          value={internalValue}
-          type={password ? 'password' : 'text'}
           autoComplete={autoComplete}
+          className={cx(style.input, { [style.isAction]: action !== undefined })}
+          name={name}
+          onChange={handleValueChange}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          type={password ? 'password' : 'text'}
+          value={internalValue}
         />
         {action && (
           <div className={cx(style.action)}>
