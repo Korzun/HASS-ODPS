@@ -26,6 +26,7 @@ export class ThumbnailQueue {
   ) {}
 
   start(): void {
+    if (this.running) return;
     this.bookStore.pruneThumbnails(this.widths);
     this.reconcile();
     this.running = true;

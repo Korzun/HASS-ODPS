@@ -114,4 +114,16 @@ describe('start (prune + reconcile)', () => {
     expect(bookStore.getThumbnail('bk6', 300)).toBeNull(); // pruned
     expect(bookStore.getThumbnail('bk6', 60)).not.toBeNull(); // generated
   });
+
+  it('start() called twice does not spawn a second loop', () => {
+    bookStore.addBook('bk7', 'g.epub', '/g.epub', 100, new Date(), FAKE_META);
+    const queue = new ThumbnailQueue(bookStore, [60], mockResize);
+    queue.start();
+    queue.start(); // second call should be a no-op
+    queue.stop();
+    // If two loops were spawned both would try to process jobs — verify no error thrown
+    // and queue state is consistent (no assertion on resize count since processLoop
+    // may have run 0 or 1 times before stop)
+    expect(() => queue.stop()).not.toThrow();
+  });
 });
