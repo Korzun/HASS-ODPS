@@ -71,9 +71,6 @@ export const BookPage = () => {
       metadataList.push({ title: 'publisher', value: book.publisher });
     }
     metadataList.push({ title: 'format', value: 'EPUB' });
-    // if (book.chapterCount > 0) {
-    //   metadataList.push({ title: 'chapters', value: book.chapterCount.toString() });
-    // }
     metadataList.push({ title: 'size', value: formatSize(book.size) });
     if (book.addedAt) {
       metadataList.push({ title: 'added', value: new Date(book.addedAt).toLocaleDateString() });
@@ -177,6 +174,8 @@ export const BookPage = () => {
         bookId={book.id}
         chapterCount={book.chapterCount}
         initialChapter={progress?.currentChapter ?? 0}
+        chapterSpineMap={book.chapterSpineMap ?? []}
+        chapterNames={book.chapterNames ?? []}
         onClose={() => setProgressModalOpen(false)}
       />
     </Page>
