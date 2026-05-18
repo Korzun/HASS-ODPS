@@ -13,7 +13,6 @@ export const ChapterProgress = ({ current, total, name }: ChapterProgressProps) 
 
   return (
     <div className={style.root}>
-      <span className={style.title}>Chapters:</span>
       <ListCheckIcon width={12} height={12} strokeWidth={2.5} />
       <span className={style.label}>
         {name ? `Ch ${current}: ${name} / ${total}` : `Ch ${current} / ${total}`}

@@ -6,11 +6,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     alignItems: 'center',
     gap: '0.3em',
   },
-  title: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    textTransform: 'capitalize',
-  },
   track: {
     fill: 'transparent',
   },

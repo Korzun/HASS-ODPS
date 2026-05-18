@@ -5,7 +5,7 @@ import { Card, Page, Tag } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
 import {
   Button,
-  BookProgress,
+  ProgressIndicator,
   ChapterProgress,
   DeleteBookButton,
   SetProgressModal,
@@ -46,13 +46,34 @@ export const BookPage = () => {
     if (book === undefined) {
       return metadataList;
     }
+    metadataList.push({
+      title: 'progress',
+      value: <ProgressIndicator value={progress ? progress.percentage : 0} size={12} />,
+    });
+    if (
+      progress &&
+      progress.percentage > 0 &&
+      book.chapterCount > 0 &&
+      progress.currentChapter != null
+    ) {
+      metadataList.push({
+        title: 'chapters',
+        value: (
+          <ChapterProgress
+            current={progress.currentChapter}
+            total={book.chapterCount}
+            name={progress.currentChapterName}
+          />
+        ),
+      });
+    }
     if (book.publisher) {
       metadataList.push({ title: 'publisher', value: book.publisher });
     }
     metadataList.push({ title: 'format', value: 'EPUB' });
-    if (book.chapterCount > 0) {
-      metadataList.push({ title: 'chapters', value: book.chapterCount.toString() });
-    }
+    // if (book.chapterCount > 0) {
+    //   metadataList.push({ title: 'chapters', value: book.chapterCount.toString() });
+    // }
     metadataList.push({ title: 'size', value: formatSize(book.size) });
     if (book.addedAt) {
       metadataList.push({ title: 'added', value: new Date(book.addedAt).toLocaleDateString() });
@@ -122,17 +143,6 @@ export const BookPage = () => {
             </div>
           </div>
           <div className={styles.metadata}>
-            <BookProgress value={progress ? progress.percentage : 0} size={12} />
-            {progress &&
-              progress.percentage > 0 &&
-              book.chapterCount > 0 &&
-              progress.currentChapter != null && (
-                <ChapterProgress
-                  current={progress.currentChapter}
-                  total={book.chapterCount}
-                  name={progress.currentChapterName}
-                />
-              )}
             <MetadataList metadata={metadata} />
           </div>
         </div>

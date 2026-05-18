@@ -18,13 +18,12 @@ const sectorPath = (pct: number): string => {
   return `M ${CX} ${CY} L ${CX} ${CY - R_INNER} A ${R_INNER} ${R_INNER} 0 ${largeArc} 1 ${x} ${y} Z`;
 };
 
-export const BookProgress = ({ value, size = 40 }: ProgressIndicatorProps) => {
+export const ProgressIndicator = ({ value, size = 40 }: ProgressIndicatorProps) => {
   const style = useStyle();
   const clamped = Math.min(100, Math.max(0, value * 100));
 
   return (
     <div className={style.root}>
-      <span className={style.title}>Progress:</span>
       {clamped > 0 && clamped < 100 && (
         <svg viewBox="0 0 100 100" width={size} height={size}>
           <circle cx={CX} cy={CY} r={R_INNER} className={style.track} />

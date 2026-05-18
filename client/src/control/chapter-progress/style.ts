@@ -7,11 +7,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     gap: '0.3em',
     color: theme.colors.text.primary,
   },
-  title: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    textTransform: 'capitalize',
-  },
   label: {
     fontSize: '0.75rem',
   },
