@@ -778,4 +778,44 @@ describe('book_thumbnails', () => {
     bookStore.deleteBook('bk9');
     expect(bookStore.getThumbnail('bk9', 60)).toBeNull();
   });
+
+  it('reimportBook updates book_thumbnails book_id when id changes', () => {
+    // Create a fake epub file in the temp booksDir so reimportBook can read it
+    const epubPath = path.join(booksDir, 'reimport.epub');
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip();
+    zip.addFile(
+      'META-INF/container.xml',
+      Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`)
+    );
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Reimport Test</dc:title></metadata>
+  <manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest>
+  <spine toc="ncx"/>
+</package>`)
+    );
+    zip.writeZip(epubPath);
+
+    // Use a mock importer that returns a different ID on reimport
+    const originalId = 'original-id';
+    const newId = 'new-id';
+    bookStore.addBook(originalId, 'reimport.epub', epubPath, 100, new Date(), FAKE_META);
+    bookStore.saveThumbnail(originalId, 60, Buffer.from('thumb'), 'image/jpeg');
+
+    const mockImporter = {
+      parseEpub: () => FAKE_META,
+      partialMD5: () => newId,
+    };
+    bookStore.reimportBook(originalId, mockImporter);
+
+    // Thumbnail should now be under new ID (not lost, not causing FK error)
+    expect(bookStore.getThumbnail(newId, 60)).not.toBeNull();
+    expect(bookStore.getThumbnail(originalId, 60)).toBeNull();
+  });
 });

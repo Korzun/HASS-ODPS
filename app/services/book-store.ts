@@ -155,7 +155,7 @@ export class BookStore {
     if (user_version < 6) {
       this.db.exec(`
         CREATE TABLE IF NOT EXISTS book_thumbnails (
-          book_id  TEXT    NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+          book_id  TEXT    NOT NULL REFERENCES books(id) ON DELETE CASCADE ON UPDATE CASCADE,
           width    INTEGER NOT NULL,
           data     BLOB    NOT NULL,
           mime     TEXT    NOT NULL,
