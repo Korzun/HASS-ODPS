@@ -782,7 +782,6 @@ describe('book_thumbnails', () => {
   it('reimportBook updates book_thumbnails book_id when id changes', () => {
     // Create a fake epub file in the temp booksDir so reimportBook can read it
     const epubPath = path.join(booksDir, 'reimport.epub');
-    const AdmZip = require('adm-zip');
     const zip = new AdmZip();
     zip.addFile(
       'META-INF/container.xml',

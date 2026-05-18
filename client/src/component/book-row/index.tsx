@@ -1,9 +1,7 @@
-import { useCallback, useState, Fragment } from 'react';
+import { useCallback, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ConfirmModal } from '~/control';
 import { useBook } from '~/provider/book';
-import { useMyProgress } from '~/provider/progress';
 import { path } from '~/router';
 
 import { CardRow } from '../card-row';
