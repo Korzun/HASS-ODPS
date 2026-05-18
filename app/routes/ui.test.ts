@@ -1069,6 +1069,13 @@ describe('PATCH /api/books/:id/metadata', () => {
     expect(cover).not.toBeNull();
     expect(cover!.data).toEqual(coverBytes);
   });
+
+  it('enqueues thumbnails after metadata update', async () => {
+    const agent = await adminAgent();
+    (mockThumbnailQueue.enqueue as jest.Mock).mockClear();
+    await agent.patch(`/api/books/${bookId}/metadata`).field('title', 'Updated');
+    expect(mockThumbnailQueue.enqueue).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('GET /api/config', () => {

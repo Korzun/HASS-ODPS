@@ -123,7 +123,7 @@ export function createOpdsRouter(
     const { width } = req.query;
     const parsedWidth = typeof width === 'string' ? parseInt(width, 10) : NaN;
 
-    if (!isNaN(parsedWidth)) {
+    if (!isNaN(parsedWidth) && parsedWidth > 0) {
       const thumbnail = bookStore.getThumbnail(req.params.id, parsedWidth);
       if (thumbnail) {
         res.set('Content-Type', thumbnail.mime);
