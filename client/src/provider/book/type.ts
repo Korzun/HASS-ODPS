@@ -15,6 +15,8 @@ export type Book = {
   size: number;
   addedAt?: string;
   chapterCount: number;
+  chapterSpineMap?: number[];
+  chapterNames?: string[];
 };
 
 export type Identifier = { scheme: string; value: string };
