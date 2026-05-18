@@ -1,11 +1,13 @@
 export { BookRow } from './book-row';
 export { Card } from './card';
+export { ChapterProgress } from './chapter-progress';
 export { CollapsibleSection } from './collapsible-section';
 export { Cover } from './cover';
 export { CoverStack } from './cover-stack';
 export { Header } from './header';
 export { LibraryScan } from './library-scan';
 export { Page } from './page';
+export { ProgressIndicator } from './progress-indicator';
 export { SeriesRow } from './series-row';
 export { Tag } from './tag';
 export { Toast } from './toast';

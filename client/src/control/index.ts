@@ -1,10 +1,8 @@
 export { Button } from './button';
-export { ChapterProgress } from './chapter-progress';
 export { ConfirmModal } from './confirm-modal';
 export { DeleteBookButton } from './delete-book-button';
 export { FieldList } from './field-list';
 export { NumberInput } from './number-input';
-export { ProgressIndicator } from './progress-indicator';
 export { ProportionalChapterSlider } from './proportional-chapter-slider';
 export { SetProgressModal } from './set-progress-modal';
 export { Switch } from './switch';

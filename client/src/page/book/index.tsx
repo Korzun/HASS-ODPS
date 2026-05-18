@@ -1,12 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Card, Page, Tag } from '~/component';
+import { Card, ChapterProgress, Page, ProgressIndicator, Tag } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
 import {
   Button,
-  ProgressIndicator,
-  ChapterProgress,
   DeleteBookButton,
   SetProgressModal,
 } from '~/control';
