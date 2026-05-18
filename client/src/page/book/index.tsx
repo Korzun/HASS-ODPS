@@ -1,13 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Card, ChapterProgress, Page, ProgressIndicator, Tag } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
-import {
-  Button,
-  DeleteBookButton,
-  SetProgressModal,
-} from '~/control';
+import { Button, DeleteBookButton, SetProgressModal } from '~/control';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook } from '~/provider/book';
 import { useMyProgress } from '~/provider/progress';
@@ -48,22 +44,8 @@ export const BookPage = () => {
       title: 'progress',
       value: <ProgressIndicator value={progress ? progress.percentage : 0} size={12} />,
     });
-    if (
-      progress &&
-      progress.percentage > 0 &&
-      book.chapterCount > 0 &&
-      progress.currentChapter != null
-    ) {
-      metadataList.push({
-        title: 'chapters',
-        value: (
-          <ChapterProgress
-            current={progress.currentChapter}
-            total={book.chapterCount}
-            name={progress.currentChapterName}
-          />
-        ),
-      });
+    if (book.chapterCount > 0) {
+      metadataList.push({ title: 'chapters', value: book.chapterCount.toString() });
     }
     if (book.publisher) {
       metadataList.push({ title: 'publisher', value: book.publisher });

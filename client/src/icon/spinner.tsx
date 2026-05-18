@@ -15,7 +15,7 @@ export const SpinnerIcon = (props: IconProps) => {
       strokeLinecap="round"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M12,1 C18,1 23,6 23,12"/>
+      <path d="M12,1 C18,1 23,6 23,12" />
     </svg>
   );
 };
