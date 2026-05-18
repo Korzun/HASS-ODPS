@@ -243,4 +243,71 @@ describe('GET /opds/books/:id/cover', () => {
     expect(res.headers['content-type']).toMatch(/image\/jpeg/);
     expect(res.body).toEqual(coverData);
   });
+
+  it('returns full cover when book has one', async () => {
+    const coverBuf = Buffer.from('opds-cover-data');
+    bookStore.addBook('opds1', 'opds.epub', path.join(booksDir, 'opds.epub'), 100, new Date(), {
+      ...FAKE_META,
+      coverData: coverBuf,
+      coverMime: 'image/jpeg',
+    });
+    const res = await request(app).get('/opds/books/opds1/cover').set(basicAuth('alice', 'secret'));
+    expect(res.status).toBe(200);
+    expect(Buffer.from(res.body).toString()).toBe('opds-cover-data');
+  });
+
+  it('returns thumbnail when ?width= matches', async () => {
+    const thumbBuf = Buffer.from('opds-thumb');
+    bookStore.addBook('opds2', 'opds2.epub', path.join(booksDir, 'opds2.epub'), 100, new Date(), {
+      ...FAKE_META,
+      coverData: Buffer.from('orig'),
+      coverMime: 'image/jpeg',
+    });
+    bookStore.saveThumbnail('opds2', 60, thumbBuf, 'image/jpeg');
+    const res = await request(app)
+      .get('/opds/books/opds2/cover?width=60')
+      .set(basicAuth('alice', 'secret'));
+    expect(res.status).toBe(200);
+    expect(Buffer.from(res.body).toString()).toBe('opds-thumb');
+  });
+
+  it('falls back to full-size when thumbnail missing', async () => {
+    const coverBuf = Buffer.from('fallback-cover');
+    bookStore.addBook('opds3', 'opds3.epub', path.join(booksDir, 'opds3.epub'), 100, new Date(), {
+      ...FAKE_META,
+      coverData: coverBuf,
+      coverMime: 'image/jpeg',
+    });
+    const res = await request(app)
+      .get('/opds/books/opds3/cover?width=60')
+      .set(basicAuth('alice', 'secret'));
+    expect(res.status).toBe(200);
+    expect(Buffer.from(res.body).toString()).toBe('fallback-cover');
+  });
+});
+
+describe('OPDS feed thumbnail link', () => {
+  it('includes opds thumbnail link for books with covers', async () => {
+    bookStore.addBook('opds4', 'opds4.epub', path.join(booksDir, 'opds4.epub'), 100, new Date(), {
+      ...FAKE_META,
+      coverData: Buffer.from('cover'),
+      coverMime: 'image/jpeg',
+    });
+    const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
+    expect(res.text).toContain('opds-spec.org/image/thumbnail');
+    expect(res.text).toContain('?width=60');
+  });
+
+  it('does not include thumbnail link for books without covers', async () => {
+    bookStore.addBook(
+      'opds5',
+      'opds5.epub',
+      path.join(booksDir, 'opds5.epub'),
+      100,
+      new Date(),
+      FAKE_META
+    );
+    const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
+    expect(res.text).not.toContain('opds-spec.org/image/thumbnail');
+  });
 });

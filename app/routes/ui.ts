@@ -20,7 +20,7 @@ export function createUiRouter(
   bookStore: BookStore,
   userStore: UserStore,
   config: AppConfig,
-  _thumbnailQueue: ThumbnailQueue
+  thumbnailQueue: ThumbnailQueue
 ): Router {
   const router = Router();
 
@@ -224,6 +224,7 @@ export function createUiRouter(
           return;
         }
         bookStore.addBook(id, file.originalname, savedPath, file.size, new Date(), meta);
+        thumbnailQueue.enqueue(id);
         uploaded.push(file.originalname);
       }
       log.info(`Books uploaded: ${uploaded.join(', ')}`);
@@ -242,6 +243,21 @@ export function createUiRouter(
   });
 
   router.get('/api/books/:id/cover', sessionAuth, (req: Request, res: Response) => {
+    const { width } = req.query;
+    const parsedWidth = typeof width === 'string' ? parseInt(width, 10) : NaN;
+
+    if (!isNaN(parsedWidth)) {
+      const thumbnail = bookStore.getThumbnail(req.params.id, parsedWidth);
+      if (thumbnail) {
+        res.set('Content-Type', thumbnail.mime);
+        res.send(thumbnail.data);
+        return;
+      }
+      log.warn(
+        `Cover thumbnail width=${parsedWidth} not found for book ${req.params.id}, serving full-size`
+      );
+    }
+
     const cover = bookStore.getCover(req.params.id);
     if (!cover) {
       res.status(404).send('Not found');
@@ -264,6 +280,7 @@ export function createUiRouter(
 
   router.post('/api/books/scan', sessionAuth, adminAuth, (_req: Request, res: Response) => {
     const result = bookStore.scan();
+    thumbnailQueue.reconcile();
     log.info(`Scan: ${result.imported.length} imported, ${result.removed.length} removed`);
     res.json(result);
   });
@@ -331,6 +348,7 @@ export function createUiRouter(
         res.status(500).json({ error: 'Failed to re-import book after update' });
         return;
       }
+      thumbnailQueue.enqueue(updated.id);
 
       log.info(`Book metadata updated: "${updated.filename}"`);
       const {

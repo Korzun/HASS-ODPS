@@ -400,6 +400,13 @@ describe('POST /api/books/upload', () => {
     const books = bookStore.listBooks();
     expect(books[0].hasCover).toBe(true);
   });
+
+  it('enqueues thumbnails after a successful upload', async () => {
+    const epubBuf = makeEpub({ title: 'Queued Book' });
+    const agent = await adminAgent();
+    await agent.post('/api/books/upload').attach('files', epubBuf, 'queued.epub');
+    expect(mockThumbnailQueue.enqueue).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('GET /api/books/:id', () => {
@@ -500,6 +507,36 @@ describe('GET /api/books/:id/cover', () => {
     const res = await agent.get('/api/books/unknownId/cover');
     expect(res.status).toBe(404);
   });
+
+  it('returns thumbnail when ?width= matches a stored thumbnail', async () => {
+    const coverBuf = Buffer.from('original-cover');
+    const thumbBuf = Buffer.from('thumbnail-data');
+    bookStore.addBook('thumbBook', 'tb.epub', path.join(booksDir, 'tb.epub'), 100, new Date(), {
+      ...FAKE_META,
+      coverData: coverBuf,
+      coverMime: 'image/jpeg',
+    });
+    bookStore.saveThumbnail('thumbBook', 150, thumbBuf, 'image/jpeg');
+
+    const agent = await adminAgent();
+    const res = await agent.get('/api/books/thumbBook/cover?width=150');
+    expect(res.status).toBe(200);
+    expect(Buffer.from(res.body).toString()).toBe('thumbnail-data');
+  });
+
+  it('falls back to full-size when ?width= has no matching thumbnail', async () => {
+    const coverBuf = Buffer.from('full-size-cover');
+    bookStore.addBook('fbBook', 'fb.epub', path.join(booksDir, 'fb.epub'), 100, new Date(), {
+      ...FAKE_META,
+      coverData: coverBuf,
+      coverMime: 'image/jpeg',
+    });
+
+    const agent = await adminAgent();
+    const res = await agent.get('/api/books/fbBook/cover?width=150');
+    expect(res.status).toBe(200);
+    expect(Buffer.from(res.body).toString()).toBe('full-size-cover');
+  });
 });
 
 describe('DELETE /api/books/:id', () => {
@@ -565,6 +602,12 @@ describe('POST /api/books/scan', () => {
     expect(res.status).toBe(200);
     expect(res.body.removed).toContain('deleted.epub');
     expect(res.body.imported).toEqual([]);
+  });
+
+  it('calls thumbnailQueue.reconcile after scan', async () => {
+    const agent = await adminAgent();
+    await agent.post('/api/books/scan');
+    expect(mockThumbnailQueue.reconcile).toHaveBeenCalledTimes(1);
   });
 });
 
