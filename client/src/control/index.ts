@@ -6,6 +6,7 @@ export { FieldList } from './field-list';
 export { LoadingSpinner } from './loading-spinner';
 export { NumberInput } from './number-input';
 export { ProgressIndicator } from './progress-indicator';
+export { ProportionalChapterSlider } from './proportional-chapter-slider';
 export { SetProgressModal } from './set-progress-modal';
 export { Switch } from './switch';
 export { TextArea } from './text-area';
