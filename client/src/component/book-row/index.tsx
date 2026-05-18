@@ -69,7 +69,7 @@ export function BookRow({ bookId, showAuthor = true }: BookRowProps) {
           <div className={styles.cover}>
             {book.hasCover ? (
               <img
-                src={`/api/books/${encodeURIComponent(book.id)}/cover`}
+                src={`/api/books/${encodeURIComponent(book.id)}/cover?width=60`}
                 alt={book.title}
                 className={styles.coverImg}
               />

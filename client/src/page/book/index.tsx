@@ -118,7 +118,7 @@ export const BookPage = () => {
             {book.hasCover ? (
               <img
                 className={styles.coverImg}
-                src={`/api/books/${encodeURIComponent(book.id)}/cover`}
+                src={`/api/books/${encodeURIComponent(book.id)}/cover?width=170`}
                 alt={book.title}
                 width={80}
                 height={114}

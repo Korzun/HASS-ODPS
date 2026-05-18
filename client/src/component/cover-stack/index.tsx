@@ -35,6 +35,7 @@ export function CoverStack({
               sequence={seq}
               width={layerWidth}
               height={layerHeight}
+              thumbnailWidth={170}
             />
           );
         })}
