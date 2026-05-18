@@ -73,7 +73,11 @@ ${entries}
 </feed>`;
 }
 
-export function createOpdsRouter(bookStore: BookStore, userStore: UserStore): Router {
+export function createOpdsRouter(
+  bookStore: BookStore,
+  userStore: UserStore,
+  _thumbnailWidths: number[]
+): Router {
   const router = Router();
   const auth = opdsAuth(userStore);
 

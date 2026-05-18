@@ -48,7 +48,7 @@ beforeEach(() => {
   // Register a test user the same way KOSync registration does: store MD5(password).
   userStore.createUser('alice', UserStore.hashPassword('secret'));
   app = express();
-  app.use('/opds', createOpdsRouter(bookStore, userStore));
+  app.use('/opds', createOpdsRouter(bookStore, userStore, [60, 170]));
 });
 
 afterEach(() => {

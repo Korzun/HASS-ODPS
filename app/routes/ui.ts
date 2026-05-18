@@ -10,6 +10,7 @@ import { logger } from '../logger';
 import { parseEpub, partialMD5 } from '../services/epub-parser';
 import { writeMetadata, EpubChanges } from '../services/epub-writer';
 import { parseCfiSpineIndex, spineIndexToChapter } from '../utils/cfi';
+import { ThumbnailQueue } from '../services/thumbnail-queue';
 
 const log = logger('UI');
 
@@ -18,7 +19,8 @@ const ALLOWED_EXTENSIONS = new Set(['.epub']);
 export function createUiRouter(
   bookStore: BookStore,
   userStore: UserStore,
-  config: AppConfig
+  config: AppConfig,
+  _thumbnailQueue: ThumbnailQueue
 ): Router {
   const router = Router();
 

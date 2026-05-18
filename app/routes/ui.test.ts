@@ -12,6 +12,7 @@ import { createUiRouter } from './ui';
 import { AppConfig, EpubMeta } from '../types';
 
 jest.mock('../logger');
+import { ThumbnailQueue } from '../services/thumbnail-queue';
 
 // The SPA routes call res.sendFile('client/dist/index.html'). Create a
 // minimal placeholder before the suite runs so the file exists in CI.
@@ -40,7 +41,13 @@ const config: AppConfig = {
   dataDir: '/tmp',
   port: 3000,
   maxConcurrentUploads: 3,
+  thumbnailWidths: [60, 170],
 };
+
+const mockThumbnailQueue = {
+  enqueue: jest.fn(),
+  reconcile: jest.fn(),
+} as unknown as ThumbnailQueue;
 
 const FAKE_META: EpubMeta = {
   title: 'Test Book',
@@ -143,7 +150,9 @@ beforeEach(() => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(session({ secret: 'test-secret', resave: false, saveUninitialized: false }));
-  app.use('/', createUiRouter(bookStore, userStore, { ...config, booksDir }));
+  app.use('/', createUiRouter(bookStore, userStore, { ...config, booksDir }, mockThumbnailQueue));
+  (mockThumbnailQueue.enqueue as jest.Mock).mockClear();
+  (mockThumbnailQueue.reconcile as jest.Mock).mockClear();
 });
 
 afterEach(() => {
