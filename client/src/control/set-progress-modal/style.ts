@@ -46,6 +46,13 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fontWeight: 700,
     color: theme.colors.text.faint,
   },
+  chapterName: {
+    fontSize: '0.85rem',
+    fontStyle: 'italic',
+    color: theme.colors.text.muted,
+    marginTop: '0.125rem',
+    minHeight: '1.25em',
+  },
   chapterSubtitle: {
     fontSize: '0.8rem',
     color: theme.colors.text.muted,
@@ -53,19 +60,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   sliderSection: {
     padding: '0.75rem 1rem 1.5rem',
-  },
-  slider: {
-    width: '100%',
-    accentColor: theme.colors.primary,
-    cursor: 'pointer',
-    display: 'block',
-  },
-  sliderLabels: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '0.7rem',
-    color: theme.colors.text.faint,
-    marginTop: '0.25rem',
   },
   error: {
     color: theme.colors.danger,

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDeleteMyProgress, useSetMyProgress } from '~/provider/progress';
 
 import { Button } from '../button';
+import { ProportionalChapterSlider } from '../proportional-chapter-slider';
 
 import { useStyle } from './style';
 
@@ -11,6 +12,8 @@ type SetProgressModalProps = {
   bookId: string;
   chapterCount: number;
   initialChapter: number;
+  chapterSpineMap?: number[];
+  chapterNames?: string[];
   onClose: () => void;
 };
 
@@ -19,11 +22,14 @@ export function SetProgressModal({
   bookId,
   chapterCount,
   initialChapter,
+  chapterSpineMap = [],
+  chapterNames = [],
   onClose,
 }: SetProgressModalProps) {
   const styles = useStyle();
   const modalRef = useRef<HTMLDialogElement>(null);
   const [selectedChapter, setSelectedChapter] = useState(initialChapter);
+  const [isSliderDragging, setIsSliderDragging] = useState(false);
 
   const [setMyProgress, saving, saveError, saveErrorMessage] = useSetMyProgress(bookId);
   const [deleteMyProgress, deleting, deleteError, deleteErrorMessage] = useDeleteMyProgress();
@@ -93,6 +99,8 @@ export function SetProgressModal({
   }, []);
 
   const isClearing = selectedChapter === 0;
+  const activeName =
+    !isSliderDragging && selectedChapter > 0 ? (chapterNames[selectedChapter - 1] ?? '') : '';
 
   return (
     <dialog ref={modalRef} className={styles.root} closedby="none" onClick={handleClickBackground}>
@@ -102,23 +110,18 @@ export function SetProgressModal({
           <div className={isClearing ? styles.chapterNumberMuted : styles.chapterNumber}>
             {isClearing ? 'Not started' : `Chapter ${selectedChapter}`}
           </div>
+          <div className={styles.chapterName}>{activeName}</div>
           <div className={styles.chapterSubtitle}>of {chapterCount} chapters</div>
         </div>
         <div className={styles.sliderSection}>
-          <input
-            type="range"
-            min={0}
-            max={chapterCount}
-            step={1}
+          <ProportionalChapterSlider
             value={selectedChapter}
-            onChange={(e) => setSelectedChapter(Number(e.target.value))}
-            className={styles.slider}
+            onChange={setSelectedChapter}
+            chapterCount={chapterCount}
+            chapterSpineMap={chapterSpineMap}
             disabled={isBusy}
+            onDragChange={setIsSliderDragging}
           />
-          <div className={styles.sliderLabels}>
-            <span>Not started</span>
-            <span>Finished</span>
-          </div>
         </div>
         {hasError && (
           <div className={styles.error}>
