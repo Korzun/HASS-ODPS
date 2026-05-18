@@ -6,6 +6,7 @@ export { CircleXIcon } from './circle-x';
 export { ClockIcon } from './clock';
 export { ListCheckIcon } from './list-check';
 export { RowRemoveIcon } from './row-remove';
+export { SpinnerIcon } from './spinner';
 export { UploadIcon } from './upload';
 export { UsersIcon } from './users';
 export { XIcon } from './x';

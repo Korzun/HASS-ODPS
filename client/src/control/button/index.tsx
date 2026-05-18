@@ -1,9 +1,8 @@
 import cx from 'classnames';
 import { useCallback } from 'react';
 
-import { LoadingSpinner } from '../loading-spinner';
-
 import { ButtonType, ButtonTypeValue, useStyle } from './style';
+import { SpinnerIcon } from '~/icon';
 
 type ButtonProps = React.PropsWithChildren<{
   danger?: boolean;
@@ -62,7 +61,7 @@ export const Button = ({
       onKeyDown={handleKeyDown}
       title={title}
     >
-      {loading && <LoadingSpinner />}
+      {loading && <SpinnerIcon className={styles.spinner} />}
       {children}
     </div>
   );

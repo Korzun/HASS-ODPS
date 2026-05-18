@@ -374,4 +374,13 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   danger: {},
   disabled: {},
   loading: {},
+  spinner: {
+    animation: '$rotation 1s infinite linear',
+    height: '1em',
+    width: '1em',
+  },
+  '@keyframes rotation': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
+  },
 }));
