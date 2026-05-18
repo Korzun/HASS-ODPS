@@ -67,11 +67,11 @@ describe('useFetchUserProgressList', () => {
     expect(typeof result.current).toBe('function');
   });
 
-  it('does nothing when isAdmin is true', async () => {
+  it('does nothing when isAdmin is false', async () => {
     const mockFetch = vi.fn();
     vi.stubGlobal('fetch', mockFetch);
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper({ isAdmin: true }),
+      wrapper: makeWrapper({ isAdmin: false }),
     });
     await result.current('alice');
     expect(mockFetch).not.toHaveBeenCalled();
@@ -81,7 +81,7 @@ describe('useFetchUserProgressList', () => {
     const mockFetch = vi.fn();
     vi.stubGlobal('fetch', mockFetch);
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper({ loadingByUsername: { alice: true } }),
+      wrapper: makeWrapper({ isAdmin: true, loadingByUsername: { alice: true } }),
     });
     await result.current('alice');
     expect(mockFetch).not.toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe('useFetchUserProgressList', () => {
       vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve([]) })
     );
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper(),
+      wrapper: makeWrapper({ isAdmin: true }),
     });
     await result.current('alice');
     expect(fetch).toHaveBeenCalledWith('/api/users/alice/progress');
@@ -105,7 +105,7 @@ describe('useFetchUserProgressList', () => {
       vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve([]) })
     );
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper(),
+      wrapper: makeWrapper({ isAdmin: true }),
     });
     await result.current('alice smith');
     expect(fetch).toHaveBeenCalledWith('/api/users/alice%20smith/progress');
@@ -125,7 +125,7 @@ describe('useFetchUserProgressList', () => {
     );
     const setProgressForUsername = vi.fn();
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper({ setProgressForUsername }),
+      wrapper: makeWrapper({ isAdmin: true, setProgressForUsername }),
     });
     await result.current('bob');
     expect(setProgressForUsername).toHaveBeenCalledWith('bob', {
@@ -142,7 +142,7 @@ describe('useFetchUserProgressList', () => {
     const calls: [string, boolean][] = [];
     const setLoadingForUsername = vi.fn((u: string, l: boolean) => calls.push([u, l]));
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper({ setLoadingForUsername }),
+      wrapper: makeWrapper({ isAdmin: true, setLoadingForUsername }),
     });
     await result.current('alice');
     expect(calls).toEqual([
@@ -155,7 +155,7 @@ describe('useFetchUserProgressList', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
     const setErrorForUsername = vi.fn();
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper({ setErrorForUsername }),
+      wrapper: makeWrapper({ isAdmin: true, setErrorForUsername }),
     });
     await result.current('alice');
     expect(setErrorForUsername).toHaveBeenCalledWith('alice', 'Failed to fetch progress');
@@ -165,7 +165,7 @@ describe('useFetchUserProgressList', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Connection refused')));
     const setErrorForUsername = vi.fn();
     const { result } = renderHook(() => useFetchUserProgressList(), {
-      wrapper: makeWrapper({ setErrorForUsername }),
+      wrapper: makeWrapper({ isAdmin: true, setErrorForUsername }),
     });
     await result.current('alice');
     expect(setErrorForUsername).toHaveBeenCalledWith('alice', 'Connection refused');

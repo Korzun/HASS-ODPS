@@ -13,7 +13,7 @@ export const useFetchUserProgressList = (): FetchUserProgressList => {
 
   return useCallback(
     async (username: string) => {
-      if (isAdmin === true || loadingByUsername[username]) return;
+      if (isAdmin !== true || loadingByUsername[username]) return;
 
       setLoadingForUsername(username, true);
       setErrorForUsername(username, undefined);
