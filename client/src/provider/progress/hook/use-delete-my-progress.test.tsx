@@ -83,10 +83,10 @@ describe('useDeleteMyProgress', () => {
       ),
     });
     await act(() => result.current[0]('book-1'));
-    expect(fetch).toHaveBeenCalledWith('/api/users/alice/progress/book-1', { method: 'DELETE' });
+    expect(fetch).toHaveBeenCalledWith('/api/my/progress/book-1', { method: 'DELETE' });
   });
 
-  it('reflects loading state from the underlying delete hook', async () => {
+  it('reflects loading state while delete is in flight', async () => {
     let resolveFetch!: (value: unknown) => void;
     vi.stubGlobal(
       'fetch',

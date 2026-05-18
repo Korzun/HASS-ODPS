@@ -1,8 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { useUsername } from '../../../provider/auth';
+import { Context } from '../context';
+import type { UserProgressList } from '../type';
 
-import { useDeleteUserProgress } from './use-delete-user-progress';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const removeProgressById = (bookId: string, { [bookId]: _, ...rest }: UserProgressList) => rest;
 
 export type DeleteMyProgress = (bookId: string) => Promise<void>;
 export type UseDeleteMyProgress =
@@ -12,14 +15,43 @@ export type UseDeleteMyProgress =
   | [DeleteMyProgress, false, true, string]; // There was a specified error while deleting progress
 export const useDeleteMyProgress = (): UseDeleteMyProgress => {
   const [username] = useUsername();
-  const [deleteUserProgress, deleting, error, errorMessage] = useDeleteUserProgress(username);
+  const { progressList, setProgressForUsername } = useContext(Context);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
-  const deleteMyProgress = useCallback(async (bookId: string) => {
-    if (username === undefined) {
-      return;
-    }
-    return deleteUserProgress(bookId);
-  }, []);
+  const deleteMyProgress = useCallback(
+    async (bookId: string) => {
+      if (deleting || username === undefined) return;
+
+      const userProgressList = progressList[username];
+      const progress = userProgressList?.[bookId];
+      if (progress === undefined) {
+        setError(true);
+        setErrorMessage('Failed to clear progress');
+        return;
+      }
+
+      setProgressForUsername(username, removeProgressById(bookId, userProgressList));
+
+      try {
+        setDeleting(true);
+        setError(false);
+        setErrorMessage(undefined);
+        const response = await fetch(`/api/my/progress/${encodeURIComponent(bookId)}`, {
+          method: 'DELETE',
+        });
+        if (response.status !== 204) throw new Error('Failed to clear progress');
+      } catch (err) {
+        setError(true);
+        setProgressForUsername(username, { ...userProgressList, [bookId]: progress });
+        if (err instanceof Error) setErrorMessage(err.message);
+      } finally {
+        setDeleting(false);
+      }
+    },
+    [progressList, setProgressForUsername, username, deleting]
+  );
 
   return useMemo(
     () => [deleteMyProgress, deleting, error, errorMessage] as UseDeleteMyProgress,
