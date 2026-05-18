@@ -13,6 +13,7 @@ type ProportionalChapterSliderProps = {
 
 function chapterPct(i: number, spineMap: number[], count: number): number {
   if (i === 0) return 0;
+  if (count <= 0) return 0;
   const max = spineMap.length > 0 ? spineMap[spineMap.length - 1] : 0;
   if (!max) return (i / count) * 100;
   const pos = spineMap[i - 1];
@@ -87,6 +88,13 @@ export function ProportionalChapterSlider({
     [getPct, chapterSpineMap, chapterCount, onChange, onDragChange]
   );
 
+  const handlePointerCancel = useCallback(() => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    onDragChange?.(false);
+    setDragPct(null);
+  }, [onDragChange]);
+
   // While dragging: raw pct drives visuals, no transition.
   // After release: value prop drives visuals, CSS transition animates the snap.
   const isDragging = dragPct !== null;
@@ -109,11 +117,15 @@ export function ProportionalChapterSlider({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         <div className={styles.track} ref={trackRef} />
         <div
           className={styles.fill}
-          style={{ width: `${displayPct}%`, transition: isDragging ? undefined : FILL_SNAP_TRANSITION }}
+          style={{
+            width: `${displayPct}%`,
+            transition: isDragging ? undefined : FILL_SNAP_TRANSITION,
+          }}
         />
         {ticks.map(({ ch, pct, active }) => (
           <div
