@@ -523,7 +523,7 @@ describe('migrations', () => {
 
     const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
     expect(row.id).toBe(correctId);
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 5 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 6 });
 
     preDb.close();
   });
@@ -625,7 +625,7 @@ describe('migrations', () => {
     const names = cols.map((c) => c.name);
     expect(names).toContain('chapter_count');
     expect(names).toContain('chapter_spine_map');
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 5 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 6 });
 
     preDb.close();
   });
@@ -699,5 +699,83 @@ describe('reimportBook', () => {
     }
     // If ID didn't change (unlikely but possible): still verify DB is consistent
     expect(bookStore.getBookById(newId)).not.toBeNull();
+  });
+});
+
+describe('book_thumbnails', () => {
+  it('saveThumbnail stores and getThumbnail retrieves', () => {
+    bookStore.addBook('bk1', 'a.epub', '/books/a.epub', 100, new Date(), FAKE_META);
+    const data = Buffer.from('thumb-data');
+    bookStore.saveThumbnail('bk1', 150, data, 'image/jpeg');
+    const result = bookStore.getThumbnail('bk1', 150);
+    expect(result).not.toBeNull();
+    expect(result!.data.toString()).toBe('thumb-data');
+    expect(result!.mime).toBe('image/jpeg');
+  });
+
+  it('getThumbnail returns null when not present', () => {
+    bookStore.addBook('bk2', 'b.epub', '/books/b.epub', 100, new Date(), FAKE_META);
+    expect(bookStore.getThumbnail('bk2', 150)).toBeNull();
+  });
+
+  it('saveThumbnail upserts on (book_id, width) conflict', () => {
+    bookStore.addBook('bk3', 'c.epub', '/books/c.epub', 100, new Date(), FAKE_META);
+    bookStore.saveThumbnail('bk3', 150, Buffer.from('v1'), 'image/jpeg');
+    bookStore.saveThumbnail('bk3', 150, Buffer.from('v2'), 'image/jpeg');
+    expect(bookStore.getThumbnail('bk3', 150)!.data.toString()).toBe('v2');
+  });
+
+  it('pruneThumbnails removes rows whose width is not in the config list', () => {
+    bookStore.addBook('bk4', 'd.epub', '/books/d.epub', 100, new Date(), FAKE_META);
+    bookStore.saveThumbnail('bk4', 60, Buffer.from('x'), 'image/jpeg');
+    bookStore.saveThumbnail('bk4', 150, Buffer.from('y'), 'image/jpeg');
+    bookStore.saveThumbnail('bk4', 300, Buffer.from('z'), 'image/jpeg');
+    const removed = bookStore.pruneThumbnails([60, 150]);
+    expect(removed).toBe(1);
+    expect(bookStore.getThumbnail('bk4', 60)).not.toBeNull();
+    expect(bookStore.getThumbnail('bk4', 150)).not.toBeNull();
+    expect(bookStore.getThumbnail('bk4', 300)).toBeNull();
+  });
+
+  it('pruneThumbnails with empty array removes all thumbnails', () => {
+    bookStore.addBook('bk5', 'e.epub', '/books/e.epub', 100, new Date(), FAKE_META);
+    bookStore.saveThumbnail('bk5', 60, Buffer.from('x'), 'image/jpeg');
+    const removed = bookStore.pruneThumbnails([]);
+    expect(removed).toBe(1);
+  });
+
+  it('getMissingThumbnailPairs returns pairs without thumbnails', () => {
+    const metaWithCover = {
+      ...FAKE_META,
+      coverData: Buffer.from('cover'),
+      coverMime: 'image/jpeg',
+    };
+    bookStore.addBook('bk6', 'f.epub', '/books/f.epub', 100, new Date(), metaWithCover);
+    bookStore.addBook('bk7', 'g.epub', '/books/g.epub', 100, new Date(), metaWithCover);
+    bookStore.saveThumbnail('bk6', 60, Buffer.from('x'), 'image/jpeg'); // already has 60px
+
+    const missing = bookStore.getMissingThumbnailPairs([60, 170]);
+    // bk6 needs 170, bk7 needs both
+    expect(missing).toContainEqual({ bookId: 'bk6', width: 170 });
+    expect(missing).toContainEqual({ bookId: 'bk7', width: 60 });
+    expect(missing).toContainEqual({ bookId: 'bk7', width: 170 });
+    expect(missing).not.toContainEqual({ bookId: 'bk6', width: 60 });
+  });
+
+  it('getMissingThumbnailPairs ignores books without covers', () => {
+    bookStore.addBook('bk8', 'h.epub', '/books/h.epub', 100, new Date(), {
+      ...FAKE_META,
+      coverData: null,
+      coverMime: null,
+    });
+    const missing = bookStore.getMissingThumbnailPairs([60]);
+    expect(missing.map((p) => p.bookId)).not.toContain('bk8');
+  });
+
+  it('deleting a book cascades to book_thumbnails', () => {
+    bookStore.addBook('bk9', 'i.epub', path.join(booksDir, 'i.epub'), 100, new Date(), FAKE_META);
+    bookStore.saveThumbnail('bk9', 60, Buffer.from('x'), 'image/jpeg');
+    bookStore.deleteBook('bk9');
+    expect(bookStore.getThumbnail('bk9', 60)).toBeNull();
   });
 });

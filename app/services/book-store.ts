@@ -44,6 +44,7 @@ export class BookStore {
     db: DB
   ) {
     this.db = db;
+    this.db.exec('PRAGMA foreign_keys = ON');
     this.migrate();
   }
 
@@ -149,6 +150,19 @@ export class BookStore {
         this.db.exec(`ALTER TABLE books ADD COLUMN chapter_names TEXT`);
       }
       this.db.exec('PRAGMA user_version = 5');
+    }
+
+    if (user_version < 6) {
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS book_thumbnails (
+          book_id  TEXT    NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+          width    INTEGER NOT NULL,
+          data     BLOB    NOT NULL,
+          mime     TEXT    NOT NULL,
+          PRIMARY KEY (book_id, width)
+        )
+      `);
+      this.db.exec('PRAGMA user_version = 6');
     }
   }
 
@@ -342,6 +356,48 @@ export class BookStore {
       | undefined;
     if (!row || !row.cover_data) return null;
     return { data: row.cover_data as Buffer, mime: row.cover_mime as string };
+  }
+
+  saveThumbnail(bookId: string, width: number, data: Buffer, mime: string): void {
+    this.db
+      .prepare(
+        `INSERT INTO book_thumbnails (book_id, width, data, mime) VALUES (?, ?, ?, ?)
+         ON CONFLICT (book_id, width) DO UPDATE SET data = excluded.data, mime = excluded.mime`
+      )
+      .run(bookId, width, data, mime);
+  }
+
+  getThumbnail(bookId: string, width: number): { data: Buffer; mime: string } | null {
+    const row = this.db
+      .prepare('SELECT data, mime FROM book_thumbnails WHERE book_id = ? AND width = ?')
+      .get(bookId, width) as { data: Buffer; mime: string } | undefined;
+    return row ?? null;
+  }
+
+  pruneThumbnails(configuredWidths: number[]): number {
+    if (configuredWidths.length === 0) {
+      return this.db.prepare('DELETE FROM book_thumbnails').run().changes;
+    }
+    const placeholders = configuredWidths.map(() => '?').join(', ');
+    return this.db
+      .prepare(`DELETE FROM book_thumbnails WHERE width NOT IN (${placeholders})`)
+      .run(...configuredWidths).changes;
+  }
+
+  getMissingThumbnailPairs(widths: number[]): Array<{ bookId: string; width: number }> {
+    const result: Array<{ bookId: string; width: number }> = [];
+    const stmt = this.db.prepare(
+      `SELECT id AS bookId FROM books
+       WHERE cover_data IS NOT NULL
+         AND id NOT IN (SELECT book_id FROM book_thumbnails WHERE width = ?)`
+    );
+    for (const width of widths) {
+      const rows = stmt.all(width) as { bookId: string }[];
+      for (const { bookId } of rows) {
+        result.push({ bookId, width });
+      }
+    }
+    return result;
   }
 
   scan(importer: ScanImporter = defaultImporter): { imported: string[]; removed: string[] } {
