@@ -235,12 +235,7 @@ export function createUiRouter(
       res.status(404).json({ error: 'Book not found' });
       return;
     }
-    const {
-      path: _path,
-      chapterSpineMap: _chapterSpineMap,
-      chapterNames: _chapterNames,
-      ...rest
-    } = book;
+    const { path: _path, ...rest } = book;
     res.json(rest);
   });
 

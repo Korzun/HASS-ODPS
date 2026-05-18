@@ -429,17 +429,21 @@ describe('GET /api/books/:id', () => {
     expect(res.status).toBe(302);
   });
 
-  it('includes chapterCount and excludes chapterSpineMap', async () => {
+  it('includes chapterCount, chapterSpineMap, and chapterNames', async () => {
     bookStore.addBook('bk1', 'book1.epub', path.join(booksDir, 'book1.epub'), 100, new Date(), {
       ...FAKE_META,
       chapterCount: 5,
       chapterSpineMap: [1, 2, 3, 4, 5],
+      chapterNames: ['Prologue', 'Ch 1', 'Ch 2', 'Ch 3', 'Ch 4'],
     });
     const agent = await adminAgent();
     const res = await agent.get('/api/books/bk1');
     expect(res.status).toBe(200);
     expect(res.body.chapterCount).toBe(5);
-    expect(res.body.chapterSpineMap).toBeUndefined();
+    expect(res.body.chapterSpineMap).toEqual([1, 2, 3, 4, 5]);
+    expect(res.body.chapterNames).toEqual(['Prologue', 'Ch 1', 'Ch 2', 'Ch 3', 'Ch 4']);
+    // path must still NOT be exposed
+    expect(res.body.path).toBeUndefined();
   });
 });
 
