@@ -53,4 +53,5 @@ export interface AppConfig {
   dataDir: string;
   port: number;
   maxConcurrentUploads: number;
+  thumbnailWidths: number[];
 }
