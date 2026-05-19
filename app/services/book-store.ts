@@ -440,26 +440,53 @@ export class BookStore {
     const imported: string[] = [];
     const removed: string[] = [];
 
-    const dbDiskNames = this.db.prepare('SELECT id, filename FROM books').all() as Array<{
-      id: string;
-      filename: string;
-    }>;
-    const dbFilenames = new Set(dbDiskNames.map((r) => r.filename));
+    const dbIds = new Set(
+      (this.db.prepare('SELECT id FROM books').all() as Array<{ id: string }>).map((r) => r.id)
+    );
 
     const diskFilenames: string[] = fs.existsSync(this.booksDir)
       ? fs.readdirSync(this.booksDir).filter((f) => path.extname(f).toLowerCase() === '.epub')
       : [];
-    const diskFilenameSet = new Set(diskFilenames);
 
-    // Import new files: on disk but not in DB
     for (const filename of diskFilenames) {
-      if (dbFilenames.has(filename)) continue;
       const filePath = path.join(this.booksDir, filename);
+      const stem = path.basename(filename, '.epub');
+
+      // Fast path: file already at <id>.epub and that id is imported.
+      if (/^[0-9a-f]{32}$/.test(stem) && dbIds.has(stem)) {
+        continue;
+      }
+
+      let id: string;
+      let meta: EpubMeta;
       try {
-        const meta = importer.parseEpub(filePath);
-        const id = importer.partialMD5(filePath);
+        id = importer.partialMD5(filePath);
+        meta = importer.parseEpub(filePath);
+      } catch (err: unknown) {
+        log.warn(
+          `scan: skipping "${filename}" — ${err instanceof Error ? err.message : String(err)}`
+        );
+        continue;
+      }
+
+      const canonicalPath = path.join(this.booksDir, id + '.epub');
+      if (filePath !== canonicalPath) {
+        if (fs.existsSync(canonicalPath)) {
+          log.warn(`scan: skipping "${filename}" — canonical path ${id}.epub already occupied`);
+          continue;
+        }
+        fs.renameSync(filePath, canonicalPath);
+      }
+
+      if (dbIds.has(id)) {
+        // Rename above was the only thing to do.
+        continue;
+      }
+
+      try {
         const titleFallback = meta.title.trim() || path.basename(filename, path.extname(filename));
-        this.addBook(id, filePath, { ...meta, title: titleFallback });
+        this.addBook(id, canonicalPath, { ...meta, title: titleFallback });
+        dbIds.add(id);
         imported.push(filename);
       } catch (err: unknown) {
         log.warn(
@@ -468,11 +495,15 @@ export class BookStore {
       }
     }
 
-    // Remove stale entries: in DB but file no longer on disk
-    for (const row of dbDiskNames) {
-      if (!diskFilenameSet.has(row.filename)) {
-        this.removeStaleBook(row.id);
-        removed.push(row.filename);
+    // Stale rows: in DB but their canonical file is missing.
+    const allIds = (this.db.prepare('SELECT id FROM books').all() as Array<{ id: string }>).map(
+      (r) => r.id
+    );
+    for (const id of allIds) {
+      const canonicalPath = path.join(this.booksDir, id + '.epub');
+      if (!fs.existsSync(canonicalPath)) {
+        this.removeStaleBook(id);
+        removed.push(id + '.epub');
       }
     }
 

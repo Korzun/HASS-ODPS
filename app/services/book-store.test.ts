@@ -405,6 +405,54 @@ describe('BookStore.scan()', () => {
     const result = bookStore.scan(makeMockImporter());
     expect(result.imported).toEqual(['book.epub']);
   });
+
+  it('renames a non-canonically-named file to <id>.epub before importing', () => {
+    const arbitraryPath = path.join(booksDir, 'arbitrary-name.epub');
+    fs.writeFileSync(arbitraryPath, makeMinimalEpub('A Book'));
+    const importer = makeMockImporter();
+    const result = bookStore.scan(importer);
+    expect(result.imported).toContain('arbitrary-name.epub');
+    expect(fs.existsSync(arbitraryPath)).toBe(false);
+    const books = bookStore.listBooks();
+    expect(books).toHaveLength(1);
+    const expectedPath = path.join(booksDir, books[0].id + '.epub');
+    expect(fs.existsSync(expectedPath)).toBe(true);
+  });
+
+  it('removes rows whose canonical file is missing', () => {
+    const id = 'orphan-id-123';
+    const filePath = path.join(booksDir, id + '.epub');
+    fs.writeFileSync(filePath, makeMinimalEpub('To Delete'));
+    bookStore.addBook(id, filePath, FAKE_META);
+    fs.unlinkSync(filePath);
+
+    const result = bookStore.scan(makeMockImporter());
+    expect(result.removed).toContain(id + '.epub');
+    expect(bookStore.getBookById(id)).toBeNull();
+  });
+
+  it('skips canonically-named files already in the DB without calling partialMD5', () => {
+    // Set up: a book exists at <id>.epub with id in DB.
+    const id = 'a1b2c3d4e5f6789012345678901234ab';
+    const filePath = path.join(booksDir, id + '.epub');
+    fs.writeFileSync(filePath, makeMinimalEpub('Already Here'));
+    bookStore.addBook(id, filePath, FAKE_META);
+
+    // Spy on importer.partialMD5 — it should NOT be called for this file.
+    let mdCallCount = 0;
+    const importer: ScanImporter = {
+      parseEpub: () => {
+        throw new Error('parseEpub should not be called');
+      },
+      partialMD5: () => {
+        mdCallCount++;
+        return 'should-not-happen';
+      },
+    };
+    const result = bookStore.scan(importer);
+    expect(result.imported).toEqual([]);
+    expect(mdCallCount).toBe(0);
+  });
 });
 
 describe('publisher, identifiers, subjects', () => {
