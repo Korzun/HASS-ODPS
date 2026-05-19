@@ -4,6 +4,7 @@ import { Database as DB } from 'better-sqlite3';
 import { Book, EpubMeta } from '../types';
 import { parseEpub, partialMD5 } from './epub-parser';
 import { logger } from '../logger';
+import { downloadFilename } from '../utils/download-filename';
 
 const log = logger('BookStore');
 
@@ -23,8 +24,6 @@ export class BookAlreadyExistsError extends Error {
 
 interface BookRow {
   id: string;
-  filename: string;
-  path: string;
   title: string;
   file_as: string;
   author: string;
@@ -241,11 +240,11 @@ export class BookStore {
     const rows = this.db
       .prepare(
         `
-      SELECT id, filename, path, title, file_as, author, description, publisher, series, series_index,
+      SELECT id, title, file_as, author, description, publisher, series, series_index,
              identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at,
              chapter_count, chapter_spine_map, chapter_names
       FROM books
-      ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, filename
+      ORDER BY CASE WHEN file_as != '' THEN file_as ELSE title END, title, id
     `
       )
       .all() as BookRow[];
@@ -256,7 +255,7 @@ export class BookStore {
     const row = this.db
       .prepare(
         `
-      SELECT id, filename, path, title, file_as, author, description, publisher, series, series_index,
+      SELECT id, title, file_as, author, description, publisher, series, series_index,
              identifiers, subjects, cover_data IS NOT NULL AS has_cover, size, mtime, added_at,
              chapter_count, chapter_spine_map, chapter_names
       FROM books WHERE id = ?
@@ -483,8 +482,13 @@ export class BookStore {
     const fileAs = r.file_as;
     return {
       id: r.id,
-      filename: r.filename,
-      path: r.path,
+      filename: downloadFilename({
+        author: r.author,
+        series: r.series,
+        seriesIndex: r.series_index,
+        title: r.title,
+      }),
+      path: path.join(this.booksDir, r.id + '.epub'),
       title: r.title,
       fileAs,
       author: r.author,
