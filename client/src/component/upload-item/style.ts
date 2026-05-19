@@ -38,7 +38,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       color: theme.colors.text.faint,
     },
     '&$uploading': {
-      color: theme.colors.primary,
+      color: '#1777FF',
       animation: '$rotation 1s infinite linear',
     },
     '&$done': {
@@ -61,7 +61,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       color: theme.colors.text.faint,
     },
     '&$uploading': {
-      color: theme.colors.primary,
+      color: '#1777FF',
       '& svg': {
         animation: '$rotation 1s infinite linear',
       },
@@ -99,7 +99,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       width: '0%',
     },
     '&$uploading': {
-      background: theme.colors.primary,
+      background: '#1777FF',
       transition: 'width 0.1s ease',
     },
     '&$done': {

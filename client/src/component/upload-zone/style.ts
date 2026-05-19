@@ -22,7 +22,7 @@ export const useStyle = createUseStyles((theme: Theme) => {
       background: DRAG_OVER_BG,
     },
     dropText: {
-      color: theme.colors.primaryHover,
+      color: '#1777FF',
     },
     clickLabel: {
       textDecoration: 'underline',

@@ -10,7 +10,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fill: 'transparent',
   },
   sector: {
-    fill: theme.colors.primary,
+    fill: '#1777FF',
   },
   ring: {
     fill: 'none',
