@@ -209,11 +209,11 @@ describe('addBook and listBooks', () => {
   });
 
   it('returns empty chapterNames array when column is NULL (pre-migration books)', () => {
-    // Simulate a pre-migration book: insert a row without chapter_names
+    // Simulate a book inserted without chapter_names (NULL default)
     db.prepare(
-      `INSERT INTO books (id, filename, path, title, size, mtime, added_at, chapter_count, chapter_spine_map)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run('old-book', 'old.epub', '/books/old.epub', 'Old Book', 100, 0, 0, 0, '[]');
+      `INSERT INTO books (id, title, size, mtime, added_at, chapter_count, chapter_spine_map)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).run('old-book', 'Old Book', 100, 0, 0, 0, '[]');
     const book = bookStore.getBookById('old-book');
     expect(book?.chapterNames).toEqual([]);
   });
@@ -598,7 +598,7 @@ describe('migrations', () => {
 
     const row = preDb.prepare('SELECT id FROM books').get() as { id: string };
     expect(row.id).toBe(correctId);
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 6 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 7 });
 
     preDb.close();
   });
@@ -700,7 +700,7 @@ describe('migrations', () => {
     const names = cols.map((c) => c.name);
     expect(names).toContain('chapter_count');
     expect(names).toContain('chapter_spine_map');
-    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 6 });
+    expect(preDb.prepare('PRAGMA user_version').get()).toMatchObject({ user_version: 7 });
 
     preDb.close();
   });
@@ -1074,5 +1074,130 @@ describe('book_thumbnails', () => {
     // Both books must remain intact after the failed reimport
     expect(bookStore.getBookById(bookAId)).not.toBeNull();
     expect(bookStore.getBookById(bookBId)).not.toBeNull();
+  });
+});
+
+describe('migration v7 (drop filename/path columns and canonicalize on-disk names)', () => {
+  it('renames files to <id>.epub and rebuilds the books table', () => {
+    const dbPath = path.join(booksDir, 'mig.sqlite');
+    const seedDb = new Database(dbPath);
+    seedDb.exec(`
+      CREATE TABLE books (
+        id            TEXT    PRIMARY KEY,
+        filename      TEXT    NOT NULL UNIQUE,
+        path          TEXT    NOT NULL,
+        title         TEXT    NOT NULL,
+        file_as       TEXT    NOT NULL DEFAULT '',
+        author        TEXT    NOT NULL DEFAULT '',
+        description   TEXT    NOT NULL DEFAULT '',
+        publisher     TEXT    NOT NULL DEFAULT '',
+        series        TEXT    NOT NULL DEFAULT '',
+        series_index  REAL    NOT NULL DEFAULT 0,
+        identifiers   TEXT    NOT NULL DEFAULT '[]',
+        subjects      TEXT    NOT NULL DEFAULT '[]',
+        cover_data    BLOB,
+        cover_mime    TEXT,
+        size          INTEGER NOT NULL,
+        mtime         INTEGER NOT NULL,
+        added_at      INTEGER NOT NULL,
+        chapter_count INTEGER NOT NULL DEFAULT 0,
+        chapter_spine_map TEXT NOT NULL DEFAULT '[]',
+        chapter_names TEXT
+      );
+      CREATE TABLE book_thumbnails (
+        book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        width   INTEGER NOT NULL,
+        data    BLOB NOT NULL,
+        mime    TEXT NOT NULL,
+        PRIMARY KEY (book_id, width)
+      );
+      PRAGMA user_version = 6;
+    `);
+
+    const oldOnDisk = path.join(booksDir, 'arbitrary.epub');
+    fs.writeFileSync(oldOnDisk, 'content');
+
+    seedDb
+      .prepare(
+        `INSERT INTO books (id, filename, path, title, size, mtime, added_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run('book-id-1', 'arbitrary.epub', oldOnDisk, 'A Book', 7, 0, 0);
+    seedDb.close();
+
+    const realDb = new Database(dbPath);
+    const store = new BookStore(booksDir, realDb);
+
+    expect(fs.existsSync(oldOnDisk)).toBe(false);
+    expect(fs.existsSync(path.join(booksDir, 'book-id-1.epub'))).toBe(true);
+
+    const book = store.getBookById('book-id-1');
+    expect(book!.title).toBe('A Book');
+
+    const cols = realDb.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+    const colNames = cols.map((c) => c.name);
+    expect(colNames).not.toContain('filename');
+    expect(colNames).not.toContain('path');
+
+    const { user_version: uv } = realDb.prepare('PRAGMA user_version').get() as {
+      user_version: number;
+    };
+    expect(uv).toBeGreaterThanOrEqual(7);
+
+    realDb.close();
+  });
+
+  it('logs and skips rows whose on-disk file is missing', () => {
+    const dbPath = path.join(booksDir, 'missing.sqlite');
+    const seedDb = new Database(dbPath);
+    seedDb.exec(`
+      CREATE TABLE books (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL UNIQUE,
+        path TEXT NOT NULL,
+        title TEXT NOT NULL,
+        file_as TEXT NOT NULL DEFAULT '',
+        author TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        publisher TEXT NOT NULL DEFAULT '',
+        series TEXT NOT NULL DEFAULT '',
+        series_index REAL NOT NULL DEFAULT 0,
+        identifiers TEXT NOT NULL DEFAULT '[]',
+        subjects TEXT NOT NULL DEFAULT '[]',
+        cover_data BLOB,
+        cover_mime TEXT,
+        size INTEGER NOT NULL,
+        mtime INTEGER NOT NULL,
+        added_at INTEGER NOT NULL,
+        chapter_count INTEGER NOT NULL DEFAULT 0,
+        chapter_spine_map TEXT NOT NULL DEFAULT '[]',
+        chapter_names TEXT
+      );
+      CREATE TABLE book_thumbnails (
+        book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        width INTEGER NOT NULL,
+        data BLOB NOT NULL,
+        mime TEXT NOT NULL,
+        PRIMARY KEY (book_id, width)
+      );
+      PRAGMA user_version = 6;
+    `);
+
+    const nonexistent = path.join(booksDir, 'gone.epub');
+    seedDb
+      .prepare(
+        `INSERT INTO books (id, filename, path, title, size, mtime, added_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run('ghost-id', 'gone.epub', nonexistent, 'Ghost', 7, 0, 0);
+    seedDb.close();
+
+    const realDb = new Database(dbPath);
+    const store = new BookStore(booksDir, realDb);
+
+    const book = store.getBookById('ghost-id');
+    expect(book).not.toBeNull();
+
+    realDb.close();
   });
 });

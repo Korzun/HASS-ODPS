@@ -69,8 +69,6 @@ export class BookStore {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS books (
         id            TEXT    PRIMARY KEY,
-        filename      TEXT    NOT NULL UNIQUE,
-        path          TEXT    NOT NULL,
         title         TEXT    NOT NULL,
         file_as       TEXT    NOT NULL DEFAULT '',
         author        TEXT    NOT NULL DEFAULT '',
@@ -98,10 +96,14 @@ export class BookStore {
       user_version: number;
     };
     if (user_version < 2) {
-      const books = this.db.prepare('SELECT id, path FROM books').all() as {
-        id: string;
-        path: string;
-      }[];
+      const v2Cols = this.db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+      const hasPath = v2Cols.some((c) => c.name === 'path');
+      const books = hasPath
+        ? (this.db.prepare('SELECT id, path FROM books').all() as {
+            id: string;
+            path: string;
+          }[])
+        : [];
       const updateBook = this.db.prepare('UPDATE books SET id = ? WHERE id = ?');
       const progressExists = this.db
         .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
@@ -177,6 +179,91 @@ export class BookStore {
       `);
       this.db.exec('PRAGMA user_version = 6');
     }
+
+    if (user_version < 7) {
+      const v7Cols = this.db.prepare('PRAGMA table_info(books)').all() as Array<{ name: string }>;
+      const hasFilename = v7Cols.some((c) => c.name === 'filename');
+      const rows = hasFilename
+        ? (this.db.prepare('SELECT id, filename, path FROM books').all() as Array<{
+            id: string;
+            filename: string;
+            path: string;
+          }>)
+        : [];
+
+      for (const row of rows) {
+        const canonical = path.join(this.booksDir, row.id + '.epub');
+        const src =
+          row.path && row.path.length > 0 ? row.path : path.join(this.booksDir, row.filename);
+
+        if (!fs.existsSync(src)) {
+          log.warn(
+            `migration v7: source file missing for book ${row.id} (${src}); skipping rename`
+          );
+          continue;
+        }
+        if (path.resolve(src) === path.resolve(canonical)) {
+          continue;
+        }
+        if (fs.existsSync(canonical)) {
+          log.warn(
+            `migration v7: canonical path ${canonical} already occupied; skipping rename for ${row.id}`
+          );
+          continue;
+        }
+        try {
+          fs.renameSync(src, canonical);
+        } catch (err: unknown) {
+          log.warn(
+            `migration v7: failed to rename ${src} → ${canonical}: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+      }
+
+      if (hasFilename) {
+        this.db.exec('PRAGMA foreign_keys=OFF');
+        this.db.transaction(() => {
+          this.db.exec(`
+            CREATE TABLE books_new (
+              id            TEXT    PRIMARY KEY,
+              title         TEXT    NOT NULL,
+              file_as       TEXT    NOT NULL DEFAULT '',
+              author        TEXT    NOT NULL DEFAULT '',
+              description   TEXT    NOT NULL DEFAULT '',
+              publisher     TEXT    NOT NULL DEFAULT '',
+              series        TEXT    NOT NULL DEFAULT '',
+              series_index  REAL    NOT NULL DEFAULT 0,
+              identifiers   TEXT    NOT NULL DEFAULT '[]',
+              subjects      TEXT    NOT NULL DEFAULT '[]',
+              cover_data    BLOB,
+              cover_mime    TEXT,
+              size          INTEGER NOT NULL,
+              mtime         INTEGER NOT NULL,
+              added_at      INTEGER NOT NULL,
+              chapter_count INTEGER NOT NULL DEFAULT 0,
+              chapter_spine_map TEXT NOT NULL DEFAULT '[]',
+              chapter_names TEXT
+            );
+            INSERT INTO books_new (id, title, file_as, author, description, publisher, series,
+                                   series_index, identifiers, subjects, cover_data, cover_mime,
+                                   size, mtime, added_at, chapter_count, chapter_spine_map, chapter_names)
+            SELECT id, title, file_as, author, description, publisher, series, series_index,
+                   identifiers, subjects, cover_data, cover_mime, size, mtime, added_at,
+                   chapter_count, chapter_spine_map, chapter_names
+            FROM books;
+            DROP TABLE books;
+            ALTER TABLE books_new RENAME TO books;
+          `);
+          this.db.exec('PRAGMA user_version = 7');
+        })();
+        this.db.exec('PRAGMA foreign_keys=ON');
+        log.info(
+          `Migration v7: canonicalized ${rows.length} book file(s); dropped filename/path columns`
+        );
+      } else {
+        this.db.exec('PRAGMA user_version = 7');
+      }
+    }
   }
 
   addBook(id: string, srcPath: string, meta: EpubMeta): void {
@@ -191,23 +278,20 @@ export class BookStore {
     }
 
     const stat = fs.statSync(targetPath);
-    const filename = id + '.epub';
     const title = meta.title.trim();
     const fileAs = (meta.fileAs || '').trim();
 
     this.db
       .prepare(
         `
-      INSERT INTO books (id, filename, path, title, file_as, author, description, publisher,
+      INSERT INTO books (id, title, file_as, author, description, publisher,
                          series, series_index, identifiers, subjects, cover_data, cover_mime,
                          size, mtime, added_at, chapter_count, chapter_spine_map, chapter_names)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
       )
       .run(
         id,
-        filename,
-        targetPath,
         title,
         fileAs,
         meta.author,
@@ -300,14 +384,12 @@ export class BookStore {
         }
         this.db
           .prepare(
-            `UPDATE books SET id=?, path=?, filename=?, title=?, file_as=?, author=?, description=?, publisher=?,
+            `UPDATE books SET id=?, title=?, file_as=?, author=?, description=?, publisher=?,
              series=?, series_index=?, identifiers=?, subjects=?, cover_data=?, cover_mime=?,
              size=?, mtime=?, chapter_count=?, chapter_spine_map=?, chapter_names=? WHERE id=?`
           )
           .run(
             newId,
-            path.join(this.booksDir, newId + '.epub'),
-            newId + '.epub',
             meta.title.trim(),
             (meta.fileAs || '').trim(),
             meta.author,
