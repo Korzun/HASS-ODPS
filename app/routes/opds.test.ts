@@ -28,6 +28,12 @@ const FAKE_META: EpubMeta = {
   chapterNames: [],
 };
 
+function stage(id: string, content: string | Buffer = 'x'): string {
+  const p = path.join(booksDir, `staged-${id}.epub`);
+  fs.writeFileSync(p, content);
+  return p;
+}
+
 let booksDir: string;
 let db: InstanceType<typeof Database>;
 let bookStore: BookStore;
@@ -93,44 +99,27 @@ describe('GET /opds/books', () => {
   });
 
   it('includes an entry for each book', async () => {
-    bookStore.addBook(
-      'book1',
-      'My Book.epub',
-      path.join(booksDir, 'My Book.epub'),
-      100,
-      new Date(),
-      { ...FAKE_META, title: 'My Book' }
-    );
+    bookStore.addBook('book1', stage('book1'), { ...FAKE_META, title: 'My Book' });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('My Book');
     expect(res.text).toContain('opds-spec.org/acquisition');
   });
 
   it('escapes special characters in titles', async () => {
-    bookStore.addBook(
-      'book2',
-      'A & B <Test>.epub',
-      path.join(booksDir, 'A & B <Test>.epub'),
-      100,
-      new Date(),
-      { ...FAKE_META, title: 'A & B <Test>' }
-    );
+    bookStore.addBook('book2', stage('book2'), { ...FAKE_META, title: 'A & B <Test>' });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('A &amp; B &lt;Test&gt;');
     expect(res.text).not.toContain('<Test>');
   });
 
   it('includes author in book entry', async () => {
-    bookStore.addBook('book3', 'Book3.epub', path.join(booksDir, 'Book3.epub'), 100, new Date(), {
-      ...FAKE_META,
-      author: 'Test Author',
-    });
+    bookStore.addBook('book3', stage('book3'), { ...FAKE_META, author: 'Test Author' });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('<author><name>Test Author</name></author>');
   });
 
   it('includes summary (description) in book entry', async () => {
-    bookStore.addBook('book4', 'Book4.epub', path.join(booksDir, 'Book4.epub'), 100, new Date(), {
+    bookStore.addBook('book4', stage('book4'), {
       ...FAKE_META,
       description: 'A great book about things.',
     });
@@ -140,36 +129,22 @@ describe('GET /opds/books', () => {
 
   it('includes cover link when hasCover is true', async () => {
     const coverData = Buffer.from('fake-cover-data');
-    bookStore.addBook(
-      'bookcover',
-      'BookCover.epub',
-      path.join(booksDir, 'BookCover.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        coverData,
-        coverMime: 'image/jpeg',
-      }
-    );
+    bookStore.addBook('bookcover', stage('bookcover'), {
+      ...FAKE_META,
+      coverData,
+      coverMime: 'image/jpeg',
+    });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('rel="http://opds-spec.org/image"');
     expect(res.text).toContain('/opds/books/bookcover/cover');
   });
 
   it('does not include cover link when hasCover is false', async () => {
-    bookStore.addBook(
-      'booknocover',
-      'BookNoCover.epub',
-      path.join(booksDir, 'BookNoCover.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        coverData: null,
-        coverMime: null,
-      }
-    );
+    bookStore.addBook('booknocover', stage('booknocover'), {
+      ...FAKE_META,
+      coverData: null,
+      coverMime: null,
+    });
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).not.toContain('rel="http://opds-spec.org/image"');
   });
@@ -184,9 +159,7 @@ describe('GET /opds/books/:id/download', () => {
   });
 
   it('returns the file with correct content type', async () => {
-    const bookPath = path.join(booksDir, 'book.epub');
-    fs.writeFileSync(bookPath, 'epub-content');
-    bookStore.addBook('bookdl', 'book.epub', bookPath, 12, new Date(), FAKE_META);
+    bookStore.addBook('bookdl', stage('bookdl', 'epub-content'), FAKE_META);
     const res = await request(app)
       .get('/opds/books/bookdl/download')
       .set(basicAuth('alice', 'secret'));
@@ -204,18 +177,11 @@ describe('GET /opds/books/:id/cover', () => {
   });
 
   it('returns 404 when book exists but has no cover', async () => {
-    bookStore.addBook(
-      'booknocover2',
-      'BookNoCover2.epub',
-      path.join(booksDir, 'BookNoCover2.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        coverData: null,
-        coverMime: null,
-      }
-    );
+    bookStore.addBook('booknocover2', stage('booknocover2'), {
+      ...FAKE_META,
+      coverData: null,
+      coverMime: null,
+    });
     const res = await request(app)
       .get('/opds/books/booknocover2/cover')
       .set(basicAuth('alice', 'secret'));
@@ -224,18 +190,11 @@ describe('GET /opds/books/:id/cover', () => {
 
   it('returns cover image with correct content type', async () => {
     const coverData = Buffer.from('fake-jpeg-data');
-    bookStore.addBook(
-      'bookcoverimg',
-      'BookCoverImg.epub',
-      path.join(booksDir, 'BookCoverImg.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        coverData,
-        coverMime: 'image/jpeg',
-      }
-    );
+    bookStore.addBook('bookcoverimg', stage('bookcoverimg'), {
+      ...FAKE_META,
+      coverData,
+      coverMime: 'image/jpeg',
+    });
     const res = await request(app)
       .get('/opds/books/bookcoverimg/cover')
       .set(basicAuth('alice', 'secret'));
@@ -246,7 +205,7 @@ describe('GET /opds/books/:id/cover', () => {
 
   it('returns full cover when book has one', async () => {
     const coverBuf = Buffer.from('opds-cover-data');
-    bookStore.addBook('opds1', 'opds.epub', path.join(booksDir, 'opds.epub'), 100, new Date(), {
+    bookStore.addBook('opds1', stage('opds1'), {
       ...FAKE_META,
       coverData: coverBuf,
       coverMime: 'image/jpeg',
@@ -258,7 +217,7 @@ describe('GET /opds/books/:id/cover', () => {
 
   it('returns thumbnail when ?width= matches', async () => {
     const thumbBuf = Buffer.from('opds-thumb');
-    bookStore.addBook('opds2', 'opds2.epub', path.join(booksDir, 'opds2.epub'), 100, new Date(), {
+    bookStore.addBook('opds2', stage('opds2'), {
       ...FAKE_META,
       coverData: Buffer.from('orig'),
       coverMime: 'image/jpeg',
@@ -273,7 +232,7 @@ describe('GET /opds/books/:id/cover', () => {
 
   it('falls back to full-size when thumbnail missing', async () => {
     const coverBuf = Buffer.from('fallback-cover');
-    bookStore.addBook('opds3', 'opds3.epub', path.join(booksDir, 'opds3.epub'), 100, new Date(), {
+    bookStore.addBook('opds3', stage('opds3'), {
       ...FAKE_META,
       coverData: coverBuf,
       coverMime: 'image/jpeg',
@@ -288,7 +247,7 @@ describe('GET /opds/books/:id/cover', () => {
 
 describe('OPDS feed thumbnail link', () => {
   it('includes opds thumbnail link for books with covers', async () => {
-    bookStore.addBook('opds4', 'opds4.epub', path.join(booksDir, 'opds4.epub'), 100, new Date(), {
+    bookStore.addBook('opds4', stage('opds4'), {
       ...FAKE_META,
       coverData: Buffer.from('cover'),
       coverMime: 'image/jpeg',
@@ -299,14 +258,7 @@ describe('OPDS feed thumbnail link', () => {
   });
 
   it('does not include thumbnail link for books without covers', async () => {
-    bookStore.addBook(
-      'opds5',
-      'opds5.epub',
-      path.join(booksDir, 'opds5.epub'),
-      100,
-      new Date(),
-      FAKE_META
-    );
+    bookStore.addBook('opds5', stage('opds5'), FAKE_META);
     const res = await request(app).get('/opds/books').set(basicAuth('alice', 'secret'));
     expect(res.text).not.toContain('opds-spec.org/image/thumbnail');
   });
