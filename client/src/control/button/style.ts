@@ -61,6 +61,15 @@ export const useStyle = createUseStyles((theme: Theme) => ({
       borderColor: '#0758d9',
       color: '#0758d9',
     },
+    '&$disabled': {
+      cursor: 'not-allowed',
+      filter: 'saturate(0)',
+      '&:hover': {
+        borderColor: '#D9D9D9',
+        color: '#1f1f1f',
+        outlineColor: 'transparent',
+      },
+    },
     '&$loading': {
       cursor: 'default',
       borderColor: '#e6e6e6',
@@ -147,6 +156,15 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     '&:active': {
       borderColor: '#0758d9',
       color: '#0758d9',
+    },
+    '&$disabled': {
+      cursor: 'not-allowed',
+      filter: 'saturate(0)',
+      '&:hover': {
+        borderColor: '#D9D9D9',
+        color: '#1f1f1f',
+        outlineColor: 'transparent',
+      },
     },
     '&$loading': {
       cursor: 'default',
@@ -302,6 +320,13 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     '&:active': {
       backgroundColor: '#d9d9d9',
     },
+    '&$disabled': {
+      cursor: 'not-allowed',
+      filter: 'saturate(0)',
+      '&:hover': {
+        backgroundColor: 'transparent',
+      },
+    },
     '&$loading': {
       cursor: 'default',
       color: '#6d6d6d',
@@ -372,7 +397,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     },
   },
   danger: {},
-  disabled: {},
+  disabled: {
+    opacity: 0.5,
+  },
   loading: {},
   spinner: {
     animation: '$rotation 1s infinite linear',

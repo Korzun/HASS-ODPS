@@ -1,8 +1,9 @@
 import cx from 'classnames';
 import { useCallback } from 'react';
 
-import { ButtonType, ButtonTypeValue, useStyle } from './style';
 import { SpinnerIcon } from '~/icon';
+
+import { ButtonType, ButtonTypeValue, useStyle } from './style';
 
 type ButtonProps = React.PropsWithChildren<{
   danger?: boolean;
