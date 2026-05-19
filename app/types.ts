@@ -1,6 +1,12 @@
 export interface Book {
   id: string; // 32-char partial MD5 (KoReader binary algorithm) — matches KOSync progress.document
+  /**
+   * User-facing download name derived from metadata
+   * ([author]-[series]-[index]-[title].epub). NOT the on-disk filename — every
+   * book is stored as `<id>.epub`.
+   */
   filename: string;
+  /** Absolute on-disk path: `<booksDir>/<id>.epub`. */
   path: string;
   title: string;
   fileAs: string;

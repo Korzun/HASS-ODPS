@@ -14,6 +14,13 @@ export class BookHashCollisionError extends Error {
   }
 }
 
+export class BookAlreadyExistsError extends Error {
+  constructor(public readonly existingId: string) {
+    super(`Book with id "${existingId}" already exists in the library`);
+    this.name = 'BookAlreadyExistsError';
+  }
+}
+
 interface BookRow {
   id: string;
   filename: string;
