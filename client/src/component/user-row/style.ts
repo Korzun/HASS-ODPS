@@ -22,8 +22,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   username: {
     color: '#FF4D4F',
+    fontWeight: 800,
   },
   undone: {
-    fontWeight: 600,
+    fontWeight: 800,
   },
 }));

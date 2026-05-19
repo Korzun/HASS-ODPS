@@ -54,7 +54,7 @@ export const UserRow = ({ username }: UserRowProps) => {
         title={`Delete user permanently?`}
         confirmText="Delete"
       >
-        This action will delete “<span className={styles.username}>{username}</span>”, all their
+        This action will delete <span className={styles.username}>{username}</span>, all their
         reading progress, and <span className={styles.undone}>can not be undone</span>.
       </ConfirmModal>
     </Fragment>
