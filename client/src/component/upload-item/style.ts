@@ -1,71 +1,17 @@
 import { createUseStyles, type Theme } from '~/provider/theme';
 
 export const useStyle = createUseStyles((theme: Theme) => ({
-  root: {
-    background: theme.colors.bg.card,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    padding: '0.625rem 0.75rem',
+  inner: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.625rem',
-  },
-  rootError: {
-    background: theme.colors.bg.card,
-    border: `1px solid ${theme.colors.danger}`,
-    borderRadius: theme.borderRadius.md,
-    padding: '0.625rem 0.75rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.625rem',
-  },
-  iconWrapperQueued: {
-    width: 28,
-    height: 28,
-    borderRadius: '50%',
-    background: theme.colors.borderLight,
-    color: theme.colors.text.muted,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  iconWrapperUploading: {
-    width: 28,
-    height: 28,
-    borderRadius: '50%',
-    background: theme.colors.primaryLight,
-    color: theme.colors.primaryHover,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  iconWrapperDone: {
-    width: 28,
-    height: 28,
-    borderRadius: '50%',
-    background: '#dcfce7',
-    color: theme.colors.success,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  iconWrapperError: {
-    width: 28,
-    height: 28,
-    borderRadius: '50%',
-    background: '#fee2e2',
-    color: theme.colors.danger,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
   },
   content: {
+    display: 'flex',
+    flexDirection: 'column',
     flex: 1,
     minWidth: 0,
+    gap: '0.25rem',
   },
   filename: {
     fontSize: theme.text.size.md,
@@ -79,55 +25,96 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '0.375rem',
-    marginTop: '0.25rem',
+    flexGrow: 1,
   },
-  barTrack: {
-    flex: 1,
-    height: 4,
-    background: theme.colors.borderLight,
-    borderRadius: 2,
-    overflow: 'hidden',
+
+  icon: {
+    lineHeight: 0,
+    '& svg': {
+      height: '15px',
+      width: '15px',
+    },
+    '&$queued': {
+      color: theme.colors.text.faint,
+    },
+    '&$uploading': {
+      color: theme.colors.primary,
+      animation: '$rotation 1s infinite linear',
+    },
+    '&$done': {
+      color: theme.colors.success,
+    },
+    '&$error': {
+      color: theme.colors.danger,
+    },
   },
-  barFillQueued: {
-    height: '100%',
-    borderRadius: 2,
-    width: '0%',
+  labelContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
   },
-  barFillUploading: {
-    height: '100%',
-    borderRadius: 2,
-    background: theme.colors.primary,
-    transition: 'width 0.1s ease',
+  leftLabel: {
+    fontSize: theme.text.size.md,
+    flexGrow: 1,
+    textTransform: 'capitalize',
+    '&$queued': {
+      color: theme.colors.text.faint,
+    },
+    '&$uploading': {
+      color: theme.colors.primary,
+      '& svg': {
+        animation: '$rotation 1s infinite linear',
+      },
+    },
+    '&$done': {
+      color: theme.colors.success,
+    },
+    '&$error': {
+      color: theme.colors.danger,
+    },
   },
-  barFillDone: {
-    height: '100%',
-    borderRadius: 2,
-    background: theme.colors.success,
-  },
-  barFillError: {
-    height: '100%',
-    borderRadius: 2,
-    background: theme.colors.danger,
-  },
-  label: {
+  rightLabel: {
     fontSize: theme.text.size.sm,
     color: theme.colors.text.faint,
     whiteSpace: 'nowrap',
-    flexShrink: 0,
+    textAlign: 'right',
+    '&$error': {
+      color: theme.colors.danger,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '12rem',
+    },
   },
-  labelDone: {
-    fontSize: theme.text.size.sm,
-    color: theme.colors.success,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-  },
-  labelError: {
-    fontSize: theme.text.size.sm,
-    color: theme.colors.danger,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
+  barTrack: {
+    flex: 1,
+    height: '0.5rem',
+    background: theme.colors.borderLight,
+    borderRadius: '0.5rem',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    maxWidth: '12rem',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: '2px',
+    '&$queued': {
+      width: '0%',
+    },
+    '&$uploading': {
+      background: theme.colors.primary,
+      transition: 'width 0.1s ease',
+    },
+    '&$done': {
+      background: theme.colors.success,
+    },
+    '&$error': {
+      background: theme.colors.danger,
+    },
+  },
+  queued: {},
+  uploading: {},
+  done: {},
+  error: {},
+  '@keyframes rotation': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
   },
 }));

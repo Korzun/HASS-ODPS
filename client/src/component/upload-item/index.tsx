@@ -1,5 +1,9 @@
-import { CheckIcon, CircleXIcon, ClockIcon, UploadIcon } from '~/icon';
+import cx from 'classnames';
+
+import { CheckIcon, CircleXIcon, ClockIcon, SpinnerIcon } from '~/icon';
 import type { UploadItem as UploadItemType } from '~/provider/book';
+
+import { Card } from '../card';
 
 import { useStyle } from './style';
 
@@ -15,49 +19,51 @@ export const UploadItem = ({ item }: Props) => {
   const uploadedMB = (bytesUploaded / 1_048_576).toFixed(1);
   const progressPercent = file.size > 0 ? Math.min((bytesUploaded / file.size) * 100, 100) : 0;
 
-  const iconWrapperClass = {
-    queued: styles.iconWrapperQueued,
-    uploading: styles.iconWrapperUploading,
-    done: styles.iconWrapperDone,
-    error: styles.iconWrapperError,
-  }[status];
+  const icon = (() => {
+    if (status === 'uploading') {
+      return <SpinnerIcon />;
+    }
+    if (status === 'error') {
+      return <CircleXIcon />;
+    }
+    if (status === 'done') {
+      return <CheckIcon />;
+    }
+    return <ClockIcon />;
+  })();
 
-  const barFillClass = {
-    queued: styles.barFillQueued,
-    uploading: styles.barFillUploading,
-    done: styles.barFillDone,
-    error: styles.barFillError,
-  }[status];
-
-  const rightLabel =
-    status === 'error'
-      ? (errorMessage ?? 'Upload failed')
-      : status === 'queued'
-        ? `${totalMB} MB`
-        : status === 'done'
-          ? `${totalMB} / ${totalMB} MB`
-          : `${uploadedMB} / ${totalMB} MB`;
-
-  const rightLabelClass =
-    status === 'done' ? styles.labelDone : status === 'error' ? styles.labelError : styles.label;
+  const rightLabel = (() => {
+    if (status === 'error') {
+      return errorMessage ?? 'Upload failed';
+    }
+    if (status === 'queued') {
+      return `${totalMB} MB`;
+    }
+    if (status === 'done') {
+      return `${totalMB} / ${totalMB} MB`;
+    }
+    return `${uploadedMB} / ${totalMB} MB`;
+  })();
 
   return (
-    <div className={status === 'error' ? styles.rootError : styles.root}>
-      <div className={iconWrapperClass}>
-        {status === 'queued' && <ClockIcon height={16} width={16} />}
-        {status === 'uploading' && <UploadIcon height={16} width={16} />}
-        {status === 'done' && <CheckIcon height={16} width={16} />}
-        {status === 'error' && <CircleXIcon height={16} width={16} />}
-      </div>
+    <Card title={file.name}>
       <div className={styles.content}>
-        <div className={styles.filename}>{file.name}</div>
+        <div className={styles.labelContainer}>
+          <div className={cx(styles.icon, styles[status])}>{icon}</div>
+          <div className={cx(styles.leftLabel, styles[status])}>{status}</div>
+          <div className={cx(styles.rightLabel, { [styles.error]: status === 'error' })}>
+            {rightLabel}
+          </div>
+        </div>
         <div className={styles.progressRow}>
           <div className={styles.barTrack}>
-            <div className={barFillClass} style={{ width: `${progressPercent}%` }} />
+            <div
+              className={cx(styles.barFill, styles[status])}
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
-          <div className={rightLabelClass}>{rightLabel}</div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };

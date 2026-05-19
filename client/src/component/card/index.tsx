@@ -7,7 +7,7 @@ export type Props = PropsWithChildren<{
   headerAction?: ReactNode;
   onClick?: () => void;
   subTitle?: string;
-  title?: string;
+  title?: string | ReactNode;
 }>;
 export const Card = ({ children, headerAction, subTitle, title, onClick }: Props) => {
   const style = useStyle();

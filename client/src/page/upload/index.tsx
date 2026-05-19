@@ -6,8 +6,10 @@ import { useStyle } from './style';
 
 export const UploadPage = () => {
   const styles = useStyle();
-  const { items, addFiles } = useUploadQueue();
   const [isAdmin] = useIsAdmin();
+
+  const { items, addFiles } = useUploadQueue();
+  const uploadsInProgress = items.some((i) => i.status === 'queued' || i.status === 'uploading');
 
   return (
     <Page>
@@ -22,7 +24,7 @@ export const UploadPage = () => {
       {isAdmin && (
         <div className={styles.scanRow}>
           <div className={styles.spacer} />
-          <LibraryScan />
+          <LibraryScan disabled={uploadsInProgress} />
         </div>
       )}
     </Page>

@@ -7,7 +7,11 @@ import { Toast } from '../toast';
 
 import { useStyle } from './style';
 
-export const LibraryScan = () => {
+interface Props {
+  disabled?: boolean;
+}
+
+export const LibraryScan = ({ disabled }: Props) => {
   const styles = useStyle();
 
   const [scanLibrary, scanResult, scanning, error] = useScanLibrary();
@@ -38,7 +42,7 @@ export const LibraryScan = () => {
 
   return (
     <div className={styles.root}>
-      <Button loading={scanning} onClick={scanLibrary}>
+      <Button disabled={disabled} loading={scanning} onClick={scanLibrary}>
         {scanning ? 'Scanning…' : 'Library scan'}
       </Button>
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={handleDismiss} />}
