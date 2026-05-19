@@ -1,5 +1,5 @@
 const ILLEGAL_FS_CHARS = /[/\\:*?"<>|]/g;
-// Excludes tab (\x09) and other common whitespace (\x0a\x0d) so they survive to WHITESPACE_RUN collapsing
+// Preserves \x09 (tab), \x0a (LF), \x0d (CR) so they reach WHITESPACE_RUN and collapse to a single space
 const CONTROL_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g;
 const WHITESPACE_RUN = /\s+/g;
 const LEADING_TRAILING = /^[_.]+|[_.]+$/g;
@@ -24,14 +24,14 @@ export function downloadFilename(book: {
   seriesIndex: number;
   title: string;
 }): string {
-  const author = sanitizeField(book.author.trim()) || 'Unknown';
-  const title = sanitizeField(book.title.trim()) || 'Unknown';
-  const series = sanitizeField(book.series.trim());
+  const author = sanitizeField(book.author) || 'Unknown';
+  const title = sanitizeField(book.title) || 'Unknown';
+  const series = sanitizeField(book.series);
 
   if (series === '') {
     return `${author}-${title}.epub`;
   }
 
-  const index = sanitizeField(formatSeriesIndex(book.seriesIndex));
+  const index = formatSeriesIndex(book.seriesIndex);
   return `${author}-${series}-${index}-${title}.epub`;
 }
