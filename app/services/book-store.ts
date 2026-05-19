@@ -442,8 +442,11 @@ export class BookStore {
     const imported: string[] = [];
     const removed: string[] = [];
 
-    const dbBooks = this.listBooks();
-    const dbFilenames = new Set(dbBooks.map((b) => b.filename));
+    const dbDiskNames = this.db.prepare('SELECT id, filename FROM books').all() as Array<{
+      id: string;
+      filename: string;
+    }>;
+    const dbFilenames = new Set(dbDiskNames.map((r) => r.filename));
 
     const diskFilenames: string[] = fs.existsSync(this.booksDir)
       ? fs.readdirSync(this.booksDir).filter((f) => path.extname(f).toLowerCase() === '.epub')
@@ -468,10 +471,10 @@ export class BookStore {
     }
 
     // Remove stale entries: in DB but file no longer on disk
-    for (const book of dbBooks) {
-      if (!diskFilenameSet.has(book.filename)) {
-        this.removeStaleBook(book.id);
-        removed.push(book.filename);
+    for (const row of dbDiskNames) {
+      if (!diskFilenameSet.has(row.filename)) {
+        this.removeStaleBook(row.id);
+        removed.push(row.filename);
       }
     }
 
