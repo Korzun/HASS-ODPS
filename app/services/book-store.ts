@@ -7,6 +7,13 @@ import { logger } from '../logger';
 
 const log = logger('BookStore');
 
+export class BookHashCollisionError extends Error {
+  constructor(public readonly collidingId: string) {
+    super(`Book hash collision: edited content matches existing book "${collidingId}"`);
+    this.name = 'BookHashCollisionError';
+  }
+}
+
 interface BookRow {
   id: string;
   filename: string;
@@ -283,6 +290,10 @@ export class BookStore {
       .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
       .get();
 
+    if (newId !== id && this.db.prepare('SELECT 1 FROM books WHERE id = ?').get(newId)) {
+      throw new BookHashCollisionError(newId);
+    }
+
     this.db.transaction(() => {
       if (newId !== id) {
         this.db
@@ -312,6 +323,27 @@ export class BookStore {
             id
           );
         if (progressExists) {
+          // For users with progress under both ids, keep whichever record is newer
+          type Conflict = { username: string; old_ts: number; new_ts: number };
+          const conflicts = this.db
+            .prepare(
+              `SELECT p1.username, p1.timestamp AS old_ts, p2.timestamp AS new_ts
+               FROM progress p1
+               JOIN progress p2 ON p1.username = p2.username AND p2.document = ?
+               WHERE p1.document = ?`
+            )
+            .all(newId, id) as Conflict[];
+          for (const c of conflicts) {
+            if (c.old_ts >= c.new_ts) {
+              this.db
+                .prepare('DELETE FROM progress WHERE username = ? AND document = ?')
+                .run(c.username, newId);
+            } else {
+              this.db
+                .prepare('DELETE FROM progress WHERE username = ? AND document = ?')
+                .run(c.username, id);
+            }
+          }
           this.db.prepare('UPDATE progress SET document=? WHERE document=?').run(newId, id);
         }
       } else {

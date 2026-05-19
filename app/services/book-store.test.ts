@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import Database from 'better-sqlite3';
 import AdmZip from 'adm-zip';
-import { BookStore, ScanImporter } from './book-store';
+import { BookStore, BookHashCollisionError, ScanImporter } from './book-store';
 import { partialMD5 } from './epub-parser';
 import { EpubMeta } from '../types';
 
@@ -700,6 +700,81 @@ describe('reimportBook', () => {
     // If ID didn't change (unlikely but possible): still verify DB is consistent
     expect(bookStore.getBookById(newId)).not.toBeNull();
   });
+
+  it('inherits orphaned progress under newId when no book owns that hash', () => {
+    const epubPath = path.join(booksDir, 'orphan.epub');
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>T</dc:title></metadata><manifest/><spine/></package>`));
+    zip.writeZip(epubPath);
+
+    const oldId = 'orphan-old';
+    const newId = 'orphan-new';
+    bookStore.addBook(oldId, 'orphan.epub', epubPath, 100, new Date(), FAKE_META);
+
+    const db2 = (bookStore as unknown as { db: import('better-sqlite3').Database }).db;
+    db2.exec(`CREATE TABLE IF NOT EXISTS progress (
+      username TEXT NOT NULL, document TEXT NOT NULL, progress TEXT NOT NULL,
+      percentage REAL NOT NULL, device TEXT NOT NULL, device_id TEXT NOT NULL,
+      timestamp INTEGER NOT NULL, PRIMARY KEY (username, document)
+    )`);
+    // Orphaned progress under newId (no book owns newId)
+    db2.prepare('INSERT INTO progress VALUES (?,?,?,?,?,?,?)').run('alice', newId, '/p[2]', 0.8, 'Kobo', 'd1', 2000);
+
+    const mockImporter = { parseEpub: () => FAKE_META, partialMD5: () => newId };
+    const result = bookStore.reimportBook(oldId, mockImporter);
+
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe(newId);
+    // Orphaned progress is now owned by the book
+    const row = db2.prepare('SELECT * FROM progress WHERE document=?').get(newId) as { username: string } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.username).toBe('alice');
+    // Old id has no progress
+    expect(db2.prepare('SELECT * FROM progress WHERE document=?').get(oldId)).toBeUndefined();
+  });
+
+  it('keeps newer progress and discards older when both ids have records for the same user', () => {
+    const epubPath = path.join(booksDir, 'merge.epub');
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>T</dc:title></metadata><manifest/><spine/></package>`));
+    zip.writeZip(epubPath);
+
+    const oldId = 'merge-old';
+    const newId = 'merge-new';
+    bookStore.addBook(oldId, 'merge.epub', epubPath, 100, new Date(), FAKE_META);
+
+    const db2 = (bookStore as unknown as { db: import('better-sqlite3').Database }).db;
+    db2.exec(`CREATE TABLE IF NOT EXISTS progress (
+      username TEXT NOT NULL, document TEXT NOT NULL, progress TEXT NOT NULL,
+      percentage REAL NOT NULL, device TEXT NOT NULL, device_id TEXT NOT NULL,
+      timestamp INTEGER NOT NULL, PRIMARY KEY (username, document)
+    )`);
+    // alice: current progress is newer (ts=3000) than orphaned (ts=1000) → current wins
+    db2.prepare('INSERT INTO progress VALUES (?,?,?,?,?,?,?)').run('alice', oldId,  '/p[5]', 0.9, 'Kobo', 'd1', 3000);
+    db2.prepare('INSERT INTO progress VALUES (?,?,?,?,?,?,?)').run('alice', newId,  '/p[2]', 0.4, 'Kobo', 'd1', 1000);
+    // bob: orphaned progress is newer (ts=5000) than current (ts=2000) → orphaned wins
+    db2.prepare('INSERT INTO progress VALUES (?,?,?,?,?,?,?)').run('bob',   oldId,  '/p[1]', 0.2, 'Kobo', 'd2', 2000);
+    db2.prepare('INSERT INTO progress VALUES (?,?,?,?,?,?,?)').run('bob',   newId,  '/p[9]', 0.95,'Kobo', 'd2', 5000);
+
+    const mockImporter = { parseEpub: () => FAKE_META, partialMD5: () => newId };
+    bookStore.reimportBook(oldId, mockImporter);
+
+    type Row = { username: string; progress: string; timestamp: number };
+    const aliceRow = db2.prepare('SELECT * FROM progress WHERE username=? AND document=?').get('alice', newId) as Row;
+    expect(aliceRow).toBeDefined();
+    expect(aliceRow.progress).toBe('/p[5]'); // alice's newer current record won
+    expect(aliceRow.timestamp).toBe(3000);
+
+    const bobRow = db2.prepare('SELECT * FROM progress WHERE username=? AND document=?').get('bob', newId) as Row;
+    expect(bobRow).toBeDefined();
+    expect(bobRow.progress).toBe('/p[9]');   // bob's newer orphaned record won
+    expect(bobRow.timestamp).toBe(5000);
+
+    // No records left under oldId
+    expect(db2.prepare('SELECT COUNT(*) AS n FROM progress WHERE document=?').get(oldId)).toMatchObject({ n: 0 });
+  });
 });
 
 describe('book_thumbnails', () => {
@@ -816,5 +891,37 @@ describe('book_thumbnails', () => {
     // Thumbnail should now be under new ID (not lost, not causing FK error)
     expect(bookStore.getThumbnail(newId, 60)).not.toBeNull();
     expect(bookStore.getThumbnail(originalId, 60)).toBeNull();
+  });
+
+  it('throws BookHashCollisionError when new hash collides with another book', () => {
+    const epubPath = path.join(booksDir, 'collision.epub');
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(`<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`));
+    zip.addFile('OEBPS/content.opf', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Collision Test</dc:title></metadata>
+  <manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest>
+  <spine toc="ncx"/>
+</package>`));
+    zip.writeZip(epubPath);
+
+    const bookAId = 'book-a-id';
+    const bookBId = 'book-b-id';
+    bookStore.addBook(bookAId, 'collision.epub', epubPath, 100, new Date(), FAKE_META);
+    bookStore.addBook(bookBId, 'other.epub', '/books/other.epub', 100, new Date(), FAKE_META);
+
+    // Mock importer returns bookBId as the new hash — collision with existing book
+    const mockImporter = {
+      parseEpub: () => FAKE_META,
+      partialMD5: () => bookBId,
+    };
+
+    expect(() => bookStore.reimportBook(bookAId, mockImporter)).toThrow(BookHashCollisionError);
+    // Both books must remain intact after the failed reimport
+    expect(bookStore.getBookById(bookAId)).not.toBeNull();
+    expect(bookStore.getBookById(bookBId)).not.toBeNull();
   });
 });

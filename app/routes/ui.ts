@@ -3,7 +3,7 @@ import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { createHash } from 'crypto';
-import { BookStore } from '../services/book-store';
+import { BookStore, BookHashCollisionError } from '../services/book-store';
 import { AppConfig, EpubMeta } from '../types';
 import { UserStore } from '../services/user-store';
 import { sessionAuth, adminAuth } from '../middleware/auth';
@@ -365,7 +365,20 @@ export function createUiRouter(
         return;
       }
 
-      const updated = bookStore.reimportBook(req.params.id);
+      let updated: ReturnType<typeof bookStore.reimportBook>;
+      try {
+        updated = bookStore.reimportBook(req.params.id);
+      } catch (err) {
+        if (err instanceof BookHashCollisionError) {
+          res.status(409).json({
+            error:
+              'The edited book now has the same fingerprint as another book in your library. ' +
+              'Remove the duplicate book and try again.',
+          });
+          return;
+        }
+        throw err;
+      }
       if (!updated) {
         res.status(500).json({ error: 'Failed to re-import book after update' });
         return;
