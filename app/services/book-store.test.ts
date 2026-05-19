@@ -958,6 +958,38 @@ describe('book_thumbnails', () => {
     expect(bookStore.getThumbnail(originalId, 60)).toBeNull();
   });
 
+  it('renames file on disk from <oldId>.epub to <newId>.epub when hash changes', () => {
+    const oldId = 'old-id-aaaa';
+    const oldPath = path.join(booksDir, oldId + '.epub');
+    fs.writeFileSync(oldPath, 'epub-bytes');
+    bookStore.addBook(oldId, oldPath, FAKE_META);
+
+    const newId = 'new-id-bbbb';
+    const mockImporter: ScanImporter = {
+      parseEpub: () => ({ ...FAKE_META, title: 'New Title' }),
+      partialMD5: () => newId,
+    };
+    bookStore.reimportBook(oldId, mockImporter);
+
+    expect(fs.existsSync(oldPath)).toBe(false);
+    expect(fs.existsSync(path.join(booksDir, newId + '.epub'))).toBe(true);
+  });
+
+  it('does not rename when hash is unchanged', () => {
+    const id = 'stable-id';
+    const filePath = path.join(booksDir, id + '.epub');
+    fs.writeFileSync(filePath, 'epub-bytes');
+    bookStore.addBook(id, filePath, FAKE_META);
+
+    const mockImporter: ScanImporter = {
+      parseEpub: () => ({ ...FAKE_META, title: 'Edited' }),
+      partialMD5: () => id,
+    };
+    bookStore.reimportBook(id, mockImporter);
+
+    expect(fs.existsSync(filePath)).toBe(true);
+  });
+
   it('throws BookHashCollisionError when new hash collides with another book', () => {
     const epubPath = path.join(booksDir, 'collision.epub');
     const zip = new AdmZip();

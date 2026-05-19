@@ -270,19 +270,18 @@ export class BookStore {
   }
 
   reimportBook(id: string, importer: ScanImporter = defaultImporter): Book | null {
-    const row = this.db.prepare('SELECT path, filename FROM books WHERE id = ?').get(id) as
-      | { path: string; filename: string }
-      | undefined;
-    if (!row) return null;
+    const exists = this.db.prepare('SELECT 1 FROM books WHERE id = ?').get(id);
+    if (!exists) return null;
 
+    const filePath = path.join(this.booksDir, id + '.epub');
     let stat: fs.Stats;
     try {
-      stat = fs.statSync(row.path);
+      stat = fs.statSync(filePath);
     } catch {
       return null;
     }
-    const meta = importer.parseEpub(row.path);
-    const newId = importer.partialMD5(row.path);
+    const meta = importer.parseEpub(filePath);
+    const newId = importer.partialMD5(filePath);
 
     const progressExists = this.db
       .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'")
@@ -294,15 +293,22 @@ export class BookStore {
 
     this.db.transaction(() => {
       if (newId !== id) {
+        const oldPath = path.join(this.booksDir, id + '.epub');
+        const newPath = path.join(this.booksDir, newId + '.epub');
+        if (oldPath !== newPath) {
+          fs.renameSync(oldPath, newPath);
+        }
         this.db
           .prepare(
-            `UPDATE books SET id=?, title=?, file_as=?, author=?, description=?, publisher=?,
+            `UPDATE books SET id=?, path=?, filename=?, title=?, file_as=?, author=?, description=?, publisher=?,
              series=?, series_index=?, identifiers=?, subjects=?, cover_data=?, cover_mime=?,
              size=?, mtime=?, chapter_count=?, chapter_spine_map=?, chapter_names=? WHERE id=?`
           )
           .run(
             newId,
-            meta.title.trim() || path.basename(row.filename, path.extname(row.filename)),
+            path.join(this.booksDir, newId + '.epub'),
+            newId + '.epub',
+            meta.title.trim(),
             (meta.fileAs || '').trim(),
             meta.author,
             meta.description,
@@ -352,7 +358,7 @@ export class BookStore {
              size=?, mtime=?, chapter_count=?, chapter_spine_map=?, chapter_names=? WHERE id=?`
           )
           .run(
-            meta.title.trim() || path.basename(row.filename, path.extname(row.filename)),
+            meta.title.trim(),
             (meta.fileAs || '').trim(),
             meta.author,
             meta.description,
