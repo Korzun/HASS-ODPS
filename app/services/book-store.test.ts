@@ -31,6 +31,12 @@ function makeMinimalEpub(title: string): Buffer {
   return zip.toBuffer();
 }
 
+function stage(id: string, content: string | Buffer = 'x'): string {
+  const p = path.join(booksDir, `staged-${id}.epub`);
+  fs.writeFileSync(p, content);
+  return p;
+}
+
 const FAKE_META: EpubMeta = {
   title: 'Test Book',
   author: 'Author Name',
@@ -65,7 +71,7 @@ afterEach(() => {
 
 describe('addBook and listBooks', () => {
   it('inserts a book and lists it', () => {
-    bookStore.addBook('abc123', 'test.epub', '/books/test.epub', 1000, new Date(1000), FAKE_META);
+    bookStore.addBook('abc123', stage('abc123'), FAKE_META);
     const books = bookStore.listBooks();
     expect(books).toHaveLength(1);
     expect(books[0].id).toBe('abc123');
@@ -74,23 +80,48 @@ describe('addBook and listBooks', () => {
     expect(books[0].hasCover).toBe(true);
   });
 
-  it('upserts on same filename', () => {
-    bookStore.addBook('id1', 'dupe.epub', '/books/dupe.epub', 100, new Date(), FAKE_META);
-    bookStore.addBook('id2', 'dupe.epub', '/books/dupe.epub', 200, new Date(), {
-      ...FAKE_META,
-      title: 'Updated',
-    });
-    const books = bookStore.listBooks();
-    expect(books).toHaveLength(1);
-    expect(books[0].title).toBe('Updated');
+  it('throws BookAlreadyExistsError when adding a book whose id is already in the DB', () => {
+    const aPath = path.join(booksDir, 'a.epub');
+    const bPath = path.join(booksDir, 'b.epub');
+    fs.writeFileSync(aPath, 'first');
+    fs.writeFileSync(bPath, 'second');
+    bookStore.addBook('same-id', aPath, FAKE_META);
+    expect(() => bookStore.addBook('same-id', bPath, FAKE_META)).toThrow(
+      'Book with id "same-id" already exists'
+    );
+  });
+
+  it('moves the source file to <booksDir>/<id>.epub', () => {
+    const stagedPath = path.join(booksDir, 'staged.epub');
+    fs.writeFileSync(stagedPath, 'content');
+    bookStore.addBook('move-id', stagedPath, FAKE_META);
+    expect(fs.existsSync(stagedPath)).toBe(false);
+    expect(fs.existsSync(path.join(booksDir, 'move-id.epub'))).toBe(true);
+  });
+
+  it('is a no-op for the file when source is already at <id>.epub', () => {
+    const canonical = path.join(booksDir, 'noop-id.epub');
+    fs.writeFileSync(canonical, 'content');
+    bookStore.addBook('noop-id', canonical, FAKE_META);
+    expect(fs.existsSync(canonical)).toBe(true);
+    expect(fs.readFileSync(canonical, 'utf8')).toBe('content');
+  });
+
+  it('records size and mtime by stat-ing the source file', () => {
+    const stagedPath = path.join(booksDir, 'sized.epub');
+    fs.writeFileSync(stagedPath, '0123456789');
+    bookStore.addBook('size-id', stagedPath, FAKE_META);
+    const book = bookStore.getBookById('size-id');
+    expect(book!.size).toBe(10);
+    expect(Math.abs(book!.mtime.getTime() - Date.now())).toBeLessThan(5000);
   });
 
   it('sorts by title', () => {
-    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       title: 'Zebra',
     });
-    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), {
+    bookStore.addBook('id2', stage('id2'), {
       ...FAKE_META,
       title: 'Apple',
     });
@@ -100,7 +131,7 @@ describe('addBook and listBooks', () => {
   });
 
   it('returns hasCover false when no cover', () => {
-    bookStore.addBook('id1', 'nocover.epub', '/books/nocover.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       coverData: null,
       coverMime: null,
@@ -109,17 +140,8 @@ describe('addBook and listBooks', () => {
     expect(books[0].hasCover).toBe(false);
   });
 
-  it('uses filename stem as title fallback when title is empty', () => {
-    bookStore.addBook('id-empty', 'my-book.epub', '/books/my-book.epub', 100, new Date(), {
-      ...FAKE_META,
-      title: '',
-    });
-    const book = bookStore.getBookById('id-empty');
-    expect(book!.title).toBe('my-book');
-  });
-
   it('persists fileAs on stored books', () => {
-    bookStore.addBook('abc123', 'test.epub', '/books/test.epub', 1000, new Date(1000), {
+    bookStore.addBook('abc123', stage('abc123'), {
       ...FAKE_META,
       fileAs: 'Asimov, Isaac',
     });
@@ -130,7 +152,7 @@ describe('addBook and listBooks', () => {
   });
 
   it('stores trimmed fileAs even when metadata has extra whitespace', () => {
-    bookStore.addBook('trim1', 'whitespace.epub', '/books/whitespace.epub', 1000, new Date(1000), {
+    bookStore.addBook('trim1', stage('trim1'), {
       ...FAKE_META,
       fileAs: '  Asimov, Isaac  ',
     });
@@ -140,12 +162,12 @@ describe('addBook and listBooks', () => {
   });
 
   it('sorts by fileAs before title', () => {
-    bookStore.addBook('id1', 'zebra.epub', '/books/zebra.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       title: 'Zebra Stories',
       fileAs: 'Apple, A.',
     });
-    bookStore.addBook('id2', 'apple.epub', '/books/apple.epub', 100, new Date(), {
+    bookStore.addBook('id2', stage('id2'), {
       ...FAKE_META,
       title: 'Apple Stories',
       fileAs: 'Zulu, Z.',
@@ -158,12 +180,12 @@ describe('addBook and listBooks', () => {
   });
 
   it('falls back to title when fileAs is empty', () => {
-    bookStore.addBook('id1', 'b.epub', '/books/b.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       title: 'Bravo',
       fileAs: '',
     });
-    bookStore.addBook('id2', 'a.epub', '/books/a.epub', 100, new Date(), {
+    bookStore.addBook('id2', stage('id2'), {
       ...FAKE_META,
       title: 'Alpha',
       fileAs: '',
@@ -176,7 +198,7 @@ describe('addBook and listBooks', () => {
   });
 
   it('stores and retrieves chapterNames (JSON round-trip)', () => {
-    bookStore.addBook('ch1', 'named.epub', '/books/named.epub', 100, new Date(), {
+    bookStore.addBook('ch1', stage('ch1'), {
       ...FAKE_META,
       chapterCount: 2,
       chapterSpineMap: [1, 2],
@@ -197,27 +219,19 @@ describe('addBook and listBooks', () => {
   });
 
   it('exposes book.filename as the computed download name', () => {
-    bookStore.addBook(
-      'fname-1',
-      'whatever-on-disk.epub',
-      path.join(booksDir, 'whatever-on-disk.epub'),
-      100,
-      new Date(),
-      { ...FAKE_META, author: 'Frank Herbert', series: '', seriesIndex: 0, title: 'Dune' }
-    );
+    bookStore.addBook('fname-1', stage('fname-1'), {
+      ...FAKE_META,
+      author: 'Frank Herbert',
+      series: '',
+      seriesIndex: 0,
+      title: 'Dune',
+    });
     const book = bookStore.getBookById('fname-1');
     expect(book!.filename).toBe('Frank_Herbert-Dune.epub');
   });
 
   it('exposes book.path as <booksDir>/<id>.epub regardless of stored path', () => {
-    bookStore.addBook(
-      'path-1',
-      'on-disk.epub',
-      path.join(booksDir, 'on-disk.epub'),
-      100,
-      new Date(),
-      FAKE_META
-    );
+    bookStore.addBook('path-1', stage('path-1'), FAKE_META);
     const book = bookStore.getBookById('path-1');
     expect(book!.path).toBe(path.join(booksDir, 'path-1.epub'));
   });
@@ -225,7 +239,7 @@ describe('addBook and listBooks', () => {
 
 describe('getBookById', () => {
   it('returns the book by id', () => {
-    bookStore.addBook('myid', 'mybook.epub', '/books/mybook.epub', 500, new Date(), FAKE_META);
+    bookStore.addBook('myid', stage('myid'), FAKE_META);
     const book = bookStore.getBookById('myid');
     expect(book).not.toBeNull();
     expect(book!.filename).toBe('Author_Name-Test_Series-1-Test_Book.epub');
@@ -238,14 +252,7 @@ describe('getBookById', () => {
 
 describe('deleteBook', () => {
   it('removes book from db and returns it', () => {
-    bookStore.addBook(
-      'del1',
-      'delete-me.epub',
-      '/books/delete-me.epub',
-      100,
-      new Date(),
-      FAKE_META
-    );
+    bookStore.addBook('del1', stage('del1'), FAKE_META);
     const deleted = bookStore.deleteBook('del1');
     expect(deleted).not.toBeNull();
     expect(deleted!.id).toBe('del1');
@@ -259,14 +266,7 @@ describe('deleteBook', () => {
 
 describe('getCover', () => {
   it('returns cover data and mime', () => {
-    bookStore.addBook(
-      'cov1',
-      'cover-book.epub',
-      '/books/cover-book.epub',
-      100,
-      new Date(),
-      FAKE_META
-    );
+    bookStore.addBook('cov1', stage('cov1'), FAKE_META);
     const cover = bookStore.getCover('cov1');
     expect(cover).not.toBeNull();
     expect(cover!.data).toEqual(Buffer.from('fake-cover'));
@@ -274,7 +274,7 @@ describe('getCover', () => {
   });
 
   it('returns null when no cover', () => {
-    bookStore.addBook('nocov', 'no-cover.epub', '/books/no-cover.epub', 100, new Date(), {
+    bookStore.addBook('nocov', stage('nocov'), {
       ...FAKE_META,
       coverData: null,
       coverMime: null,
@@ -340,9 +340,9 @@ describe('BookStore.scan()', () => {
   });
 
   it('removes a stale DB entry whose file no longer exists on disk', () => {
-    const fakePath = path.join(booksDir, 'ghost.epub');
-    // Add directly to DB without creating the file
-    bookStore.addBook('ghostid001', 'ghost.epub', fakePath, 100, new Date(), {
+    // Add the book with a real file, then delete the file to simulate a stale DB entry
+    const ghostStagedPath = stage('ghostid001');
+    bookStore.addBook('ghostid001', ghostStagedPath, {
       title: 'Ghost Book',
       author: '',
       description: '',
@@ -358,9 +358,11 @@ describe('BookStore.scan()', () => {
       chapterSpineMap: [],
       chapterNames: [],
     });
+    // Delete the canonical file to make the DB entry stale
+    fs.unlinkSync(path.join(booksDir, 'ghostid001.epub'));
     expect(bookStore.listBooks()).toHaveLength(1);
     const result = bookStore.scan(makeMockImporter());
-    expect(result.removed).toEqual(['ghost.epub']);
+    expect(result.removed).toEqual(['ghostid001.epub']);
     expect(result.imported).toEqual([]);
     expect(bookStore.listBooks()).toHaveLength(0);
   });
@@ -415,25 +417,25 @@ describe('publisher, identifiers, subjects', () => {
   });
 
   it('stores and retrieves publisher', () => {
-    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('id1', stage('id1'), FAKE_META);
     const book = bookStore.getBookById('id1');
     expect(book?.publisher).toBe('Test Publisher');
   });
 
   it('stores and retrieves identifiers (JSON round-trip)', () => {
-    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('id1', stage('id1'), FAKE_META);
     const book = bookStore.getBookById('id1');
     expect(book?.identifiers).toEqual([{ scheme: 'ISBN', value: '978-0000000000' }]);
   });
 
   it('stores and retrieves subjects (JSON round-trip)', () => {
-    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('id1', stage('id1'), FAKE_META);
     const book = bookStore.getBookById('id1');
     expect(book?.subjects).toEqual(['Fiction']);
   });
 
   it('stores empty identifiers as empty array', () => {
-    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       identifiers: [],
     });
@@ -442,7 +444,7 @@ describe('publisher, identifiers, subjects', () => {
   });
 
   it('stores empty subjects as empty array', () => {
-    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       subjects: [],
     });
@@ -460,7 +462,7 @@ describe('chapter data', () => {
   });
 
   it('stores and retrieves chapterCount', () => {
-    bookStore.addBook('id1', 'book.epub', '/books/book.epub', 100, new Date(), {
+    bookStore.addBook('id1', stage('id1'), {
       ...FAKE_META,
       chapterCount: 12,
       chapterSpineMap: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -471,7 +473,7 @@ describe('chapter data', () => {
 
   it('stores and retrieves chapterSpineMap (JSON round-trip)', () => {
     const spineMap = [2, 4, 6, 8];
-    bookStore.addBook('id2', 'map.epub', '/books/map.epub', 100, new Date(), {
+    bookStore.addBook('id2', stage('id2'), {
       ...FAKE_META,
       chapterCount: 4,
       chapterSpineMap: spineMap,
@@ -481,7 +483,7 @@ describe('chapter data', () => {
   });
 
   it('defaults to chapterCount 0 and empty chapterSpineMap', () => {
-    bookStore.addBook('id3', 'default.epub', '/books/default.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('id3', stage('id3'), FAKE_META);
     const book = bookStore.getBookById('id3');
     expect(book?.chapterCount).toBe(0);
     expect(book?.chapterSpineMap).toEqual([]);
@@ -669,18 +671,18 @@ describe('reimportBook', () => {
 
   it('re-reads metadata from disk and updates the DB row', () => {
     const epubBuf = makeMinimalEpub('Original');
-    const epubPath = path.join(booksDir, 'test.epub');
-    fs.writeFileSync(epubPath, epubBuf);
-    const id = partialMD5(epubPath);
-    const stat = fs.statSync(epubPath);
-    bookStore.addBook(id, 'test.epub', epubPath, stat.size, stat.mtime, {
+    const stagedPath = path.join(booksDir, 'staged-original.epub');
+    fs.writeFileSync(stagedPath, epubBuf);
+    const id = partialMD5(stagedPath);
+    bookStore.addBook(id, stagedPath, {
       ...FAKE_META,
       title: 'Original',
     });
 
-    // Manually overwrite the EPUB on disk with new title
+    // The file is now at <booksDir>/<id>.epub — overwrite it with new title
+    const canonicalPath = path.join(booksDir, id + '.epub');
     const updatedBuf = makeMinimalEpub('Updated');
-    fs.writeFileSync(epubPath, updatedBuf);
+    fs.writeFileSync(canonicalPath, updatedBuf);
 
     const updated = bookStore.reimportBook(id);
     // ID may have changed due to ZIP rewrite — updated reflects new state
@@ -690,11 +692,11 @@ describe('reimportBook', () => {
 
   it('cascades id change to progress table when partial MD5 shifts', () => {
     const epubBuf = makeMinimalEpub('Before');
-    const epubPath = path.join(booksDir, 'cascade.epub');
-    fs.writeFileSync(epubPath, epubBuf);
-    const oldId = partialMD5(epubPath);
-    const stat = fs.statSync(epubPath);
-    bookStore.addBook(oldId, 'cascade.epub', epubPath, stat.size, stat.mtime, FAKE_META);
+    const stagedPath = path.join(booksDir, 'staged-cascade.epub');
+    fs.writeFileSync(stagedPath, epubBuf);
+    const oldId = partialMD5(stagedPath);
+    bookStore.addBook(oldId, stagedPath, FAKE_META);
+    const epubPath = path.join(booksDir, oldId + '.epub');
 
     // Insert a progress record for the old ID directly
     const db2 = (bookStore as unknown as { db: import('better-sqlite3').Database }).db;
@@ -745,7 +747,7 @@ describe('reimportBook', () => {
 
     const oldId = 'orphan-old';
     const newId = 'orphan-new';
-    bookStore.addBook(oldId, 'orphan.epub', epubPath, 100, new Date(), FAKE_META);
+    bookStore.addBook(oldId, epubPath, FAKE_META);
 
     const db2 = (bookStore as unknown as { db: import('better-sqlite3').Database }).db;
     db2.exec(`CREATE TABLE IF NOT EXISTS progress (
@@ -792,7 +794,7 @@ describe('reimportBook', () => {
 
     const oldId = 'merge-old';
     const newId = 'merge-new';
-    bookStore.addBook(oldId, 'merge.epub', epubPath, 100, new Date(), FAKE_META);
+    bookStore.addBook(oldId, epubPath, FAKE_META);
 
     const db2 = (bookStore as unknown as { db: import('better-sqlite3').Database }).db;
     db2.exec(`CREATE TABLE IF NOT EXISTS progress (
@@ -842,7 +844,7 @@ describe('reimportBook', () => {
 
 describe('book_thumbnails', () => {
   it('saveThumbnail stores and getThumbnail retrieves', () => {
-    bookStore.addBook('bk1', 'a.epub', '/books/a.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk1', stage('bk1'), FAKE_META);
     const data = Buffer.from('thumb-data');
     bookStore.saveThumbnail('bk1', 150, data, 'image/jpeg');
     const result = bookStore.getThumbnail('bk1', 150);
@@ -852,19 +854,19 @@ describe('book_thumbnails', () => {
   });
 
   it('getThumbnail returns null when not present', () => {
-    bookStore.addBook('bk2', 'b.epub', '/books/b.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk2', stage('bk2'), FAKE_META);
     expect(bookStore.getThumbnail('bk2', 150)).toBeNull();
   });
 
   it('saveThumbnail upserts on (book_id, width) conflict', () => {
-    bookStore.addBook('bk3', 'c.epub', '/books/c.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk3', stage('bk3'), FAKE_META);
     bookStore.saveThumbnail('bk3', 150, Buffer.from('v1'), 'image/jpeg');
     bookStore.saveThumbnail('bk3', 150, Buffer.from('v2'), 'image/jpeg');
     expect(bookStore.getThumbnail('bk3', 150)!.data.toString()).toBe('v2');
   });
 
   it('pruneThumbnails removes rows whose width is not in the config list', () => {
-    bookStore.addBook('bk4', 'd.epub', '/books/d.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk4', stage('bk4'), FAKE_META);
     bookStore.saveThumbnail('bk4', 60, Buffer.from('x'), 'image/jpeg');
     bookStore.saveThumbnail('bk4', 150, Buffer.from('y'), 'image/jpeg');
     bookStore.saveThumbnail('bk4', 300, Buffer.from('z'), 'image/jpeg');
@@ -876,7 +878,7 @@ describe('book_thumbnails', () => {
   });
 
   it('pruneThumbnails with empty array removes all thumbnails', () => {
-    bookStore.addBook('bk5', 'e.epub', '/books/e.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk5', stage('bk5'), FAKE_META);
     bookStore.saveThumbnail('bk5', 60, Buffer.from('x'), 'image/jpeg');
     const removed = bookStore.pruneThumbnails([]);
     expect(removed).toBe(1);
@@ -888,8 +890,8 @@ describe('book_thumbnails', () => {
       coverData: Buffer.from('cover'),
       coverMime: 'image/jpeg',
     };
-    bookStore.addBook('bk6', 'f.epub', '/books/f.epub', 100, new Date(), metaWithCover);
-    bookStore.addBook('bk7', 'g.epub', '/books/g.epub', 100, new Date(), metaWithCover);
+    bookStore.addBook('bk6', stage('bk6'), metaWithCover);
+    bookStore.addBook('bk7', stage('bk7'), metaWithCover);
     bookStore.saveThumbnail('bk6', 60, Buffer.from('x'), 'image/jpeg'); // already has 60px
 
     const missing = bookStore.getMissingThumbnailPairs([60, 170]);
@@ -901,7 +903,7 @@ describe('book_thumbnails', () => {
   });
 
   it('getMissingThumbnailPairs ignores books without covers', () => {
-    bookStore.addBook('bk8', 'h.epub', '/books/h.epub', 100, new Date(), {
+    bookStore.addBook('bk8', stage('bk8'), {
       ...FAKE_META,
       coverData: null,
       coverMime: null,
@@ -911,7 +913,7 @@ describe('book_thumbnails', () => {
   });
 
   it('deleting a book cascades to book_thumbnails', () => {
-    bookStore.addBook('bk9', 'i.epub', path.join(booksDir, 'i.epub'), 100, new Date(), FAKE_META);
+    bookStore.addBook('bk9', stage('bk9'), FAKE_META);
     bookStore.saveThumbnail('bk9', 60, Buffer.from('x'), 'image/jpeg');
     bookStore.deleteBook('bk9');
     expect(bookStore.getThumbnail('bk9', 60)).toBeNull();
@@ -942,7 +944,7 @@ describe('book_thumbnails', () => {
     // Use a mock importer that returns a different ID on reimport
     const originalId = 'original-id';
     const newId = 'new-id';
-    bookStore.addBook(originalId, 'reimport.epub', epubPath, 100, new Date(), FAKE_META);
+    bookStore.addBook(originalId, epubPath, FAKE_META);
     bookStore.saveThumbnail(originalId, 60, Buffer.from('thumb'), 'image/jpeg');
 
     const mockImporter = {
@@ -979,8 +981,8 @@ describe('book_thumbnails', () => {
 
     const bookAId = 'book-a-id';
     const bookBId = 'book-b-id';
-    bookStore.addBook(bookAId, 'collision.epub', epubPath, 100, new Date(), FAKE_META);
-    bookStore.addBook(bookBId, 'other.epub', '/books/other.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook(bookAId, epubPath, FAKE_META);
+    bookStore.addBook(bookBId, stage('book-b-id'), FAKE_META);
 
     // Mock importer returns bookBId as the new hash — collision with existing book
     const mockImporter = {

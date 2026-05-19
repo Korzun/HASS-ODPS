@@ -179,61 +179,53 @@ export class BookStore {
     }
   }
 
-  addBook(
-    id: string,
-    filename: string,
-    filePath: string,
-    size: number,
-    mtime: Date,
-    meta: EpubMeta
-  ): void {
-    const stmt = this.db.prepare(`
-      INSERT INTO books (id, filename, path, title, file_as, author, description, publisher, series, series_index, identifiers, subjects, cover_data, cover_mime, size, mtime, added_at, chapter_count, chapter_spine_map, chapter_names)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(filename) DO UPDATE SET
-        id = excluded.id,
-        path = excluded.path,
-        title = excluded.title,
-        file_as = excluded.file_as,
-        author = excluded.author,
-        description = excluded.description,
-        publisher = excluded.publisher,
-        series = excluded.series,
-        series_index = excluded.series_index,
-        identifiers = excluded.identifiers,
-        subjects = excluded.subjects,
-        cover_data = excluded.cover_data,
-        cover_mime = excluded.cover_mime,
-        size = excluded.size,
-        mtime = excluded.mtime,
-        chapter_count = excluded.chapter_count,
-        chapter_spine_map = excluded.chapter_spine_map,
-        chapter_names = excluded.chapter_names
-    `);
-    const title = meta.title.trim() || path.basename(filename, path.extname(filename));
+  addBook(id: string, srcPath: string, meta: EpubMeta): void {
+    const existing = this.db.prepare('SELECT 1 FROM books WHERE id = ?').get(id);
+    if (existing) {
+      throw new BookAlreadyExistsError(id);
+    }
+
+    const targetPath = path.join(this.booksDir, id + '.epub');
+    if (path.resolve(srcPath) !== path.resolve(targetPath)) {
+      fs.renameSync(srcPath, targetPath);
+    }
+
+    const stat = fs.statSync(targetPath);
+    const filename = id + '.epub';
+    const title = meta.title.trim();
     const fileAs = (meta.fileAs || '').trim();
-    stmt.run(
-      id,
-      filename,
-      filePath,
-      title,
-      fileAs,
-      meta.author,
-      meta.description,
-      meta.publisher,
-      meta.series,
-      meta.seriesIndex,
-      JSON.stringify(meta.identifiers),
-      JSON.stringify(meta.subjects),
-      meta.coverData,
-      meta.coverMime,
-      size,
-      mtime.getTime(),
-      Date.now(),
-      meta.chapterCount,
-      JSON.stringify(meta.chapterSpineMap),
-      JSON.stringify(meta.chapterNames)
-    );
+
+    this.db
+      .prepare(
+        `
+      INSERT INTO books (id, filename, path, title, file_as, author, description, publisher,
+                         series, series_index, identifiers, subjects, cover_data, cover_mime,
+                         size, mtime, added_at, chapter_count, chapter_spine_map, chapter_names)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+      )
+      .run(
+        id,
+        filename,
+        targetPath,
+        title,
+        fileAs,
+        meta.author,
+        meta.description,
+        meta.publisher,
+        meta.series,
+        meta.seriesIndex,
+        JSON.stringify(meta.identifiers),
+        JSON.stringify(meta.subjects),
+        meta.coverData,
+        meta.coverMime,
+        stat.size,
+        stat.mtimeMs,
+        Date.now(),
+        meta.chapterCount,
+        JSON.stringify(meta.chapterSpineMap),
+        JSON.stringify(meta.chapterNames)
+      );
   }
 
   listBooks(): Book[] {
@@ -458,10 +450,10 @@ export class BookStore {
       if (dbFilenames.has(filename)) continue;
       const filePath = path.join(this.booksDir, filename);
       try {
-        const stat = fs.statSync(filePath);
         const meta = importer.parseEpub(filePath);
         const id = importer.partialMD5(filePath);
-        this.addBook(id, filename, filePath, stat.size, stat.mtime, meta);
+        const titleFallback = meta.title.trim() || path.basename(filename, path.extname(filename));
+        this.addBook(id, filePath, { ...meta, title: titleFallback });
         imported.push(filename);
       } catch (err: unknown) {
         log.warn(
