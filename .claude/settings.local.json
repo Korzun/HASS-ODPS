@@ -33,7 +33,9 @@
       "Bash(mv panel/series-list component/series-list)",
       "Bash(mv panel/standalone-book-list component/standalone-book-list)",
       "Bash(mv panel/upload-zone component/upload-zone)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(node -e \"require\\('better-sqlite3'\\)\")",
+      "Bash(npm rebuild *)"
     ]
   }
 }
