@@ -25,6 +25,12 @@ const FAKE_META: EpubMeta = {
   chapterNames: [],
 };
 
+function stage(id: string, content: string | Buffer = 'x'): string {
+  const p = path.join(booksDir, `staged-${id}.epub`);
+  fs.writeFileSync(p, content);
+  return p;
+}
+
 const mockResize = jest.fn(async (_buf: Buffer, _width: number) => Buffer.from('resized'));
 
 let db: InstanceType<typeof Database>;
@@ -45,7 +51,7 @@ afterEach(() => {
 
 describe('enqueue + drainForTest', () => {
   it('generates thumbnails for each configured width', async () => {
-    bookStore.addBook('bk1', 'a.epub', '/a.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk1', stage('bk1'), FAKE_META);
     const queue = new ThumbnailQueue(bookStore, [60, 170], mockResize);
     queue.enqueue('bk1');
     await queue.drainForTest();
@@ -58,7 +64,7 @@ describe('enqueue + drainForTest', () => {
   });
 
   it('skips books with no cover', async () => {
-    bookStore.addBook('bk2', 'b.epub', '/b.epub', 100, new Date(), {
+    bookStore.addBook('bk2', stage('bk2'), {
       ...FAKE_META,
       coverData: null,
       coverMime: null,
@@ -72,7 +78,7 @@ describe('enqueue + drainForTest', () => {
 
   it('logs and continues when resize throws', async () => {
     mockResize.mockRejectedValueOnce(new Error('sharp failed'));
-    bookStore.addBook('bk3', 'c.epub', '/c.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk3', stage('bk3'), FAKE_META);
     const queue = new ThumbnailQueue(bookStore, [60, 170], mockResize);
     queue.enqueue('bk3');
     await expect(queue.drainForTest()).resolves.not.toThrow();
@@ -84,8 +90,8 @@ describe('enqueue + drainForTest', () => {
 
 describe('reconcile', () => {
   it('queues missing (bookId, width) pairs', async () => {
-    bookStore.addBook('bk4', 'd.epub', '/d.epub', 100, new Date(), FAKE_META);
-    bookStore.addBook('bk5', 'e.epub', '/e.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk4', stage('bk4'), FAKE_META);
+    bookStore.addBook('bk5', stage('bk5'), FAKE_META);
     bookStore.saveThumbnail('bk4', 60, Buffer.from('x'), 'image/jpeg'); // already exists
 
     const queue = new ThumbnailQueue(bookStore, [60, 170], mockResize);
@@ -103,7 +109,7 @@ describe('reconcile', () => {
 
 describe('start (prune + reconcile)', () => {
   it('prunes widths not in config before reconciling', async () => {
-    bookStore.addBook('bk6', 'f.epub', '/f.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk6', stage('bk6'), FAKE_META);
     bookStore.saveThumbnail('bk6', 300, Buffer.from('old'), 'image/jpeg'); // obsolete width
 
     const queue = new ThumbnailQueue(bookStore, [60], mockResize);
@@ -116,7 +122,7 @@ describe('start (prune + reconcile)', () => {
   });
 
   it('start() called twice does not spawn a second loop', () => {
-    bookStore.addBook('bk7', 'g.epub', '/g.epub', 100, new Date(), FAKE_META);
+    bookStore.addBook('bk7', stage('bk7'), FAKE_META);
     const queue = new ThumbnailQueue(bookStore, [60], mockResize);
     queue.start();
     queue.start(); // second call should be a no-op
