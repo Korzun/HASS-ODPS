@@ -166,6 +166,25 @@ describe('GET /opds/books/:id/download', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/epub/);
   });
+
+  it('uses the computed download name in Content-Disposition', async () => {
+    bookStore.addBook('lotr1', stage('lotr1', 'epub-content'), {
+      ...FAKE_META,
+      title: 'The Fellowship of the Ring',
+      author: 'J.R.R. Tolkien',
+      series: 'The Lord of the Rings',
+      seriesIndex: 1,
+    });
+
+    const res = await request(app)
+      .get('/opds/books/lotr1/download')
+      .set(basicAuth('alice', 'secret'));
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-disposition']).toMatch(
+      /J\.R\.R\._Tolkien-The_Lord_of_the_Rings-1-The_Fellowship_of_the_Ring\.epub/
+    );
+  });
 });
 
 describe('GET /opds/books/:id/cover', () => {
