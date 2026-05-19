@@ -54,7 +54,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   coverPlaceholder: {
     width: 80,
-    height: 114,
+    height: 118,
     background: theme.colors.border,
     borderRadius: '8px',
     flexShrink: 0,
@@ -64,7 +64,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     borderRadius: '8px',
     display: 'block',
     objectFit: 'cover',
-    border: '1px solid #ffffff66',
+    // border: '1px solid #ffffff66',
     // boxShadow: '0 2px 8px rgba(0,0,0,.15)',
   },
   metadata: {

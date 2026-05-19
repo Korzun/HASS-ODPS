@@ -1,7 +1,7 @@
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Card, ChapterProgress, Page, ProgressIndicator, Tag } from '~/component';
+import { Card, Page, ProgressIndicator, Tag } from '~/component';
 import { MetadataList, type Metadata } from '~/component/metadata-list';
 import { Button, DeleteBookButton, SetProgressModal } from '~/control';
 import { useIsAdmin } from '~/provider/auth';
@@ -101,7 +101,7 @@ export const BookPage = () => {
                 src={`/api/books/${encodeURIComponent(book.id)}/cover?width=170`}
                 alt={book.title}
                 width={80}
-                height={114}
+                height={118}
               />
             ) : (
               <div className={styles.coverPlaceholder} />
