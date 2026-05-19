@@ -66,6 +66,12 @@ const FAKE_META: EpubMeta = {
   chapterNames: [],
 };
 
+function stage(id: string, content: string | Buffer = 'x'): string {
+  const p = path.join(booksDir, `staged-${id}.epub`);
+  fs.writeFileSync(p, content);
+  return p;
+}
+
 // Helper: build a minimal EPUB zip as a Buffer
 function makeEpub(
   opts: {
@@ -236,7 +242,7 @@ describe('GET /api/books', () => {
   });
 
   it('returns JSON array of books', async () => {
-    bookStore.addBook('book1', 'book.epub', path.join(booksDir, 'book.epub'), 100, new Date(), {
+    bookStore.addBook('book1', stage('book1'), {
       ...FAKE_META,
       title: 'book',
     });
@@ -244,7 +250,7 @@ describe('GET /api/books', () => {
     const res = await agent.get('/api/books');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body[0].filename).toBe('book.epub');
+    expect(res.body[0].filename).toBe('Test_Author-book.epub');
   });
 
   it('returns enriched book data with author, series, hasCover', async () => {
@@ -257,14 +263,7 @@ describe('GET /api/books', () => {
       coverData: null,
       coverMime: null,
     };
-    bookStore.addBook(
-      'enriched1',
-      'enriched.epub',
-      path.join(booksDir, 'enriched.epub'),
-      200,
-      new Date(),
-      meta
-    );
+    bookStore.addBook('enriched1', stage('enriched1'), meta);
     const agent = await adminAgent();
     const res = await agent.get('/api/books');
     expect(res.status).toBe(200);
@@ -285,14 +284,7 @@ describe('GET /api/books', () => {
       author: 'Isaac Asimov',
     };
 
-    bookStore.addBook(
-      'foundation1',
-      'foundation.epub',
-      path.join(booksDir, 'foundation.epub'),
-      200,
-      new Date(),
-      meta
-    );
+    bookStore.addBook('foundation1', stage('foundation1'), meta);
 
     const agent = await adminAgent();
     const res = await agent.get('/api/books');
@@ -307,18 +299,11 @@ describe('GET /api/books', () => {
   });
 
   it('includes chapterCount in the book list response', async () => {
-    bookStore.addBook(
-      'id-ch',
-      'chaptered.epub',
-      path.join(booksDir, 'chaptered.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        chapterCount: 7,
-        chapterSpineMap: [1, 2, 3, 4, 5, 6, 7],
-      }
-    );
+    bookStore.addBook('id-ch', stage('id-ch'), {
+      ...FAKE_META,
+      chapterCount: 7,
+      chapterSpineMap: [1, 2, 3, 4, 5, 6, 7],
+    });
     const agent = await adminAgent();
     const res = await agent.get('/api/books');
     expect(res.status).toBe(200);
@@ -374,10 +359,10 @@ describe('POST /api/books/upload', () => {
     const res = await agent.post('/api/books/upload').attach('files', epubBuf, 'parsed.epub');
     expect(res.status).toBe(200);
     expect(res.body.uploaded).toContain('parsed.epub');
-    expect(fs.existsSync(path.join(booksDir, 'parsed.epub'))).toBe(true);
 
-    // Verify metadata was stored
+    // Verify metadata was stored and file is on disk at canonical path
     const books = bookStore.listBooks();
+    expect(fs.existsSync(books[0].path)).toBe(true);
     expect(books).toHaveLength(1);
     expect(books[0].title).toBe('Parsed Title');
     expect(books[0].author).toBe('Parsed Author');
@@ -420,7 +405,7 @@ describe('GET /api/books/:id', () => {
       identifiers: [{ scheme: 'ISBN', value: '978-1234567890' }],
       subjects: ['Fiction', 'Mystery'],
     };
-    bookStore.addBook('detailid1', 'detail.epub', '/books/detail.epub', 2000, new Date(), meta);
+    bookStore.addBook('detailid1', stage('detailid1'), meta);
 
     const res = await agent.get('/api/books/detailid1');
     expect(res.status).toBe(200);
@@ -446,7 +431,7 @@ describe('GET /api/books/:id', () => {
   });
 
   it('includes chapterCount, chapterSpineMap, and chapterNames', async () => {
-    bookStore.addBook('bk1', 'book1.epub', path.join(booksDir, 'book1.epub'), 100, new Date(), {
+    bookStore.addBook('bk1', stage('bk1'), {
       ...FAKE_META,
       chapterCount: 5,
       chapterSpineMap: [1, 2, 3, 4, 5],
@@ -471,14 +456,7 @@ describe('GET /api/books/:id/cover', () => {
       coverData: coverBuf,
       coverMime: 'image/jpeg',
     };
-    bookStore.addBook(
-      'coverId1',
-      'cover-book.epub',
-      path.join(booksDir, 'cover-book.epub'),
-      100,
-      new Date(),
-      meta
-    );
+    bookStore.addBook('coverId1', stage('coverId1'), meta);
 
     const agent = await adminAgent();
     const res = await agent.get('/api/books/coverId1/cover');
@@ -488,14 +466,7 @@ describe('GET /api/books/:id/cover', () => {
   });
 
   it('returns 404 for a book without cover', async () => {
-    bookStore.addBook(
-      'noCoverId',
-      'no-cover.epub',
-      path.join(booksDir, 'no-cover.epub'),
-      100,
-      new Date(),
-      FAKE_META
-    );
+    bookStore.addBook('noCoverId', stage('noCoverId'), FAKE_META);
 
     const agent = await adminAgent();
     const res = await agent.get('/api/books/noCoverId/cover');
@@ -511,7 +482,7 @@ describe('GET /api/books/:id/cover', () => {
   it('returns thumbnail when ?width= matches a stored thumbnail', async () => {
     const coverBuf = Buffer.from('original-cover');
     const thumbBuf = Buffer.from('thumbnail-data');
-    bookStore.addBook('thumbBook', 'tb.epub', path.join(booksDir, 'tb.epub'), 100, new Date(), {
+    bookStore.addBook('thumbBook', stage('thumbBook'), {
       ...FAKE_META,
       coverData: coverBuf,
       coverMime: 'image/jpeg',
@@ -526,7 +497,7 @@ describe('GET /api/books/:id/cover', () => {
 
   it('falls back to full-size when ?width= has no matching thumbnail', async () => {
     const coverBuf = Buffer.from('full-size-cover');
-    bookStore.addBook('fbBook', 'fb.epub', path.join(booksDir, 'fb.epub'), 100, new Date(), {
+    bookStore.addBook('fbBook', stage('fbBook'), {
       ...FAKE_META,
       coverData: coverBuf,
       coverMime: 'image/jpeg',
@@ -541,15 +512,13 @@ describe('GET /api/books/:id/cover', () => {
 
 describe('DELETE /api/books/:id', () => {
   it('deletes a book and returns 204', async () => {
-    const bookPath = path.join(booksDir, 'book.epub');
-    fs.writeFileSync(bookPath, 'x');
-    bookStore.addBook('book1', 'book.epub', bookPath, 1, new Date(), FAKE_META);
+    bookStore.addBook('book1', stage('book1'), FAKE_META);
     const [book] = bookStore.listBooks();
 
     const agent = await adminAgent();
     const res = await agent.delete(`/api/books/${book.id}`);
     expect(res.status).toBe(204);
-    expect(fs.existsSync(bookPath)).toBe(false);
+    expect(fs.existsSync(path.join(booksDir, 'book1.epub'))).toBe(false);
   });
 
   it('returns 404 for unknown book id', async () => {
@@ -590,17 +559,17 @@ describe('POST /api/books/scan', () => {
   });
 
   it('reports removed for a DB entry whose file is gone', async () => {
-    // Add a book to the DB pointing at a file that does not exist
-    const fakePath = path.join(booksDir, 'deleted.epub');
-    bookStore.addBook('stale001', 'deleted.epub', fakePath, 100, new Date(), {
+    // Add a book to the DB then remove the file so the scan reports it removed
+    bookStore.addBook('stale001', stage('stale001'), {
       ...FAKE_META,
       title: 'Stale Book',
     });
+    fs.rmSync(path.join(booksDir, 'stale001.epub'));
 
     const agent = await adminAgent();
     const res = await agent.post('/api/books/scan');
     expect(res.status).toBe(200);
-    expect(res.body.removed).toContain('deleted.epub');
+    expect(res.body.removed).toContain('stale001.epub');
     expect(res.body.imported).toEqual([]);
   });
 
@@ -613,14 +582,7 @@ describe('POST /api/books/scan', () => {
 
 describe('DELETE /api/books/:id (admin-only)', () => {
   beforeEach(() => {
-    bookStore.addBook(
-      'b1',
-      'book.epub',
-      path.join(booksDir, 'book.epub'),
-      100,
-      new Date(),
-      FAKE_META
-    );
+    bookStore.addBook('b1', stage('b1'), FAKE_META);
   });
 
   it('returns 204 for admin', async () => {
@@ -712,18 +674,11 @@ describe('GET /api/my/progress', () => {
 
   it('includes currentChapter when a matching book has chapter data and CFI is valid', async () => {
     // spine: cover(0) ch1(1) ch2(2) ch3(3); nav: ch1→1, ch2→2, ch3→3
-    bookStore.addBook(
-      'doc-with-chapters',
-      'chapters.epub',
-      path.join(booksDir, 'chapters.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        chapterCount: 3,
-        chapterSpineMap: [1, 2, 3],
-      }
-    );
+    bookStore.addBook('doc-with-chapters', stage('doc-with-chapters'), {
+      ...FAKE_META,
+      chapterCount: 3,
+      chapterSpineMap: [1, 2, 3],
+    });
     // EPUB_CFI(/6/6...) → N=6 → spineIndex=(6-2)/2=2 → chapter 2 (ch2 is at spineIndex 2)
     userStore.saveProgress('alice', {
       document: 'doc-with-chapters',
@@ -739,19 +694,12 @@ describe('GET /api/my/progress', () => {
   });
 
   it('includes currentChapterName when the book has chapterNames and CFI resolves to a chapter', async () => {
-    bookStore.addBook(
-      'doc-with-names',
-      'named-chapters.epub',
-      path.join(booksDir, 'named-chapters.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        chapterCount: 3,
-        chapterSpineMap: [1, 2, 3],
-        chapterNames: ['Chapter 1', 'Chapter 2', 'Chapter 3'],
-      }
-    );
+    bookStore.addBook('doc-with-names', stage('doc-with-names'), {
+      ...FAKE_META,
+      chapterCount: 3,
+      chapterSpineMap: [1, 2, 3],
+      chapterNames: ['Chapter 1', 'Chapter 2', 'Chapter 3'],
+    });
     // EPUB_CFI(/6/6...) → spineIndex=2 → chapter 2 → chapterNames[1] = 'Chapter 2'
     userStore.saveProgress('alice', {
       document: 'doc-with-names',
@@ -767,19 +715,12 @@ describe('GET /api/my/progress', () => {
   });
 
   it('omits currentChapterName when the book has no chapterNames', async () => {
-    bookStore.addBook(
-      'doc-no-names',
-      'no-named-chapters.epub',
-      path.join(booksDir, 'no-named-chapters.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        chapterCount: 3,
-        chapterSpineMap: [1, 2, 3],
-        chapterNames: [],
-      }
-    );
+    bookStore.addBook('doc-no-names', stage('doc-no-names'), {
+      ...FAKE_META,
+      chapterCount: 3,
+      chapterSpineMap: [1, 2, 3],
+      chapterNames: [],
+    });
     // Same CFI as above — resolves to chapter 2, but chapterNames is empty
     userStore.saveProgress('alice', {
       document: 'doc-no-names',
@@ -809,18 +750,11 @@ describe('GET /api/my/progress', () => {
   });
 
   it('omits currentChapter when the CFI is not in KoReader EPUB_CFI format', async () => {
-    bookStore.addBook(
-      'doc-bad-cfi',
-      'bad-cfi.epub',
-      path.join(booksDir, 'bad-cfi.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        chapterCount: 3,
-        chapterSpineMap: [1, 2, 3],
-      }
-    );
+    bookStore.addBook('doc-bad-cfi', stage('doc-bad-cfi'), {
+      ...FAKE_META,
+      chapterCount: 3,
+      chapterSpineMap: [1, 2, 3],
+    });
     userStore.saveProgress('alice', {
       document: 'doc-bad-cfi',
       progress: '/p[1]',
@@ -835,18 +769,11 @@ describe('GET /api/my/progress', () => {
   });
 
   it('does not expose chapterSpineMap on progress records', async () => {
-    bookStore.addBook(
-      'doc-no-expose',
-      'no-expose.epub',
-      path.join(booksDir, 'no-expose.epub'),
-      100,
-      new Date(),
-      {
-        ...FAKE_META,
-        chapterCount: 3,
-        chapterSpineMap: [1, 2, 3],
-      }
-    );
+    bookStore.addBook('doc-no-expose', stage('doc-no-expose'), {
+      ...FAKE_META,
+      chapterCount: 3,
+      chapterSpineMap: [1, 2, 3],
+    });
     userStore.saveProgress('alice', {
       document: 'doc-no-expose',
       progress: 'EPUB_CFI(/6/4!/4/1:0)',
@@ -982,7 +909,7 @@ describe('PUT /api/my/progress/:document', () => {
   });
 
   it('synthesises an EPUB CFI when the book has a chapterSpineMap', async () => {
-    bookStore.addBook('cfidoc', 'cfidoc.epub', `${booksDir}/cfidoc.epub`, 100, new Date(), {
+    bookStore.addBook('cfidoc', stage('cfidoc'), {
       ...FAKE_META,
       chapterCount: 10,
       chapterSpineMap: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
