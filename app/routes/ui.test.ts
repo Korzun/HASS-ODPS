@@ -392,6 +392,46 @@ describe('POST /api/books/upload', () => {
     await agent.post('/api/books/upload').attach('files', epubBuf, 'queued.epub');
     expect(mockThumbnailQueue.enqueue).toHaveBeenCalledTimes(1);
   });
+
+  it('places uploaded file at <booksDir>/<id>.epub', async () => {
+    const agent = await adminAgent();
+    const epubBuf = makeEpub({ title: 'Stored Book', author: 'A' });
+    const res = await agent.post('/api/books/upload').attach('files', epubBuf, 'human-name.epub');
+    expect(res.status).toBe(200);
+    const books = bookStore.listBooks();
+    expect(books).toHaveLength(1);
+    const onDisk = fs
+      .readdirSync(booksDir)
+      .filter((f) => f.endsWith('.epub') && !f.startsWith('staged-'));
+    expect(onDisk).toEqual([books[0].id + '.epub']);
+  });
+
+  it('returns 409 when uploading a duplicate (same content twice)', async () => {
+    const agent = await adminAgent();
+    const epubBuf = makeEpub({ title: 'Dup', author: 'A' });
+    await agent.post('/api/books/upload').attach('files', epubBuf, 'first.epub');
+    const res = await agent.post('/api/books/upload').attach('files', epubBuf, 'second.epub');
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/already in the library/i);
+  });
+
+  it('falls back to original-filename stem when title metadata is empty', async () => {
+    const agent = await adminAgent();
+    const epubBuf = makeEpub({ author: 'A' }); // no title
+    await agent.post('/api/books/upload').attach('files', epubBuf, 'my-book.epub');
+    const books = bookStore.listBooks();
+    expect(books).toHaveLength(1);
+    expect(books[0].title).toBe('my-book');
+  });
+
+  it('cleans up staging directory after successful upload', async () => {
+    const agent = await adminAgent();
+    const epubBuf = makeEpub({ title: 'Clean', author: 'A' });
+    await agent.post('/api/books/upload').attach('files', epubBuf, 'clean.epub');
+    const stagingDir = path.join(booksDir, '.staging');
+    const staged = fs.existsSync(stagingDir) ? fs.readdirSync(stagingDir) : [];
+    expect(staged).toEqual([]);
+  });
 });
 
 describe('GET /api/books/:id', () => {

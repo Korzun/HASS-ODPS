@@ -3,7 +3,7 @@ import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { createHash } from 'crypto';
-import { BookStore, BookHashCollisionError } from '../services/book-store';
+import { BookStore, BookHashCollisionError, BookAlreadyExistsError } from '../services/book-store';
 import { AppConfig, EpubMeta } from '../types';
 import { UserStore } from '../services/user-store';
 import { sessionAuth, adminAuth } from '../middleware/auth';
@@ -25,9 +25,20 @@ export function createUiRouter(
 ): Router {
   const router = Router();
 
+  const stagingDir = path.join(bookStore.getBooksDir(), '.staging');
   const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, bookStore.getBooksDir()),
-    filename: (_req, file, cb) => cb(null, path.basename(file.originalname)),
+    destination: (_req, _file, cb) => {
+      try {
+        fs.mkdirSync(stagingDir, { recursive: true });
+        cb(null, stagingDir);
+      } catch (err) {
+        cb(err as Error, stagingDir);
+      }
+    },
+    filename: (_req, file, cb) => {
+      const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      cb(null, `${unique}-${path.basename(file.originalname)}`);
+    },
   });
 
   const upload = multer({
@@ -218,13 +229,39 @@ export function createUiRouter(
           meta = parseEpub(savedPath);
           id = partialMD5(savedPath);
         } catch (err: unknown) {
-          fs.unlinkSync(savedPath);
+          try {
+            fs.unlinkSync(savedPath);
+          } catch {
+            /* file may already be gone */
+          }
           res.status(400).json({
             error: `Failed to parse EPUB: ${err instanceof Error ? err.message : String(err)}`,
           });
           return;
         }
-        bookStore.addBook(id, file.originalname, savedPath, file.size, new Date(), meta);
+        // parseEpub falls back to the file's basename when no dc:title is present.
+        // Since savedPath is a staging path with a unique prefix, we must ignore
+        // that fallback and use the client's original filename stem instead.
+        const stagedTitleFallback = path.basename(savedPath, path.extname(savedPath));
+        const realTitle = meta.title === stagedTitleFallback ? '' : meta.title.trim();
+        const titleFallback =
+          realTitle || path.basename(file.originalname, path.extname(file.originalname));
+        try {
+          bookStore.addBook(id, savedPath, { ...meta, title: titleFallback });
+        } catch (err: unknown) {
+          try {
+            fs.unlinkSync(savedPath);
+          } catch {
+            /* file may already be gone */
+          }
+          if (err instanceof BookAlreadyExistsError) {
+            res.status(409).json({
+              error: 'A book with the same fingerprint is already in the library.',
+            });
+            return;
+          }
+          throw err;
+        }
         thumbnailQueue.enqueue(id);
         uploaded.push(file.originalname);
       }
