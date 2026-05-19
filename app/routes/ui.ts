@@ -2,6 +2,7 @@ import express, { Router, Request, Response } from 'express';
 import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
+import { createHash } from 'crypto';
 import { BookStore } from '../services/book-store';
 import { AppConfig, EpubMeta } from '../types';
 import { UserStore } from '../services/user-store';
@@ -246,25 +247,46 @@ export function createUiRouter(
     const { width } = req.query;
     const parsedWidth = typeof width === 'string' ? parseInt(width, 10) : NaN;
 
+    let data: Buffer;
+    let mime: string;
+
     if (!isNaN(parsedWidth) && parsedWidth > 0) {
       const thumbnail = bookStore.getThumbnail(req.params.id, parsedWidth);
       if (thumbnail) {
-        res.set('Content-Type', thumbnail.mime);
-        res.send(thumbnail.data);
+        data = thumbnail.data;
+        mime = thumbnail.mime;
+      } else {
+        log.warn(
+          `Cover thumbnail width=${parsedWidth} not found for book ${req.params.id}, serving full-size`
+        );
+        const cover = bookStore.getCover(req.params.id);
+        if (!cover) {
+          res.status(404).send('Not found');
+          return;
+        }
+        data = cover.data;
+        mime = cover.mime;
+      }
+    } else {
+      const cover = bookStore.getCover(req.params.id);
+      if (!cover) {
+        res.status(404).send('Not found');
         return;
       }
-      log.warn(
-        `Cover thumbnail width=${parsedWidth} not found for book ${req.params.id}, serving full-size`
-      );
+      data = cover.data;
+      mime = cover.mime;
     }
 
-    const cover = bookStore.getCover(req.params.id);
-    if (!cover) {
-      res.status(404).send('Not found');
+    const etag = `"${createHash('md5').update(data).digest('hex')}"`;
+    if (req.headers['if-none-match'] === etag) {
+      res.status(304).end();
       return;
     }
-    res.set('Content-Type', cover.mime);
-    res.send(cover.data);
+
+    res.set('Content-Type', mime);
+    res.set('ETag', etag);
+    res.set('Cache-Control', 'private, max-age=0, must-revalidate');
+    res.send(data);
   });
 
   router.delete('/api/books/:id', sessionAuth, adminAuth, (req: Request, res: Response) => {
