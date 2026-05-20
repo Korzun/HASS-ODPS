@@ -31,16 +31,13 @@ export const SeriesPage = () => {
           <div>
             <h1 className={style.title}>{name}</h1>
             <div className={style.author}>{author}</div>
-            {/*<div className={style.meta}>
-              {author} · {seriesBookList.length} book{seriesBookList.length !== 1 ? 's' : ''}
-            </div>*/}
           </div>
         </div>
       </Card>
-      <Card title="Reading Order">
+      <Card title="Books">
         <div className={style.bookList}>
           {seriesBookList.map((book) => (
-            <BookRow key={book.id} bookId={book.id} showAuthor={false} />
+            <BookRow key={book.id} asCard={false} bookId={book.id} showAuthor={false} />
           ))}
         </div>
       </Card>

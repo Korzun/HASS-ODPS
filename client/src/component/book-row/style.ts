@@ -43,15 +43,15 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
-  format: {
-    fontSize: '.75rem',
-    color: theme.colors.text.faint,
-  },
-  progress: {
-    fontSize: '.75rem',
-    color: theme.colors.success,
-    fontWeight: 500,
-    marginRight: '.25rem',
-    flexShrink: 0,
+  navigate: {
+    cursor: 'pointer',
+    '&:hover': {
+      '& $title': {
+        color: '#3f96fe',
+      },
+      '& $meta': {
+        color: '#87BAFF',
+      },
+    },
   },
 }));

@@ -1,4 +1,5 @@
-import { useCallback, Fragment } from 'react';
+import cx from 'classnames';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useBook } from '~/provider/book';
@@ -9,33 +10,16 @@ import { CardRow } from '../card-row';
 import { useStyle } from './style';
 
 interface BookRowProps {
+  asCard?: boolean;
   bookId: string;
   showAuthor?: boolean;
 }
 
-export function BookRow({ bookId, showAuthor = true }: BookRowProps) {
+export function BookRow({ asCard = true, bookId, showAuthor = true }: BookRowProps) {
   const styles = useStyle();
   const navigate = useNavigate();
 
   const [book, loading, error] = useBook(bookId);
-
-  // const [showDeleteProgressModal, setShowDeleteProgressModal] = useState<boolean>(false);
-  // const handleDeleteProgress = useCallback(() => {
-  //   if (!book) {
-  //     return;
-  //   }
-  //   setShowDeleteProgressModal(true);
-  // }, [book]);
-  // const handleDeleteProgressCancel = useCallback(() => {
-  //   setShowDeleteProgressModal(false);
-  // }, []);
-  // const handleDeleteProgressConfirm = useCallback(() => {
-  //   setShowDeleteProgressModal(false);
-  //   if (!book) {
-  //     return;
-  //   }
-  //   // deleteBook(book.id);
-  // }, [book]);
 
   const handleNavigate = useCallback(() => {
     if (!book) {
@@ -45,54 +29,38 @@ export function BookRow({ bookId, showAuthor = true }: BookRowProps) {
   }, [book, navigate]);
 
   if (loading) {
-    return (
-      <CardRow onClick={handleNavigate}>
-        <div className={styles.root}>Loading...</div>
-      </CardRow>
-    );
+    const loadingContent = <div className={styles.root}>Loading...</div>;
+    return asCard ? <CardRow>{loadingContent}</CardRow> : { loadingContent };
   }
 
   if (error) {
-    return (
-      <CardRow onClick={handleNavigate}>
-        <div className={styles.root}>Error loading book</div>
-      </CardRow>
-    );
+    const errorContent = <div className={styles.root}>Error loading book</div>;
+    return asCard ? <CardRow>{errorContent}</CardRow> : errorContent;
   }
 
-  return (
-    <Fragment>
-      <CardRow onClick={handleNavigate}>
-        <div className={styles.root}>
-          <div className={styles.cover}>
-            {book.hasCover ? (
-              <img
-                src={`/api/books/${encodeURIComponent(book.id)}/cover?width=60`}
-                alt={book.title}
-                className={styles.coverImg}
-              />
-            ) : (
-              <div className={styles.coverPlaceholder} />
-            )}
-          </div>
-          <div className={styles.info}>
-            <div className={styles.title}>{book.title}</div>
-            {showAuthor && book.author && <div className={styles.meta}>{book.author}</div>}
-            {book.seriesIndex > 0 && <div className={styles.meta}>Book {book.seriesIndex}</div>}
-          </div>
-        </div>
-      </CardRow>
-      {/*<ConfirmModal
-        isOpen={showDeleteProgressModal}
-        onCancel={handleDeleteProgressCancel}
-        onConfirm={handleDeleteProgressConfirm}
-        danger
-        title={`Delete reading progress?`}
-        confirmText="Delete"
-      >
-        Your progress, notes, and highlights for “{book.title}” will be permanently deleted. This
-        action cannot be undone.
-      </ConfirmModal>*/}
-    </Fragment>
+  const content = (
+    <div
+      className={cx(styles.root, { [styles.navigate]: !asCard })}
+      onClick={!asCard ? handleNavigate : undefined}
+    >
+      <div className={styles.cover}>
+        {book.hasCover ? (
+          <img
+            src={`/api/books/${encodeURIComponent(book.id)}/cover?width=60`}
+            alt={book.title}
+            className={styles.coverImg}
+          />
+        ) : (
+          <div className={styles.coverPlaceholder} />
+        )}
+      </div>
+      <div className={styles.info}>
+        <div className={styles.title}>{book.title}</div>
+        {showAuthor && book.author && <div className={styles.meta}>{book.author}</div>}
+        {book.seriesIndex > 0 && <div className={styles.meta}>Book {book.seriesIndex}</div>}
+      </div>
+    </div>
   );
+
+  return asCard ? <CardRow onClick={handleNavigate}>{content}</CardRow> : content;
 }
