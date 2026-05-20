@@ -1,13 +1,13 @@
-import { Fragment, ReactNode, useCallback, useState } from 'react';
+import cx from 'classnames';
+import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 
 import { Button, ConfirmModal } from '~/control';
-import { AlertOctagonIcon } from '~/icon';
+import { AlertOctagonIcon, ChevronCircleIcon } from '~/icon';
 import { useUserProgressList } from '~/provider/progress';
 import { useDeleteUser, useUser } from '~/provider/user';
 
 import { Card } from '../card';
-import { CollapsibleSection } from '../collapsible-section';
-import { UserBookRow } from '../user-book-row';
+import { UserProgressRow } from '../user-progress-row';
 
 import { useStyle } from './style';
 
@@ -18,6 +18,11 @@ interface UserRowProps {
 export const UserRow = ({ username }: UserRowProps) => {
   const styles = useStyle();
   const [user] = useUser(username);
+
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const handleExpandToggle = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
 
   const [userProgressList, loading, error] = useUserProgressList(username);
   const [deleteUser, deleting] = useDeleteUser();
@@ -34,17 +39,45 @@ export const UserRow = ({ username }: UserRowProps) => {
     deleteUser(username);
   }, [deleteUser, username]);
 
+  const cardElement = useMemo(() => {
+    if (loading) {
+      return 'Loading...';
+    }
+    if (error) {
+      return 'Error loading user progress';
+    }
+    if (userProgressList === undefined || Object.keys(userProgressList).length === 0) {
+      return 'No progress records';
+    }
+    return Object.values(userProgressList ?? {}).map((progress) => (
+      <UserProgressRow key={progress.document} bookId={progress.document} username={username} />
+    )) as ReactNode[];
+  }, [error, userProgressList, loading, username]);
+
   return (
     <Fragment>
       <Card
-        title={username}
-        subTitle={user ? `${user.progressCount} synced` : undefined}
+        title={
+          <div className={styles.title} onClick={handleExpandToggle}>
+            <ChevronCircleIcon
+              className={cx(styles.chevron, isExpanded ? styles.expanded : styles.collapsed)}
+            />
+            {username}
+          </div>
+        }
+        subTitle={
+          user
+            ? `${user.progressCount} book${user.progressCount === 1 ? '' : 's'} synced`
+            : undefined
+        }
         headerAction={
           <Button type="link" danger onClick={handleDeleteUser} loading={deleting}>
-            Delete
+            Delete user
           </Button>
         }
-      ></Card>
+      >
+        {isExpanded && <div className={styles.content}>{cardElement}</div>}
+      </Card>
       <ConfirmModal
         isOpen={showDeleteUserModal}
         onCancel={handleDeleteUserCancel}
@@ -58,46 +91,5 @@ export const UserRow = ({ username }: UserRowProps) => {
         reading progress, and <span className={styles.undone}>can not be undone</span>.
       </ConfirmModal>
     </Fragment>
-
-    // <li className={styles.root}>
-    //   <CollapsibleSection
-    //     title={username}
-    //     subTitle={user ? `${user.progressCount} synced` : undefined}
-    //     actions={[
-    //       <Button type="link" danger onClick={handleDeleteUser} loading={deleting}>
-    //         Delete
-    //       </Button>,
-    //     ]}
-    //   >
-    //     <ul className={styles.progressList}>
-    //       {loading ? (
-    //         <li className={styles.progressEmpty}>Loading…</li>
-    //       ) : error ? (
-    //         <li className={styles.progressEmpty}>Error loading user's progress</li>
-    //       ) : userProgressList && Object.keys(userProgressList).length === 0 ? (
-    //         <li className={styles.progressEmpty}>No progress records.</li>
-    //       ) : (
-    //         (Object.values(userProgressList ?? {}).map((progress) => {
-    //           <UserBookRow
-    //             key={progress.document}
-    //             bookId={progress.document}
-    //             username={username}
-    //           />;
-    //         }) as ReactNode[])
-    //       )}
-    //     </ul>
-    //   </CollapsibleSection>
-    //   <ConfirmModal
-    //     isOpen={showDeleteUserModal}
-    //     onCancel={handleDeleteUserCancel}
-    //     onConfirm={handleDeleteUserConfirm}
-    //     danger
-    //     title={`Delete “${username}” permanently?`}
-    //     confirmText="Delete"
-    //   >
-    //     This action will delete the user and all their reading progress. This action cannot be
-    //     undone.
-    //   </ConfirmModal>
-    // </li>
   );
 };

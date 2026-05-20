@@ -1,24 +1,32 @@
 import { createUseStyles, type Theme } from '~/provider/theme';
 
 export const useStyle = createUseStyles((theme: Theme) => ({
-  root: {
-    listStyle: 'none',
-    background: theme.colors.bg.card,
-    borderRadius: theme.borderRadius.md,
-    boxShadow: theme.shadows.card,
-    marginBottom: '.5rem',
+  title: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '0.75rem',
+    cursor: 'pointer',
   },
-  progressList: {
-    listStyle: 'none',
-    padding: '.5rem .75rem',
-    margin: 0,
-    background: theme.colors.primaryLight,
-    borderTop: `1px solid ${theme.colors.borderLight}`,
+  chevron: {
+    position: 'relative',
+    top: '4.5px',
+    left: '1.5px',
+    display: 'block',
+    height: '20px',
+    width: '20px',
+    margin: '-6px',
+    transition: 'transform 0.3s linear',
   },
-  progressEmpty: {
-    color: theme.colors.text.muted,
-    fontSize: '.875rem',
-    padding: '.4rem 0',
+  collapsed: {
+    transform: 'rotate(0deg)',
+  },
+  expanded: {
+    transform: 'rotate(90deg)',
+  },
+  content: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.1rem',
   },
   username: {
     color: '#FF4D4F',

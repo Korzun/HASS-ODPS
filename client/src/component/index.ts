@@ -13,7 +13,7 @@ export { Tag } from './tag';
 export { Toast } from './toast';
 export { UploadItem } from './upload-item';
 export { UploadZone } from './upload-zone';
-export { UserBookRow } from './user-book-row';
 export { UserList } from './user-list';
+export { UserProgressRow } from './user-progress-row';
 export { UserRegister } from './user-register';
 export { UserRow } from './user-row';
