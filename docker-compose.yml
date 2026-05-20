@@ -8,7 +8,7 @@ services:
     volumes:
       - ./app:/app/app
       - ${BOOKS:-./dev-books}:/media/books
-      - dev-data:/data
+      - ./dev-data:/data
     environment:
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASS: ${ADMIN_PASS:-changeme}
@@ -33,5 +33,3 @@ services:
     depends_on:
       - api
 
-volumes:
-  dev-data:
