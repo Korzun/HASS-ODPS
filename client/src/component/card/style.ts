@@ -13,7 +13,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   header: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
     padding: '0.5rem 0.75rem',
     backgroundColor: '#EEEEEE',
