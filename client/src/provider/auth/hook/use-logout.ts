@@ -12,7 +12,7 @@ export const useLogout = (): UseLogout => {
     setErrorMessage(undefined);
     try {
       await fetch('/logout', { method: 'POST' });
-      window.location.reload();
+      window.location.href = '/login';
     } catch (err) {
       setError(true);
       if (err instanceof Error) {
