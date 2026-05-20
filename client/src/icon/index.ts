@@ -2,6 +2,8 @@ export { AlertOctagonIcon } from './alert-octagon';
 export { BookIcon } from './book';
 export { BooksIcon } from './books';
 export { CheckIcon } from './check';
+export { ChevronCircleIcon } from './chevron-circle';
+export { ChevronIcon } from './chevron';
 export { CircleXIcon } from './circle-x';
 export { ClockIcon } from './clock';
 export { ListCheckIcon } from './list-check';
@@ -12,4 +14,3 @@ export { UsersIcon } from './users';
 export { XIcon } from './x';
 
 export type { IconProps } from './props';
-export { defaultFilledIconProps, defaultStrokeIconProps } from './props';
