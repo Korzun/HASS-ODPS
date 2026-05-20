@@ -4,6 +4,17 @@ import { useUsername } from '../../../provider/auth';
 import { Context } from '../context';
 import type { Progress } from '../type';
 
+const DEVICE_ID_KEY = 'hass-odps-device-id';
+
+function getOrCreateDeviceId(): string {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
 export type SetMyProgress = (args: { currentChapter: number; percentage: number }) => Promise<void>;
 export type UseSetMyProgress =
   | [SetMyProgress, false, false, undefined]
@@ -34,7 +45,7 @@ export const useSetMyProgress = (bookId: string): UseSetMyProgress => {
         const response = await fetch(`/api/my/progress/${encodeURIComponent(bookId)}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ currentChapter, percentage }),
+          body: JSON.stringify({ currentChapter, percentage, device: 'Web', device_id: getOrCreateDeviceId() }),
         });
         if (!response.ok) throw new Error('Failed to save progress');
       } catch (err) {

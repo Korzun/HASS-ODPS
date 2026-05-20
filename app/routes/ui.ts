@@ -150,7 +150,7 @@ export function createUiRouter(
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
-    const { currentChapter, percentage } = req.body as Record<string, unknown>;
+    const { currentChapter, percentage, device, device_id } = req.body as Record<string, unknown>;
     if (
       typeof currentChapter !== 'number' ||
       !Number.isInteger(currentChapter) ||
@@ -173,8 +173,8 @@ export function createUiRouter(
       document: req.params.document,
       progress,
       percentage,
-      device: '',
-      device_id: '',
+      device: typeof device === 'string' && device ? device : 'Web',
+      device_id: typeof device_id === 'string' ? device_id : '',
     });
     res.status(200).json({});
   });

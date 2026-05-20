@@ -948,6 +948,23 @@ describe('PUT /api/my/progress/:document', () => {
     expect(userStore.getProgress('alice', 'doc1')!.percentage).toBe(0.75);
   });
 
+  it('saves device and device_id when provided', async () => {
+    const agent = await userAgent();
+    const res = await agent
+      .put('/api/my/progress/doc1')
+      .send({ currentChapter: 5, percentage: 0.25, device: 'Web', device_id: 'test-uuid' });
+    expect(res.status).toBe(200);
+    const saved = userStore.getProgress('alice', 'doc1');
+    expect(saved!.device).toBe('Web');
+    expect(saved!.device_id).toBe('test-uuid');
+  });
+
+  it('defaults device to "Web" when not provided', async () => {
+    const agent = await userAgent();
+    await agent.put('/api/my/progress/doc1').send({ currentChapter: 5, percentage: 0.25 });
+    expect(userStore.getProgress('alice', 'doc1')!.device).toBe('Web');
+  });
+
   it('synthesises an EPUB CFI when the book has a chapterSpineMap', async () => {
     bookStore.addBook('cfidoc', stage('cfidoc'), {
       ...FAKE_META,

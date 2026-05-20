@@ -50,7 +50,10 @@ function makeWrapper(initialProgress: ProgressList = {}, username?: string) {
 }
 
 describe('useSetMyProgress', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
 
   it('returns initial state', () => {
     const { result } = renderHook(() => useSetMyProgress('book-1'), {
@@ -76,6 +79,7 @@ describe('useSetMyProgress', () => {
   });
 
   it('sends PUT to /api/my/progress/:bookId with JSON body', async () => {
+    localStorage.setItem('hass-odps-device-id', 'test-device-id');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
     const { result } = renderHook(() => useSetMyProgress('book-1'), {
       wrapper: makeWrapper({}, 'alice'),
@@ -84,8 +88,34 @@ describe('useSetMyProgress', () => {
     expect(fetch).toHaveBeenCalledWith('/api/my/progress/book-1', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentChapter: 3, percentage: 0.5 }),
+      body: JSON.stringify({ currentChapter: 3, percentage: 0.5, device: 'Web', device_id: 'test-device-id' }),
     });
+  });
+
+  it('generates and persists a device ID in localStorage', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    const { result } = renderHook(() => useSetMyProgress('book-1'), {
+      wrapper: makeWrapper({}, 'alice'),
+    });
+    await act(() => result.current[0]({ currentChapter: 1, percentage: 0.1 }));
+    const storedId = localStorage.getItem('hass-odps-device-id');
+    expect(storedId).toBeTruthy();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.device_id).toBe(storedId);
+    expect(body.device).toBe('Web');
+  });
+
+  it('reuses the same device ID across calls', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    const { result } = renderHook(() => useSetMyProgress('book-1'), {
+      wrapper: makeWrapper({}, 'alice'),
+    });
+    await act(() => result.current[0]({ currentChapter: 1, percentage: 0.1 }));
+    await act(() => result.current[0]({ currentChapter: 2, percentage: 0.2 }));
+    const calls = vi.mocked(fetch).mock.calls;
+    const id1 = JSON.parse((calls[0][1] as RequestInit).body as string).device_id;
+    const id2 = JSON.parse((calls[1][1] as RequestInit).body as string).device_id;
+    expect(id1).toBe(id2);
   });
 
   it('URL-encodes bookId in the endpoint', async () => {
