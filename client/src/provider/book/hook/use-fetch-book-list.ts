@@ -6,8 +6,15 @@ import type { Book, BookList } from '../type';
 export type FetchBookList = () => Promise<void>;
 
 export const useFetchBookList = (): FetchBookList => {
-  const { bookListLoading, setBookList, setBookListFetched, setBookListLoading, setBookListError } =
-    useContext(Context);
+  const {
+    bookListLoading,
+    bookList,
+    completeBookIds,
+    setBookList,
+    setBookListFetched,
+    setBookListLoading,
+    setBookListError,
+  } = useContext(Context);
 
   return useCallback(async () => {
     if (bookListLoading) return;
@@ -22,11 +29,10 @@ export const useFetchBookList = (): FetchBookList => {
         bookListArray.reduce(
           (acc, book) => ({
             ...acc,
-            [book.id]: {
-              ...book,
-              identifiers: book.identifiers ?? [],
-              subjects: book.subjects ?? [],
-            },
+            [book.id]:
+              completeBookIds.has(book.id) && bookList[book.id] !== undefined
+                ? bookList[book.id]
+                : { ...book, identifiers: book.identifiers ?? [], subjects: book.subjects ?? [] },
           }),
           {} as BookList
         )
@@ -37,5 +43,5 @@ export const useFetchBookList = (): FetchBookList => {
     } finally {
       setBookListLoading(false);
     }
-  }, [bookListLoading, setBookList, setBookListFetched, setBookListLoading, setBookListError]);
+  }, [bookListLoading, bookList, completeBookIds, setBookList, setBookListFetched, setBookListLoading, setBookListError]);
 };
