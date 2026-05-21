@@ -40,8 +40,9 @@ export const UserRow = ({ username }: UserRowProps) => {
   return (
     <Fragment>
       <Card
+        onClickHeader={handleExpandToggle}
         title={
-          <div className={styles.title} onClick={handleExpandToggle}>
+          <div className={styles.title}>
             <ChevronCircleIcon
               className={cx(styles.chevron, isExpanded ? styles.expanded : styles.collapsed)}
             />

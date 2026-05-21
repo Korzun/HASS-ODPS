@@ -5,7 +5,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     display: 'flex',
     alignItems: 'baseline',
     gap: '0.75rem',
-    cursor: 'pointer',
   },
   chevron: {
     position: 'relative',
