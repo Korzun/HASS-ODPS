@@ -1,0 +1,156 @@
+import { createUseStyles, type Theme } from '~/provider/theme';
+
+export const useStyle = createUseStyles((theme: Theme) => ({
+  loading: {
+    color: theme.colors.text.muted,
+    padding: '2rem',
+    textAlign: 'center',
+  },
+  notFound: {
+    color: theme.colors.text.muted,
+    padding: '2rem',
+    textAlign: 'center',
+  },
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    color: theme.colors.primary,
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    padding: '0.25rem 0',
+    marginBottom: '1.25rem',
+    display: 'block',
+    '&:hover': { color: theme.colors.primaryHover },
+  },
+  detail: {
+    display: 'flex',
+    gap: '1.25rem',
+    alignItems: 'flex-start',
+    position: 'relative',
+    // height: '100%',
+    // marginBottom: '1.5rem',
+  },
+  cardContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    '& > div': {
+      borderTopStyle: 'solid',
+      borderTopWidth: '1px',
+      borderTopColor: '#E6E6E9',
+      paddingTop: '0.75rem',
+    },
+    '& > div:first-child': {
+      borderTopStyle: 'none',
+      paddingTop: 0,
+    },
+  },
+  buttonContainer: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  spacer: {
+    flexGrow: 1,
+  },
+  coverPlaceholder: {
+    width: 80,
+    height: 118,
+    background: theme.colors.border,
+    borderRadius: '8px',
+    flexShrink: 0,
+  },
+  coverImg: {
+    flexShrink: 0,
+    borderRadius: '8px',
+    display: 'block',
+    objectFit: 'cover',
+    // border: '1px solid #ffffff66',
+    // boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+  },
+  metadata: {
+    display: 'flex',
+    gap: '1rem',
+  },
+  info: {
+    flex: 1,
+    minWidth: 0,
+    height: '100%',
+  },
+  title: {
+    margin: '0 0 0.25rem',
+    fontSize: '1.25rem',
+    fontWeight: 700,
+    color: theme.colors.text.primary,
+  },
+  author: {
+    color: theme.colors.text.secondary,
+    marginBottom: '0.375rem',
+  },
+  series: {
+    position: 'absolute',
+    top: '8px',
+    right: 0,
+    cursor: 'pointer',
+  },
+  meta: {
+    color: theme.colors.text.muted,
+    fontSize: '0.875rem',
+    marginBottom: '0.125rem',
+  },
+  editBtn: {
+    marginTop: '0.75rem',
+    padding: '0.375rem 0.75rem',
+    background: theme.colors.primary,
+    color: '#fff',
+    border: 'none',
+    borderRadius: theme.borderRadius.sm,
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    '&:hover': { background: theme.colors.primaryHover },
+  },
+  cardTitle: {
+    fontSize: '.7rem',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '.06em',
+    color: '#9ca3af',
+    marginBottom: '.6rem',
+  },
+  description: {
+    color: '#585863',
+    lineHeight: 1.3,
+    whiteSpace: 'pre-wrap',
+    '& > p': {
+      marginBottom: '0.5em',
+    },
+    '& > p:last-child': {
+      marginBottom: 0,
+    },
+  },
+  subjects: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.5rem',
+  },
+  pill: {
+    padding: '0.25rem 0.625rem',
+    background: theme.colors.primaryLight,
+    color: theme.colors.primary,
+    borderRadius: '8px',
+    fontSize: '0.75rem',
+    breakInside: 'avoid',
+    breakAfter: 'right',
+  },
+  identifiers: {},
+  identifier: {
+    fontSize: '0.875rem',
+    color: theme.colors.text.muted,
+    marginBottom: '0.125rem',
+  },
+  scheme: {
+    fontWeight: 600,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    fontSize: '0.75rem',
+  },
+}));

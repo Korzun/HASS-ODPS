@@ -1,0 +1,57 @@
+import { createUseStyles } from '../../provider/theme';
+import type { Theme } from '../../provider/theme';
+
+export const useStyle = createUseStyles((theme: Theme) => ({
+  root: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  cover: {
+    flexShrink: 0,
+    borderRadius: theme.borderRadius.sm,
+  },
+  coverImg: {
+    width: 43,
+    height: 60,
+    objectFit: 'cover',
+    borderRadius: '8px',
+    display: 'block',
+  },
+  coverPlaceholder: {
+    width: 43,
+    height: 60,
+    background: '#e0e0e0',
+    borderRadius: 2,
+  },
+  info: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    fontWeight: 500,
+    marginBottom: '.125rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  meta: {
+    fontSize: '.75rem',
+    color: theme.colors.text.muted,
+    marginBottom: '.1rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  navigate: {
+    cursor: 'pointer',
+    '&:hover': {
+      '& $title': {
+        color: '#3f96fe',
+      },
+      '& $meta': {
+        color: '#87BAFF',
+      },
+    },
+  },
+}));

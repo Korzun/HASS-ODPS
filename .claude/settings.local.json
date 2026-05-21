@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/korzun/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git -C /Users/korzun/Code/HASS-ODPS add .gitignore)",
+      "Bash(git -C /Users/korzun/Code/HASS-ODPS commit -m \"chore: ignore .worktrees directory\")",
+      "Bash(git:*)",
+      "Bash(npm install:*)",
+      "Bash(npm show:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(python3 -c \"import yaml; yaml.safe_load\\(open\\('.github/workflows/release.yml'\\)\\)\")",
+      "Bash(python3 -m pip install pyyaml -q)",
+      "Bash(python3 -c \"import yaml; yaml.safe_load\\(open\\('/Users/korzun/Code/HASS-ODPS/.worktrees/feature-release-workflow/.github/workflows/release.yml'\\)\\)\")",
+      "Bash(actionlint /Users/korzun/Code/HASS-ODPS/.worktrees/feature-release-workflow/.github/workflows/release.yml)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(actionlint:*)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(curl:*)",
+      "Bash(gh api:*)",
+      "Bash(python3 -c \"import sys,json; [print\\(f['path']\\) for f in json.load\\(sys.stdin\\)['tree'] if f['path'].endswith\\('.lua'\\)]\")",
+      "Bash(npx vitest *)",
+      "Bash(npx eslint *)",
+      "Bash(npm uninstall *)",
+      "Bash(npx jest *)",
+      "Bash(xargs ls *)",
+      "Bash(mv panel/book-list component/book-list)",
+      "Bash(mv panel/library-scan component/library-scan)",
+      "Bash(mv panel/series-list component/series-list)",
+      "Bash(mv panel/standalone-book-list component/standalone-book-list)",
+      "Bash(mv panel/upload-zone component/upload-zone)",
+      "Bash(npm run *)",
+      "Bash(node -e \"require\\('better-sqlite3'\\)\")",
+      "Bash(npm rebuild *)"
+    ]
+  }
+}
