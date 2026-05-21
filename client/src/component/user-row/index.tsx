@@ -1,13 +1,12 @@
 import cx from 'classnames';
-import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 
 import { Button, ConfirmModal } from '~/control';
 import { AlertOctagonIcon, ChevronCircleIcon } from '~/icon';
-import { useUserProgressList } from '~/provider/progress';
 import { useDeleteUser, useUser } from '~/provider/user';
 
 import { Card } from '../card';
-import { UserProgressRow } from '../user-progress-row';
+import { UserRowContent } from '../user-row-content';
 
 import { useStyle } from './style';
 
@@ -24,7 +23,6 @@ export const UserRow = ({ username }: UserRowProps) => {
     setIsExpanded((prev) => !prev);
   }, []);
 
-  const [userProgressList, loading, error] = useUserProgressList(username);
   const [deleteUser, deleting] = useDeleteUser();
 
   const [showDeleteUserModal, setShowDeleteUserModal] = useState<boolean>(false);
@@ -38,21 +36,6 @@ export const UserRow = ({ username }: UserRowProps) => {
     setShowDeleteUserModal(false);
     deleteUser(username);
   }, [deleteUser, username]);
-
-  const cardElement = useMemo(() => {
-    if (loading) {
-      return 'Loading...';
-    }
-    if (error) {
-      return 'Error loading user progress';
-    }
-    if (userProgressList === undefined || Object.keys(userProgressList).length === 0) {
-      return 'No progress records';
-    }
-    return Object.values(userProgressList ?? {}).map((progress) => (
-      <UserProgressRow key={progress.document} bookId={progress.document} username={username} />
-    )) as ReactNode[];
-  }, [error, userProgressList, loading, username]);
 
   return (
     <Fragment>
@@ -76,7 +59,11 @@ export const UserRow = ({ username }: UserRowProps) => {
           </Button>
         }
       >
-        {isExpanded && <div className={styles.content}>{cardElement}</div>}
+        {isExpanded && (
+          <div className={styles.content}>
+            <UserRowContent username={username} />
+          </div>
+        )}
       </Card>
       <ConfirmModal
         isOpen={showDeleteUserModal}

@@ -17,3 +17,4 @@ export { UserList } from './user-list';
 export { UserProgressRow } from './user-progress-row';
 export { UserRegister } from './user-register';
 export { UserRow } from './user-row';
+export { UserRowContent } from './user-row-content';
