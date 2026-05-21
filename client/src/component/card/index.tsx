@@ -1,10 +1,10 @@
 import cx from 'classnames';
-import { PropsWithChildren, ReactNode, useCallback } from 'react';
+import { PropsWithChildren, ReactNode, ReactElement, useCallback } from 'react';
 
 import { useStyle } from './style';
 
 export type Props = PropsWithChildren<{
-  headerAction?: ReactNode;
+  headerAction?: ReactNode | ReactElement[];
   onClick?: () => void;
   subTitle?: string;
   title?: string | ReactNode;
