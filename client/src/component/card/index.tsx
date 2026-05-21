@@ -6,10 +6,18 @@ import { useStyle } from './style';
 export type Props = PropsWithChildren<{
   headerAction?: ReactNode | ReactElement[];
   onClick?: () => void;
+  onClickHeader?: () => void;
   subTitle?: string;
   title?: string | ReactNode;
 }>;
-export const Card = ({ children, headerAction, subTitle, title, onClick }: Props) => {
+export const Card = ({
+  children,
+  headerAction,
+  onClick,
+  onClickHeader,
+  subTitle,
+  title,
+}: Props) => {
   const style = useStyle();
 
   const handleKeyDown = useCallback(
@@ -29,8 +37,14 @@ export const Card = ({ children, headerAction, subTitle, title, onClick }: Props
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
-      {(title || subTitle || headerAction) && (
-        <div className={cx(style.header, { [style.collapsed]: !children })}>
+      {(title || subTitle || headerAction || onClickHeader) && (
+        <div
+          className={cx(style.header, {
+            [style.collapsed]: !children,
+            [style.clickable]: onClickHeader !== undefined,
+          })}
+          onClick={onClickHeader ?? undefined}
+        >
           {title && <div className={style.title}>{title}</div>}
           {subTitle && <div className={style.subTitle}>{subTitle}</div>}
           <div className={style.spacer} />
