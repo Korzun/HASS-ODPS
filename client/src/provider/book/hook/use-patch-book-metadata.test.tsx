@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { useCallback, useContext, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -189,5 +189,22 @@ describe('usePatchBookMetadata', () => {
     });
     await act(() => result.current[0]('1', {}));
     expect(result.current[3]).toBe('Save failed');
+  });
+
+  it('does not send a second request while the first is still in flight', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+
+    const { result } = renderHook(() => usePatchBookMetadata(), {
+      wrapper: makeWrapper([makeBook({ id: '1' })]),
+    });
+
+    act(() => {
+      void result.current[0]('1', { title: 'First' });
+    });
+    await waitFor(() => expect(result.current[1]).toBe(true));
+
+    await act(() => result.current[0]('1', { title: 'Second' }));
+
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

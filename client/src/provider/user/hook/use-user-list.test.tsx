@@ -8,13 +8,17 @@ import type { User, UserList } from '../type';
 
 import { useUserList } from '.';
 
-function makeWrapper(initialUsers: User[] = []) {
+function makeWrapper(
+  initialUsers: User[] = [],
+  initialLoading = false,
+  initialError: string | undefined = undefined
+) {
   return function Wrapper({ children }: { children: ReactNode }) {
     const [userList, setUserListRaw] = useState<UserList>(
       Object.fromEntries(initialUsers.map((u) => [u.username, u]))
     );
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | undefined>();
+    const [loading, setLoading] = useState(initialLoading);
+    const [error, setError] = useState<string | undefined>(initialError);
     const setUserList = useCallback(
       (updater: (prev: UserList) => UserList) => setUserListRaw(updater),
       []
@@ -61,5 +65,31 @@ describe('useUserList', () => {
     vi.stubGlobal('fetch', mockFetch);
     renderHook(() => useUserList(), { wrapper: makeWrapper() });
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith('/api/users'));
+  });
+
+  it('does not fetch when the user list is already populated', async () => {
+    const mockFetch = vi.fn();
+    vi.stubGlobal('fetch', mockFetch);
+    renderHook(() => useUserList(), {
+      wrapper: makeWrapper([{ username: 'alice', progressCount: 0 }]),
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch while loading is already true', async () => {
+    const mockFetch = vi.fn();
+    vi.stubGlobal('fetch', mockFetch);
+    renderHook(() => useUserList(), { wrapper: makeWrapper([], true) });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch when an error is already set', async () => {
+    const mockFetch = vi.fn();
+    vi.stubGlobal('fetch', mockFetch);
+    renderHook(() => useUserList(), { wrapper: makeWrapper([], false, 'Previous error') });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

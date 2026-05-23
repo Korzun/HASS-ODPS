@@ -13,36 +13,39 @@ export const useDeleteBook = (): UseDeleteBook => {
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
-  const deleteBook = useCallback(async (id: string) => {
-    // Prevent multiple parallel requests
-    if (loading === true) {
-      return;
-    }
+  const deleteBook = useCallback(
+    async (id: string) => {
+      // Prevent multiple parallel requests
+      if (loading) {
+        return;
+      }
 
-    const book = bookList[id];
-    if (book === undefined) {
-      setError(true);
-      setErrorMessage('Failed to delete book');
-      return;
-    }
+      const book = bookList[id];
+      if (book === undefined) {
+        setError(true);
+        setErrorMessage('Failed to delete book');
+        return;
+      }
 
-    setBookList((prev) => removeBookById(id, prev));
+      setBookList((prev) => removeBookById(id, prev));
 
-    try {
-      setLoading(true);
-      setError(false);
-      setErrorMessage(undefined);
-      const res = await fetch(`/api/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      if (res.status !== 204) throw new Error('Failed to delete book');
-    } catch (err) {
-      setError(true);
-      setBookList((prev) => ({ ...prev, [book.id]: book }));
-      clearCompleteBookIds();
-      if (err instanceof Error) setErrorMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        setLoading(true);
+        setError(false);
+        setErrorMessage(undefined);
+        const res = await fetch(`/api/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (res.status !== 204) throw new Error('Failed to delete book');
+      } catch (err) {
+        setError(true);
+        setBookList((prev) => ({ ...prev, [book.id]: book }));
+        clearCompleteBookIds();
+        if (err instanceof Error) setErrorMessage(err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [bookList, clearCompleteBookIds, loading, setBookList]
+  );
 
   return useMemo(
     () => [deleteBook, loading, error, errorMessage],

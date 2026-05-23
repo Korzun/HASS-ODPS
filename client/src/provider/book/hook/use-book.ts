@@ -27,7 +27,7 @@ export const useBook = (bookId: string, completeBook: boolean = false): UseBook 
     ) {
       void fetchBook(bookId);
     }
-  }, [bookId, bookList, loading, errorMessage, fetchBook, completeBookIds]);
+  }, [bookId, bookList, loading, errorMessage, fetchBook, completeBookIds, completeBook]);
 
   return useMemo(() => {
     const book = bookList[bookId];

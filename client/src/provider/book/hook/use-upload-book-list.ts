@@ -23,7 +23,7 @@ export const useUploadBookList = (): UseUploadBookList => {
   const uploadBooks = useCallback(
     async (files: FileList): Promise<void> => {
       // Prevent multiple parallel requests
-      if (loading === true) {
+      if (loading) {
         return;
       }
 
@@ -56,7 +56,7 @@ export const useUploadBookList = (): UseUploadBookList => {
         setLoading(false);
       }
     },
-    [fetchBookList, clearCompleteBookIds]
+    [fetchBookList, clearCompleteBookIds, loading]
   );
 
   return useMemo(

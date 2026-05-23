@@ -26,7 +26,7 @@ export const useScanLibrary = (): UseScanLibrary => {
 
   const scanLibrary: ScanLibrary = useCallback(async () => {
     // Prevent multiple parallel requests
-    if (loading === true) {
+    if (loading) {
       return;
     }
 
@@ -52,7 +52,7 @@ export const useScanLibrary = (): UseScanLibrary => {
     } finally {
       setLoading(false);
     }
-  }, [fetchBookList, clearCompleteBookIds]);
+  }, [fetchBookList, clearCompleteBookIds, loading]);
 
   return useMemo(
     () => [scanLibrary, scanResult, loading, error, errorMessage] as UseScanLibrary,

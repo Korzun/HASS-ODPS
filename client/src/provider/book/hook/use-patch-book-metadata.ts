@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState, useMemo } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { Context } from '../context';
 import { Book } from '../type';
@@ -31,7 +31,7 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
   const patchBookMetadata = useCallback(
     async (bookId: string, patch: BookMetadataPatch): Promise<string | undefined> => {
       // Prevent multiple parallel requests
-      if (loading === true) {
+      if (loading) {
         return;
       }
 
@@ -74,7 +74,7 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
         setLoading(false);
       }
     },
-    []
+    [loading, setBookList]
   );
 
   return useMemo(
