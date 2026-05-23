@@ -162,4 +162,23 @@ describe('useDeleteBook', () => {
     expect(result.current[2]).toBe(true);
     expect(result.current[3]).toBe('Failed to delete book');
   });
+
+  it('does not send a second request while the first is still in flight', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+
+    const { result } = renderHook(() => useDeleteBook(), {
+      wrapper: makeWrapper([makeBook({ id: '1' }), makeBook({ id: '2' })]),
+    });
+
+    // First call — starts loading
+    act(() => {
+      void result.current[0]('1');
+    });
+    await waitFor(() => expect(result.current[1]).toBe(true));
+
+    // Second call while loading — should be ignored
+    await act(() => result.current[0]('2'));
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 });

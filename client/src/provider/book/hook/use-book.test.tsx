@@ -133,4 +133,26 @@ describe('useBook', () => {
     const [returnedBook] = result.current;
     expect(returnedBook?.title).toBe('Dune');
   });
+
+  it('triggers fetch when completeBook changes from false to true', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(makeBook({ id: '1' })),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const book = makeBook({ id: '1' });
+    const { rerender } = renderHook(
+      ({ complete }: { complete: boolean }) => useBook('1', complete),
+      { wrapper: makeWrapper([book], new Set()), initialProps: { complete: false } }
+    );
+
+    // Book is in the list and completeBook=false — no fetch should fire
+    expect(mockFetch).not.toHaveBeenCalled();
+
+    // Changing to completeBook=true should trigger a fetch for the full data
+    rerender({ complete: true });
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledWith('/api/books/1'));
+  });
 });

@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -84,5 +84,20 @@ describe('useScanLibrary', () => {
     await act(() => result.current[0]());
 
     expect(mockClear).not.toHaveBeenCalled();
+  });
+
+  it('does not start a second scan while one is already in progress', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+
+    const { result } = renderHook(() => useScanLibrary(), { wrapper: makeWrapper() });
+
+    act(() => {
+      void result.current[0]();
+    });
+    await waitFor(() => expect(result.current[2]).toBe(true)); // loading
+
+    await act(() => result.current[0]());
+
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

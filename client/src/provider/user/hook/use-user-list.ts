@@ -38,6 +38,10 @@ export const useUserList = (): UseUserList => {
     if (!loading && error === undefined && Object.keys(userList).length === 0) {
       void getUserList();
     }
+    // loading, error, and userList are intentionally excluded: this effect is meant to fire once on
+    // mount. getUserList is stable so deps never change. Adding the others would cause a re-fetch
+    // loop when the server legitimately returns zero users.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getUserList]);
 
   return useMemo(

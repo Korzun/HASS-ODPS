@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -95,5 +95,20 @@ describe('useUploadBookList', () => {
     await act(() => result.current[0](makeFileList('book.epub')));
 
     expect(mockClear).not.toHaveBeenCalled();
+  });
+
+  it('does not start a second upload while one is already in progress', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
+
+    const { result } = renderHook(() => useUploadBookList(), { wrapper: makeWrapper() });
+
+    act(() => {
+      void result.current[0](makeFileList('book.epub'));
+    });
+    await waitFor(() => expect(result.current[2]).toBe(true)); // loading
+
+    await act(() => result.current[0](makeFileList('book2.epub')));
+
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

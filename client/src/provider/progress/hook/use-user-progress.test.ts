@@ -65,4 +65,27 @@ describe('useUserProgress', () => {
     const { result } = renderHook(() => useUserProgress('alice', 'book-1'));
     expect(result.current).toEqual([undefined, false, false, undefined]);
   });
+
+  it('returns updated progress when bookId changes', () => {
+    stubList([
+      {
+        'book-1': { document: 'book-1', percentage: 0.5 },
+        'book-2': { document: 'book-2', percentage: 0.8 },
+      },
+      false,
+      false,
+      undefined,
+    ]);
+
+    const { result, rerender } = renderHook(
+      ({ bookId }: { bookId: string }) => useUserProgress('alice', bookId),
+      { initialProps: { bookId: 'book-1' } }
+    );
+
+    expect(result.current[0]).toEqual({ document: 'book-1', percentage: 0.5 });
+
+    rerender({ bookId: 'book-2' });
+
+    expect(result.current[0]).toEqual({ document: 'book-2', percentage: 0.8 });
+  });
 });
