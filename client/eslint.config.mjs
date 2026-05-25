@@ -7,39 +7,10 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: [
-      "dist/**",
-      "node_modules/**",
-      "client/node_modules/**",
-      "client/dist/**",
-    ],
+    ignores: ["dist/**", "node_modules/**"],
   },
-
-  // Server (server/)
   {
-    files: ["server/**/*.ts"],
-    extends: [tseslint.configs.recommended],
-    plugins: {
-      prettier: eslintPluginPrettier,
-    },
-    rules: {
-      ...eslintConfigPrettier.rules,
-      "prettier/prettier": "error",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-          destructuredArrayIgnorePattern: "^_",
-        },
-      ],
-    },
-  },
-
-  // Client (client/src/)
-  {
-    files: ["client/src/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     plugins: {
       import: importX,
@@ -49,7 +20,7 @@ export default tseslint.config(
     settings: {
       "import-x/resolver": {
         typescript: {
-          project: "./client/tsconfig.json",
+          project: "./tsconfig.json",
         },
         node: true,
       },
