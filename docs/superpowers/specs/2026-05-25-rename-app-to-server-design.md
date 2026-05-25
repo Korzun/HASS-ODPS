@@ -75,7 +75,13 @@ Becomes a workspace root. No `dependencies` or `devDependencies`. Declares works
 ```
 
 ### `server/package.json` (new)
-All current root `dependencies` (express, better-sqlite3, sharp, etc.) and all current root `devDependencies` except `eslint-plugin-react-hooks` (which moves to client). Scripts:
+All current root `dependencies` (express, better-sqlite3, sharp, etc.). `devDependencies`: all current root devDeps **except** the following, which are only used by the client eslint config and move to `client/package.json`:
+- `eslint-plugin-react-hooks`
+- `eslint-plugin-import-x`
+- `eslint-import-resolver-typescript`
+- `@eslint/js`
+
+Scripts:
 - `build`: `tsc`
 - `dev`: `nodemon --watch . --ext ts,json --exec 'ts-node --project tsconfig.json' index.ts`
 - `test`: `jest`
@@ -97,13 +103,21 @@ One change:
 - `roots: ['<rootDir>']` (was `['<rootDir>/app']`)
 
 ### `server/eslint.config.mjs` (new)
-Contains the server TypeScript section from the current root `eslint.config.mjs`: `@typescript-eslint`, `import-x`, `prettier` rules targeting `**/*.ts`. Ignores `dist/`.
+Extracted from the server section of the current root `eslint.config.mjs`. Key differences from root:
+- `files: ["**/*.ts"]` (was `"app/**/*.ts"`)
+- `ignores: ["dist/**", "node_modules/**"]`
+- Plugins: `typescript-eslint`, `eslint-plugin-prettier`
+- No `import-x` (not used in the current server section)
 
 ### `client/eslint.config.mjs` (new)
-Contains the client React section from the current root `eslint.config.mjs`: `react-hooks`, `prettier` rules. Replaces any existing eslint config in `client/` if present.
+Extracted from the client section of the current root `eslint.config.mjs`. Key differences from root:
+- `files: ["src/**/*.{ts,tsx}"]` (was `"client/src/**/*.{ts,tsx}"`)
+- `settings["import-x/resolver"].typescript.project`: `"./tsconfig.json"` (was `"./client/tsconfig.json"`)
+- `ignores: ["dist/**", "node_modules/**"]`
+- Client currently has no eslint config — this is a new file.
 
 ### `client/package.json` (updated)
-Adds to `devDependencies`: `eslint`, `eslint-config-prettier`, `eslint-plugin-prettier`, `eslint-plugin-react-hooks`, `prettier`. Adds `lint` and `lint:fix` scripts targeting `eslint .`.
+Adds to `devDependencies`: `@eslint/js`, `eslint`, `eslint-config-prettier`, `eslint-plugin-import-x`, `eslint-import-resolver-typescript`, `eslint-plugin-prettier`, `eslint-plugin-react-hooks`, `prettier`, `typescript-eslint`. Adds `lint` and `lint:fix` scripts targeting `eslint .`.
 
 ### `client/package-lock.json`
 Deleted. npm workspaces produces a single root `package-lock.json` covering all workspaces.
