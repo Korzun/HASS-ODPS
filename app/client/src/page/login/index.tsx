@@ -59,10 +59,10 @@ export const LoginPage = () => {
   return (
     <Page type="minimal">
       <div className={styles.root}>
+        <h1 className={styles.title}>
+          <BooksIcon /> HASS-ODPS
+        </h1>
         <Card className={styles.card}>
-          <h1 className={styles.title}>
-            <BooksIcon /> HASS-ODPS
-          </h1>
           <div className={styles.inputContainer}>
             <TextInput
               placeholder="Username"

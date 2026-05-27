@@ -5,6 +5,7 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'column',
     minHeight: '100vh',
     backgroundColor: theme.color.bg.page,
     padding: `0 ${theme.space.xxl}`,
