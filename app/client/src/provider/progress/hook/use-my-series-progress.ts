@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
-import { useUsername } from '../../../provider/auth';
+import { useSeriesBookList } from '../../book';
+import { calculateSeriesProgressPercent } from '../helper';
 
-import { useUserSeriesProgress } from './use-user-series-progress';
+import { useMyProgressList } from './use-my-progress-list';
 
 export type UseMySeriesProgress =
   | [undefined, false, false, undefined] // Initial State (or if no progress exists for user)
@@ -12,28 +13,20 @@ export type UseMySeriesProgress =
   | [undefined, false, true, undefined] // There was an unspecified error while loading progress
   | [undefined, false, true, string]; // There was a specified error while loading progress
 export const useMySeriesProgress = (seriesName: string): UseMySeriesProgress => {
-  const [username, usernameLoading, usernameError, usernameErrorMessage] = useUsername();
-  const [seriesProgress, progressLoading, progressError, progressErrorMessage] =
-    useUserSeriesProgress(username, seriesName);
+  const [myProgressList, loading, error, errorMessage] = useMyProgressList();
+  const [seriesBookList] = useSeriesBookList(seriesName);
 
   return useMemo((): UseMySeriesProgress => {
-    if (usernameError) {
-      return [undefined, false, true, usernameErrorMessage];
+    if (loading) {
+      return [undefined, true, false, undefined];
     }
-    if (progressError) {
-      return [undefined, false, true, progressErrorMessage];
+    if (error) {
+      return [undefined, false, error, errorMessage];
     }
-    if (usernameLoading || progressLoading) {
-      return [seriesProgress as number | undefined, true, false, undefined];
+    if (myProgressList === undefined || seriesBookList === undefined) {
+      return [undefined, false, false, undefined];
     }
+    const seriesProgress = calculateSeriesProgressPercent(seriesBookList, myProgressList);
     return [seriesProgress, false, false, undefined];
-  }, [
-    seriesProgress,
-    progressLoading,
-    progressError,
-    progressErrorMessage,
-    usernameLoading,
-    usernameError,
-    usernameErrorMessage,
-  ]);
+  }, [loading, error, errorMessage, myProgressList, seriesBookList]);
 };
