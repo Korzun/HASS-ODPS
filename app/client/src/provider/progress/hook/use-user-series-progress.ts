@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { useSeriesBookList, type Book } from '../../book';
-import type { UserProgressList } from '../type';
+import { useSeriesBookList } from '../../book';
+import { calculateSeriesProgressPercent } from '../helper';
 
 import { useUserProgressList } from './use-user-progress-list';
 
@@ -32,19 +32,4 @@ export const useUserSeriesProgress = (
     const seriesProgress = calculateSeriesProgressPercent(seriesBookList, userProgressList);
     return [seriesProgress, false, false, undefined];
   }, [loading, error, errorMessage, userProgressList, seriesBookList]);
-};
-
-const calculateSeriesProgressPercent = (
-  books: Book[],
-  progressMap: UserProgressList
-): number | undefined => {
-  if (!books.some((book) => progressMap[book.id])) {
-    return undefined;
-  }
-  const avg =
-    books.reduce((sum, book) => {
-      return sum + (progressMap[book.id]?.percentage ?? 0);
-    }, 0) / books.length;
-
-  return avg;
 };
