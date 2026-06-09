@@ -45,10 +45,11 @@ model BookThumbnail {
 }
 
 model User {
-  id         String     @id
-  username   String     @unique
-  key        String
-  progresses Progress[]
+  id           String     @id
+  username     String     @unique
+  passwordHash String?    @map("password_hash")
+  syncPassword String?    @map("sync_password")
+  progresses   Progress[]
 
   @@map("users")
 }
