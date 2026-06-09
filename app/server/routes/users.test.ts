@@ -101,7 +101,8 @@ describe('GET /api/users', () => {
 
   it('returns users with progress counts', async () => {
     await userStore.createUser('alice', 'pass');
-    await userStore.saveProgress('alice', {
+    const aliceId = (await userStore.getUserIdByUsername('alice'))!;
+    await userStore.saveProgress(aliceId, {
       document: 'doc1',
       progress: '/p[1]',
       percentage: 0.5,
@@ -139,7 +140,8 @@ describe('GET /api/users/:username/progress', () => {
 
   it('returns progress records for a user', async () => {
     await userStore.createUser('alice', 'pass');
-    await userStore.saveProgress('alice', {
+    const aliceId = (await userStore.getUserIdByUsername('alice'))!;
+    await userStore.saveProgress(aliceId, {
       document: 'dune.epub',
       progress: '/p[5]',
       percentage: 0.42,
@@ -162,7 +164,8 @@ describe('GET /api/users/:username/progress', () => {
       fs.writeFileSync(stagedPath, 'x');
       await bookStore.addBook('lin-old', stagedPath, FAKE_META);
       await userStore.createUser('alice', 'pass');
-      await userStore.saveProgress('alice', {
+      const aliceId = (await userStore.getUserIdByUsername('alice'))!;
+      await userStore.saveProgress(aliceId, {
         document: 'lin-old',
         progress: '/p[2]',
         percentage: 0.4,
@@ -207,7 +210,8 @@ describe('DELETE /api/users/:username', () => {
 
   it('cascades to delete progress records', async () => {
     await userStore.createUser('alice', 'pass');
-    await userStore.saveProgress('alice', {
+    const aliceId = (await userStore.getUserIdByUsername('alice'))!;
+    await userStore.saveProgress(aliceId, {
       document: 'doc1',
       progress: '/p[1]',
       percentage: 0.5,
@@ -216,7 +220,7 @@ describe('DELETE /api/users/:username', () => {
     });
     const agent = await adminAgent();
     await agent.delete('/api/users/alice');
-    expect(await userStore.getUserProgress('alice')).toEqual([]);
+    expect(await userStore.getUserProgress(aliceId)).toEqual([]);
   });
 });
 
@@ -232,7 +236,7 @@ describe('POST /api/users', () => {
     expect(res.status).toBe(201);
     expect(res.body.username).toBe('bob');
     expect(await userStore.userExists('bob')).toBe(true);
-    expect(await userStore.authenticate('bob', UserStore.hashPassword('secret'))).toBe(true);
+    expect(await userStore.authenticate('bob', UserStore.hashPassword('secret'))).toBeTruthy();
   });
 
   it('returns 409 for duplicate username', async () => {
@@ -301,7 +305,8 @@ describe('DELETE /api/users/:username/progress/:document', () => {
 
   it('clears the progress record and returns 204', async () => {
     await userStore.createUser('alice', 'pass');
-    await userStore.saveProgress('alice', {
+    const aliceId = (await userStore.getUserIdByUsername('alice'))!;
+    await userStore.saveProgress(aliceId, {
       document: 'dune.epub',
       progress: '/p[5]',
       percentage: 0.42,
@@ -311,7 +316,7 @@ describe('DELETE /api/users/:username/progress/:document', () => {
     const agent = await adminAgent();
     const res = await agent.delete('/api/users/alice/progress/dune.epub');
     expect(res.status).toBe(204);
-    expect(await userStore.getProgress('alice', 'dune.epub')).toBeNull();
+    expect(await userStore.getProgress(aliceId, 'dune.epub')).toBeNull();
   });
 });
 

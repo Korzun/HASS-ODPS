@@ -19,24 +19,26 @@ export function createUsersRouter(userStore: UserStore, adminUsername: string): 
 
   router.get('/:username/progress', async (req: Request, res: Response) => {
     const { username } = req.params;
-    if (!(await userStore.userExists(username))) {
+    const userId = await userStore.getUserIdByUsername(username);
+    if (!userId) {
       log.warn(`Progress fetch for unknown user "${username}"`);
       res.status(404).json({ error: 'User not found' });
       return;
     }
-    const progress = await userStore.getUserProgress(username);
+    const progress = await userStore.getUserProgress(userId);
     log.debug(`Progress fetched for "${username}" (${progress.length} records)`);
     res.json(progress);
   });
 
   router.delete('/:username/progress/:document', async (req: Request, res: Response) => {
     const { username, document } = req.params;
-    if (!(await userStore.userExists(username))) {
+    const userId = await userStore.getUserIdByUsername(username);
+    if (!userId) {
       log.warn(`Progress clear attempted for unknown user "${username}"`);
       res.status(404).json({ error: 'User not found' });
       return;
     }
-    const cleared = await userStore.clearProgress(username, document);
+    const cleared = await userStore.clearProgress(userId, document);
     if (!cleared) {
       log.warn(`Progress clear: no record for "${username}" document "${document}"`);
       res.status(404).json({ error: 'Progress record not found' });
