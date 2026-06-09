@@ -161,7 +161,7 @@ beforeEach(async () => {
   await runMigrations(prisma, booksDir);
   bookStore = new BookStore(booksDir, prisma);
   userStore = new UserStore(prisma);
-  await userStore.createUser('alice', UserStore.hashPassword('alicepass'));
+  await userStore.createUser('alice', await UserStore.hashLoginPassword('alicepass'));
   aliceId = (await userStore.getUserIdByUsername('alice'))!;
 
   app = express();
@@ -236,6 +236,15 @@ describe('POST /api/login', () => {
       .set('Content-Type', 'application/x-www-form-urlencoded');
     expect(res.status).toBe(401);
   });
+
+  it('returns 403 with a clear message when the user has no password set', async () => {
+    await userStore.createUser('nopass', null);
+    const res = await request(app)
+      .post('/api/login')
+      .send('username=nopass&password=anything')
+      .set('Content-Type', 'application/x-www-form-urlencoded');
+    expect(res.status).toBe(403);
+  });
 });
 
 describe('GET /api/me', () => {
@@ -248,14 +257,28 @@ describe('GET /api/me', () => {
     const agent = await adminAgent();
     const res = await agent.get('/api/me');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ username: 'admin', isAdmin: true });
+    expect(res.body).toEqual({ username: 'admin', isAdmin: true, mustChangePassword: false });
   });
 
   it('returns isAdmin false for regular user session', async () => {
     const agent = await userAgent();
     const res = await agent.get('/api/me');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ username: 'alice', isAdmin: false });
+    expect(res.body).toEqual({ username: 'alice', isAdmin: false, mustChangePassword: false });
+  });
+
+  it('returns mustChangePassword true after an admin password reset', async () => {
+    const newPassword = await userStore.resetPassword('alice');
+    const agent = request.agent(app);
+    await agent
+      .post('/api/login')
+      .send(`username=alice&password=${newPassword}`)
+      .set('Content-Type', 'application/x-www-form-urlencoded');
+
+    const res = await agent.get('/api/me');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ username: 'alice', isAdmin: false, mustChangePassword: true });
   });
 });
 
@@ -916,7 +939,7 @@ describe('GET /api/my/progress', () => {
   });
 
   it("does not return another user's progress", async () => {
-    await userStore.createUser('bob', UserStore.hashPassword('bobpass'));
+    await userStore.createUser('bob', await UserStore.hashLoginPassword('bobpass'));
     const bobId = (await userStore.getUserIdByUsername('bob'))!;
     await userStore.saveProgress(bobId, {
       document: 'doc2',
@@ -1414,8 +1437,45 @@ describe('PATCH /api/my/password', () => {
       .patch('/api/my/password')
       .send({ currentPassword: 'alicepass', newPassword: 'newpass' });
     expect(res.status).toBe(204);
-    expect(await userStore.validateUser('alice', 'newpass')).toBe(true);
+    expect(await userStore.validateUser('alice', 'newpass')).toBeTruthy();
     expect(await userStore.validateUser('alice', 'alicepass')).toBe(false);
+  });
+});
+
+describe('GET /api/my/sync-password', () => {
+  it('returns syncPassword for authenticated non-admin user', async () => {
+    const agent = await userAgent();
+    const res = await agent.get('/api/my/sync-password');
+    expect(res.status).toBe(200);
+    expect(typeof res.body.syncPassword).toBe('string');
+    expect(res.body.syncPassword.split(' ')).toHaveLength(2);
+  });
+
+  it('redirects unauthenticated requests', async () => {
+    const res = await request(app).get('/api/my/sync-password');
+    expect(res.status).toBe(302);
+  });
+
+  it('returns 403 for admin user', async () => {
+    const agent = await adminAgent();
+    const res = await agent.get('/api/my/sync-password');
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /api/my/sync-password/regenerate', () => {
+  it('returns a new syncPassword', async () => {
+    const agent = await userAgent();
+    const res = await agent.post('/api/my/sync-password/regenerate');
+    expect(res.status).toBe(200);
+    expect(typeof res.body.syncPassword).toBe('string');
+    expect(res.body.syncPassword.split(' ')).toHaveLength(2);
+  });
+
+  it('returns 403 for admin user', async () => {
+    const agent = await adminAgent();
+    const res = await agent.post('/api/my/sync-password/regenerate');
+    expect(res.status).toBe(403);
   });
 });
 
@@ -1458,5 +1518,53 @@ describe('SPA routes serve index.html', () => {
     const res = await request(app).get('/upload');
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe('/login');
+  });
+});
+
+describe('requirePasswordChange middleware', () => {
+  async function resetAndLoginAlice() {
+    const newPassword = await userStore.resetPassword('alice');
+    const agent = request.agent(app);
+    await agent
+      .post('/api/login')
+      .send(`username=alice&password=${newPassword}`)
+      .set('Content-Type', 'application/x-www-form-urlencoded');
+    return { agent, newPassword: newPassword! };
+  }
+
+  it('blocks other /api/* routes with 403 when mustChangePassword is true', async () => {
+    const { agent } = await resetAndLoginAlice();
+    const res = await agent.get('/api/books');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('Password change required');
+  });
+
+  it('allows GET /api/me when mustChangePassword is true', async () => {
+    const { agent } = await resetAndLoginAlice();
+    const res = await agent.get('/api/me');
+    expect(res.status).toBe(200);
+    expect(res.body.mustChangePassword).toBe(true);
+  });
+
+  it('allows non-API routes (SPA) when mustChangePassword is true', async () => {
+    const { agent } = await resetAndLoginAlice();
+    const res = await agent.get('/library');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<!DOCTYPE html>');
+  });
+
+  it('clears the flag after PATCH /api/my/password succeeds, allowing other routes again', async () => {
+    const { agent, newPassword } = await resetAndLoginAlice();
+
+    const changeRes = await agent
+      .patch('/api/my/password')
+      .send({ currentPassword: newPassword, newPassword: 'brandnewpass' });
+    expect(changeRes.status).toBe(204);
+
+    const meRes = await agent.get('/api/me');
+    expect(meRes.body.mustChangePassword).toBe(false);
+
+    const booksRes = await agent.get('/api/books');
+    expect(booksRes.status).toBe(200);
   });
 });

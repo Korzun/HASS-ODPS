@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -38,6 +38,18 @@ function requireUserId(req: Request, res: Response): string | null {
     return null;
   }
   return userId;
+}
+
+function requirePasswordChange(req: Request, res: Response, next: NextFunction): void {
+  if (!req.session.mustChangePassword) {
+    next();
+    return;
+  }
+  if (req.path === '/api/me' || req.path === '/api/my/password' || !req.path.startsWith('/api/')) {
+    next();
+    return;
+  }
+  res.status(403).json({ error: 'Password change required' });
 }
 
 export function createUiRouter(
@@ -102,12 +114,18 @@ export function createUiRouter(
       res.sendStatus(200);
       return;
     }
+    if ((await userStore.userExists(username)) && !(await userStore.userHasPassword(username))) {
+      log.warn(`Login failed for "${username}" — password not set`);
+      res.sendStatus(403);
+      return;
+    }
     const userId = await userStore.validateUser(username, password);
     if (userId) {
       req.session.authenticated = true;
       req.session.isAdmin = false;
       req.session.username = username;
       req.session.userId = userId;
+      req.session.mustChangePassword = await userStore.getMustChangePassword(username);
       log.info(`User "${username}" logged in`);
       res.sendStatus(200);
       return;
@@ -122,8 +140,14 @@ export function createUiRouter(
   });
 
   router.get('/api/me', sessionAuth, (req: Request, res: Response) => {
-    res.json({ username: req.session.username, isAdmin: req.session.isAdmin });
+    res.json({
+      username: req.session.username,
+      isAdmin: req.session.isAdmin,
+      mustChangePassword: req.session.mustChangePassword ?? false,
+    });
   });
+
+  router.use(requirePasswordChange);
 
   router.get('/api/config', sessionAuth, (_req: Request, res: Response) => {
     res.json({ maxConcurrentUploads: config.maxConcurrentUploads });
@@ -233,17 +257,48 @@ export function createUiRouter(
       res.status(401).json({ error: 'Current password is incorrect' });
       return;
     }
-    const changed = await userStore.changePassword(
-      req.session.username!,
-      UserStore.hashPassword(newPassword)
-    );
+    const newHash = await UserStore.hashLoginPassword(newPassword);
+    const changed = await userStore.changePassword(req.session.username!, newHash);
     if (!changed) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+    req.session.mustChangePassword = false;
     log.info(`User "${req.session.username}" changed their password`);
     res.status(204).send();
   });
+
+  router.get('/api/my/sync-password', sessionAuth, async (req: Request, res: Response) => {
+    if (req.session.isAdmin) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    const syncPassword = await userStore.getSyncPassword(req.session.username!);
+    if (syncPassword === null) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json({ syncPassword });
+  });
+
+  router.post(
+    '/api/my/sync-password/regenerate',
+    sessionAuth,
+    async (req: Request, res: Response) => {
+      if (req.session.isAdmin) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+      const newPassword = UserStore.generateSyncPassword();
+      const changed = await userStore.changeSyncPassword(req.session.username!, newPassword);
+      if (!changed) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+      log.info(`User "${req.session.username}" regenerated sync password`);
+      res.json({ syncPassword: newPassword });
+    }
+  );
 
   // ── Static assets (no auth required) ──────────────────
   router.use('/assets', express.static(path.join(__dirname, '../../../client/dist/assets')));
