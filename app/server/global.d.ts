@@ -6,6 +6,7 @@ declare module 'express-session' {
     username?: string;
     userId?: string;
     isAdmin?: boolean;
+    mustChangePassword?: boolean;
   }
 }
 
