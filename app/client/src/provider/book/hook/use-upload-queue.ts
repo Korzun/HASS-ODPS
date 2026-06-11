@@ -1,6 +1,8 @@
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { apiFetch, ensureFreshToken } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 
 import { useFetchBookList } from './use-fetch-book-list';
@@ -25,6 +27,7 @@ export const useUploadQueue = (): UseUploadQueue => {
   const [maxConcurrent, setMaxConcurrent] = useState(3);
   const fetchBookList = useFetchBookList();
   const { clearCompleteBookIds } = useContext(Context);
+  const withTargetUser = useWithTargetUser();
 
   // IDs of items whose XHR has been created — prevents double-starting across renders
   const startedRef = useRef(new Set<string>());
@@ -35,9 +38,11 @@ export const useUploadQueue = (): UseUploadQueue => {
   // Stable refs to avoid stale closure captures inside xhr.onload
   const fetchBookListRef = useRef(fetchBookList);
   const clearCompleteBookIdsRef = useRef(clearCompleteBookIds);
+  const withTargetUserRef = useRef(withTargetUser);
   useLayoutEffect(() => {
     fetchBookListRef.current = fetchBookList;
     clearCompleteBookIdsRef.current = clearCompleteBookIds;
+    withTargetUserRef.current = withTargetUser;
   });
 
   // Fetch server config on mount
@@ -130,7 +135,7 @@ export const useUploadQueue = (): UseUploadQueue => {
         const token = await ensureFreshToken();
         // The XHR may have been aborted (unmount) while we awaited the refresh.
         if (xhrMapRef.current.get(item.id) !== xhr) return;
-        xhr.open('POST', '/api/books/upload');
+        xhr.open('POST', withTargetUserRef.current('/api/books/upload'));
         if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         const formData = new FormData();
         formData.append('files', item.file);

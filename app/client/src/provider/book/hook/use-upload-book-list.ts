@@ -1,6 +1,8 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 import type { UploadResult } from '../type';
 
@@ -16,6 +18,7 @@ export type UseUploadBookList = [
 export const useUploadBookList = (): UseUploadBookList => {
   const { clearCompleteBookIds } = useContext(Context);
   const fetchBookList = useFetchBookList();
+  const withTargetUser = useWithTargetUser();
   const [uploadResult, setUploadResult] = useState<UploadResult | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -39,7 +42,7 @@ export const useUploadBookList = (): UseUploadBookList => {
           formData.append('files', file);
         }
 
-        const response = await apiFetch('/api/books/upload', { method: 'POST', body: formData });
+        const response = await apiFetch(withTargetUser('/api/books/upload'), { method: 'POST', body: formData });
         if (!response.ok) {
           const data = (await response.json().catch(() => ({}))) as { error?: string };
           throw new Error(data.error ?? 'Upload failed');
@@ -57,7 +60,7 @@ export const useUploadBookList = (): UseUploadBookList => {
         setLoading(false);
       }
     },
-    [fetchBookList, clearCompleteBookIds, loading]
+    [withTargetUser, fetchBookList, clearCompleteBookIds, loading]
   );
 
   return useMemo(

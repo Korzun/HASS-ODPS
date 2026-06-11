@@ -1,6 +1,8 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 import { BookList } from '../type';
 
@@ -9,6 +11,7 @@ const removeBookById = (bookId: string, { [bookId]: _, ...rest }: BookList) => r
 export type UseDeleteBook = [(id: string) => Promise<void>, boolean, boolean, string | undefined];
 export const useDeleteBook = (): UseDeleteBook => {
   const { bookList, setBookList, clearCompleteBookIds } = useContext(Context);
+  const withTargetUser = useWithTargetUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -33,7 +36,7 @@ export const useDeleteBook = (): UseDeleteBook => {
         setLoading(true);
         setError(false);
         setErrorMessage(undefined);
-        const res = await apiFetch(`/api/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const res = await apiFetch(withTargetUser(`/api/books/${encodeURIComponent(id)}`), { method: 'DELETE' });
         if (res.status !== 204) throw new Error('Failed to delete book');
       } catch (err) {
         setError(true);
@@ -44,7 +47,7 @@ export const useDeleteBook = (): UseDeleteBook => {
         setLoading(false);
       }
     },
-    [bookList, clearCompleteBookIds, loading, setBookList]
+    [withTargetUser, bookList, clearCompleteBookIds, loading, setBookList]
   );
 
   return useMemo(

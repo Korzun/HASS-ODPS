@@ -1,6 +1,8 @@
 import { useCallback, useContext } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 import type { Book } from '../type';
 
@@ -9,6 +11,7 @@ export type FetchBook = (bookId: string) => Promise<void>;
 export const useFetchBook = (): FetchBook => {
   const { loadingByBookId, setBookList, setLoadingForBook, setErrorForBook, setBookComplete } =
     useContext(Context);
+  const withTargetUser = useWithTargetUser();
 
   return useCallback(
     async (bookId: string) => {
@@ -17,7 +20,7 @@ export const useFetchBook = (): FetchBook => {
       setLoadingForBook(bookId, true);
       setErrorForBook(bookId, undefined);
       try {
-        const response = await apiFetch(`/api/books/${encodeURIComponent(bookId)}`);
+        const response = await apiFetch(withTargetUser(`/api/books/${encodeURIComponent(bookId)}`));
         if (!response.ok) throw new Error('Book not found');
         const book = await (response.json() as Promise<Book>);
         setBookList((prev) => ({ ...prev, [book.id]: book }));
@@ -28,6 +31,13 @@ export const useFetchBook = (): FetchBook => {
         setLoadingForBook(bookId, false);
       }
     },
-    [loadingByBookId, setBookList, setLoadingForBook, setErrorForBook, setBookComplete]
+    [
+      withTargetUser,
+      loadingByBookId,
+      setBookList,
+      setLoadingForBook,
+      setErrorForBook,
+      setBookComplete,
+    ]
   );
 };

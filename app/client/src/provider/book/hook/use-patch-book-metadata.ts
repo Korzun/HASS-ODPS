@@ -1,6 +1,8 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context as ProgressContext } from '../../progress/context';
 import { Context } from '../context';
 import { Book } from '../type';
@@ -27,6 +29,7 @@ export type UsePatchBookMetadata = [
 export const usePatchBookMetadata = (): UsePatchBookMetadata => {
   const { setBookList } = useContext(Context);
   const { renameProgressKey } = useContext(ProgressContext);
+  const withTargetUser = useWithTargetUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -53,7 +56,7 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
         if (identifiers !== undefined) fd.append('identifiers', JSON.stringify(identifiers));
         if (cover !== undefined) fd.append('cover', cover);
 
-        const response = await apiFetch(`/api/books/${encodeURIComponent(bookId)}/metadata`, {
+        const response = await apiFetch(withTargetUser(`/api/books/${encodeURIComponent(bookId)}/metadata`), {
           method: 'PATCH',
           body: fd,
         });
@@ -78,7 +81,7 @@ export const usePatchBookMetadata = (): UsePatchBookMetadata => {
         setLoading(false);
       }
     },
-    [loading, setBookList, renameProgressKey]
+    [withTargetUser, loading, setBookList, renameProgressKey]
   );
 
   return useMemo(

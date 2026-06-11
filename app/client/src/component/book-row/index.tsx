@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuthorizedSrc } from '~/lib/use-authorized-src';
 import { useBook } from '~/provider/book';
+import { useWithTargetUser } from '~/provider/library-target';
 import { useMyProgress } from '~/provider/progress';
 import { path } from '~/router';
 
@@ -20,6 +21,7 @@ interface BookRowProps {
 export function BookRow({ asCard = true, bookId, showAuthor = true }: BookRowProps) {
   const styles = useStyle();
   const navigate = useNavigate();
+  const withTargetUser = useWithTargetUser();
 
   const [book, loading, error] = useBook(bookId);
   const [progress] = useMyProgress(bookId);
@@ -32,7 +34,7 @@ export function BookRow({ asCard = true, bookId, showAuthor = true }: BookRowPro
   }, [book, navigate]);
 
   const coverSrc = useAuthorizedSrc(
-    book?.hasCover ? `/api/books/${encodeURIComponent(book.id)}/cover?width=60` : null
+    book?.hasCover ? withTargetUser(`/api/books/${encodeURIComponent(book.id)}/cover?width=60`) : null
   );
 
   if (loading) {
