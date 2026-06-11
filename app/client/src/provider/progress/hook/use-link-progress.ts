@@ -1,6 +1,8 @@
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 import type { UserProgressList } from '../type';
 
@@ -17,6 +19,7 @@ export type UseLinkProgress =
 
 export const useLinkProgress = (bookId: string, username: string): UseLinkProgress => {
   const { progressList, setProgressForUsername } = useContext(Context);
+  const withTargetUser = useWithTargetUser();
   const [linking, setLinking] = useState(false);
   const linkingRef = useRef(false);
   const [error, setError] = useState(false);
@@ -30,7 +33,7 @@ export const useLinkProgress = (bookId: string, username: string): UseLinkProgre
       setError(false);
       setErrorMessage(undefined);
       try {
-        const response = await apiFetch(`/api/books/${encodeURIComponent(bookId)}/link`, {
+        const response = await apiFetch(withTargetUser(`/api/books/${encodeURIComponent(bookId)}/link`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ documentId }),
@@ -51,7 +54,7 @@ export const useLinkProgress = (bookId: string, username: string): UseLinkProgre
         setLinking(false);
       }
     },
-    [bookId, username, progressList, setProgressForUsername]
+    [withTargetUser, bookId, username, progressList, setProgressForUsername]
   );
 
   return useMemo(

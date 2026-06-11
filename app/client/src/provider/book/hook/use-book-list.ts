@@ -1,4 +1,6 @@
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
+
+import { useLibraryTarget } from '~/provider/library-target';
 
 import { Context } from '../context';
 import type { Book } from '../type';
@@ -12,14 +14,31 @@ export type UseBookList =
   | [Book[], false, true, string];
 
 export const useBookList = (): UseBookList => {
-  const { bookList, bookListFetched, bookListLoading, bookListError } = useContext(Context);
+  const {
+    bookList,
+    bookListFetched,
+    bookListLoading,
+    bookListError,
+    setBookListFetched,
+    clearCompleteBookIds,
+  } = useContext(Context);
   const fetchBookList = useFetchBookList();
+  const [targetUsername] = useLibraryTarget();
 
   useEffect(() => {
     if (!bookListLoading && bookListError === undefined && !bookListFetched) {
       void fetchBookList();
     }
   }, [bookListFetched, bookListLoading, bookListError, fetchBookList]);
+
+  const prevTargetRef = useRef(targetUsername);
+  useEffect(() => {
+    if (prevTargetRef.current === targetUsername) return;
+    prevTargetRef.current = targetUsername;
+    clearCompleteBookIds();
+    setBookListFetched(false);
+    void fetchBookList();
+  }, [targetUsername, fetchBookList, setBookListFetched, clearCompleteBookIds]);
 
   return useMemo(
     () =>

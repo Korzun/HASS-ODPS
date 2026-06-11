@@ -1,6 +1,8 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 
 import { useFetchBookList } from './use-fetch-book-list';
@@ -20,6 +22,7 @@ export type UseScanLibrary =
 export const useScanLibrary = (): UseScanLibrary => {
   const { clearCompleteBookIds } = useContext(Context);
   const fetchBookList = useFetchBookList();
+  const withTargetUser = useWithTargetUser();
   const [scanResult, setScanResult] = useState<ScanResult | undefined>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -35,7 +38,7 @@ export const useScanLibrary = (): UseScanLibrary => {
     setScanResult(undefined);
 
     try {
-      const response = await apiFetch('/api/books/scan', { method: 'POST' });
+      const response = await apiFetch(withTargetUser('/api/books/scan'), { method: 'POST' });
       if (!response.ok) {
         throw new Error('Scan failed');
       }
@@ -53,7 +56,7 @@ export const useScanLibrary = (): UseScanLibrary => {
     } finally {
       setLoading(false);
     }
-  }, [fetchBookList, clearCompleteBookIds, loading]);
+  }, [withTargetUser, fetchBookList, clearCompleteBookIds, loading]);
 
   return useMemo(
     () => [scanLibrary, scanResult, loading, error, errorMessage] as UseScanLibrary,

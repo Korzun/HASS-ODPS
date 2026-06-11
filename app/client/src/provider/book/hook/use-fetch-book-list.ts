@@ -1,6 +1,9 @@
 import { useCallback, useContext } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useIsAdmin } from '~/provider/auth';
+import { useLibraryTarget, useWithTargetUser } from '~/provider/library-target';
+
 import { Context } from '../context';
 import type { Book, BookList } from '../type';
 
@@ -16,14 +19,18 @@ export const useFetchBookList = (): FetchBookList => {
     setBookListLoading,
     setBookListError,
   } = useContext(Context);
+  const [isAdmin] = useIsAdmin();
+  const [targetUsername] = useLibraryTarget();
+  const withTargetUser = useWithTargetUser();
 
   return useCallback(async () => {
+    if (isAdmin && !targetUsername) return;
     if (bookListLoading) return;
 
     setBookListLoading(true);
     setBookListError(undefined);
     try {
-      const response = await apiFetch('/api/books');
+      const response = await apiFetch(withTargetUser('/api/books'));
       if (!response.ok) throw new Error('Failed to fetch books');
       const bookListArray = await (response.json() as Promise<Book[]>);
       setBookList(() =>
@@ -45,6 +52,9 @@ export const useFetchBookList = (): FetchBookList => {
       setBookListLoading(false);
     }
   }, [
+    isAdmin,
+    targetUsername,
+    withTargetUser,
     bookListLoading,
     bookList,
     completeBookIds,

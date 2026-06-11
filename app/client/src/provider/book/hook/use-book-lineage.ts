@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
 
 export type LineageEntry = {
   oldId: string;
@@ -24,11 +25,12 @@ type FetchResult = { bookId: string; data: BookLineage } | { bookId: string; err
 export const useBookLineage = (bookId: string): UseBookLineage => {
   const [result, setResult] = useState<FetchResult | null>(null);
   const [fetchKey, setFetchKey] = useState(0);
+  const withTargetUser = useWithTargetUser();
 
   useEffect(() => {
     let cancelled = false;
 
-    apiFetch(`/api/books/${encodeURIComponent(bookId)}/lineage`)
+    apiFetch(withTargetUser(`/api/books/${encodeURIComponent(bookId)}/lineage`))
       .then(async (response) => {
         if (!response.ok) throw new Error('Failed to fetch lineage');
         return response.json() as Promise<BookLineage>;
@@ -43,7 +45,7 @@ export const useBookLineage = (bookId: string): UseBookLineage => {
     return () => {
       cancelled = true;
     };
-  }, [bookId, fetchKey]);
+  }, [bookId, fetchKey, withTargetUser]);
 
   const refetch = useCallback(() => setFetchKey((k) => k + 1), []);
 

@@ -14,6 +14,7 @@ import { Button, DeleteBookButton, RegenChaptersButton, SetProgressModal } from 
 import { useAuthorizedSrc } from '~/lib/use-authorized-src';
 import { useIsAdmin } from '~/provider/auth';
 import { useBook } from '~/provider/book';
+import { useWithTargetUser } from '~/provider/library-target';
 import { useMyProgress } from '~/provider/progress';
 import { path } from '~/router';
 import { formatSize, hashString } from '~/utils';
@@ -26,6 +27,7 @@ export const BookPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isAdmin] = useIsAdmin();
+  const withTargetUser = useWithTargetUser();
 
   const [book, loading, error] = useBook(id!, true);
   const [progress] = useMyProgress(id!);
@@ -79,7 +81,7 @@ export const BookPage = () => {
   }, [book]);
 
   const coverSrc = useAuthorizedSrc(
-    book?.hasCover ? `/api/books/${encodeURIComponent(book.id)}/cover?width=170` : null
+    book?.hasCover ? withTargetUser(`/api/books/${encodeURIComponent(book.id)}/cover?width=170`) : null
   );
 
   if (loading) {

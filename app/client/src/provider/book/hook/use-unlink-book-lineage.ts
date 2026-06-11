@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
 
 export type UnlinkBookLineage = (documentId: string) => Promise<boolean>;
 export type UseUnlinkBookLineage =
@@ -12,6 +13,7 @@ export type UseUnlinkBookLineage =
 export const useUnlinkBookLineage = (bookId: string): UseUnlinkBookLineage => {
   const [unlinking, setUnlinking] = useState(false);
   const unlinkingRef = useRef(false);
+  const withTargetUser = useWithTargetUser();
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
@@ -23,8 +25,7 @@ export const useUnlinkBookLineage = (bookId: string): UseUnlinkBookLineage => {
       setError(false);
       setErrorMessage(undefined);
       try {
-        const response = await apiFetch(
-          `/api/books/${encodeURIComponent(bookId)}/link/${encodeURIComponent(documentId)}`,
+        const response = await apiFetch(withTargetUser(`/api/books/${encodeURIComponent(bookId)}/link/${encodeURIComponent(documentId)}`),
           { method: 'DELETE' }
         );
         if (response.status !== 204) {
@@ -47,7 +48,7 @@ export const useUnlinkBookLineage = (bookId: string): UseUnlinkBookLineage => {
         setUnlinking(false);
       }
     },
-    [bookId]
+    [bookId, withTargetUser]
   );
 
   return useMemo(

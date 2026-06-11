@@ -1,4 +1,5 @@
 import { useAuthorizedSrc } from '~/lib/use-authorized-src';
+import { useWithTargetUser } from '~/provider/library-target';
 
 import { useStyle } from './style';
 
@@ -12,11 +13,12 @@ interface CoverProps {
 }
 
 export function Cover({ bookId, title, sequence, width, height, thumbnailWidth }: CoverProps) {
+  const withTargetUser = useWithTargetUser();
   const style = useStyle({ sequence, height, width, isGhost: !bookId });
   const url = bookId
     ? thumbnailWidth
-      ? `/api/books/${encodeURIComponent(bookId)}/cover?width=${thumbnailWidth}`
-      : `/api/books/${encodeURIComponent(bookId)}/cover`
+      ? withTargetUser(`/api/books/${encodeURIComponent(bookId)}/cover?width=${thumbnailWidth}`)
+      : withTargetUser(`/api/books/${encodeURIComponent(bookId)}/cover`)
     : null;
   const src = useAuthorizedSrc(url);
 

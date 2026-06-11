@@ -1,6 +1,8 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
 
 import { apiFetch } from '../../../lib/api-fetch';
+import { useWithTargetUser } from '~/provider/library-target';
+
 import { Context as ProgressContext } from '../../progress/context';
 import { Context } from '../context';
 import type { Book } from '../type';
@@ -15,6 +17,7 @@ export type UseRegenChapters = [
 export const useRegenChapters = (): UseRegenChapters => {
   const { setBookList } = useContext(Context);
   const { renameProgressKey } = useContext(ProgressContext);
+  const withTargetUser = useWithTargetUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -27,7 +30,7 @@ export const useRegenChapters = (): UseRegenChapters => {
         setLoading(true);
         setError(false);
         setErrorMessage(undefined);
-        const res = await apiFetch(`/api/books/${encodeURIComponent(id)}/regen-chapters`, {
+        const res = await apiFetch(withTargetUser(`/api/books/${encodeURIComponent(id)}/regen-chapters`), {
           method: 'POST',
         });
         if (!res.ok) throw new Error('Failed to regenerate chapters');
@@ -45,7 +48,7 @@ export const useRegenChapters = (): UseRegenChapters => {
         setLoading(false);
       }
     },
-    [loading, setBookList, renameProgressKey]
+    [withTargetUser, loading, setBookList, renameProgressKey]
   );
 
   return useMemo(
