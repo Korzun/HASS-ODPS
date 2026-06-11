@@ -3,6 +3,7 @@ import { useContext } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeJwt } from '../../lib/test-jwt';
+import { setToken } from '../../lib/token';
 
 import { Context } from './context';
 import { AuthProvider } from './provider';
@@ -118,6 +119,68 @@ describe('AuthProvider', () => {
       await vi.advanceTimersByTimeAsync(4 * 60 * 1000 + 1000); // past exp - 60s
     });
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/refresh', { method: 'POST' });
+  });
+
+  it('picks up a token stored after render (login flow)', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 401 })); // mount refresh fails
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('username')).toHaveTextContent('none');
+
+    act(() => {
+      setToken(
+        makeJwt({
+          sub: 'u1',
+          username: 'alice',
+          isAdmin: false,
+          mustChangePassword: false,
+          exp: futureExp(),
+        })
+      );
+    });
+    await waitFor(() => expect(screen.getByTestId('username')).toHaveTextContent('alice'));
+  });
+
+  it('masks a late wake-up past expiry as loading instead of logged-out', async () => {
+    vi.useFakeTimers();
+    const exp = Math.floor(Date.now() / 1000) + 300;
+    localStorage.setItem(
+      'accessToken',
+      makeJwt({ sub: 'u1', username: 'alice', isAdmin: false, mustChangePassword: false, exp })
+    );
+    let release!: (r: Response) => void;
+    fetchMock.mockReturnValueOnce(new Promise<Response>((resolve) => (release = resolve)));
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    // Simulate tab sleep: clock jumps past exp before the timer can fire.
+    act(() => {
+      vi.setSystemTime(Date.now() + 400 * 1000);
+    });
+    // Drain the proactive timer (armed at exp-60s ≈ 240s out). With the system
+    // clock already past exp, isExpired(claims) is true at fire time.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300 * 1000);
+    });
+    expect(screen.getByTestId('loading')).toHaveTextContent('true'); // masked, no bounce
+    const next = makeJwt({
+      sub: 'u1',
+      username: 'alice',
+      isAdmin: false,
+      mustChangePassword: false,
+      exp: Math.floor(Date.now() / 1000) + 900,
+    });
+    await act(async () => {
+      release(new Response(JSON.stringify({ accessToken: next }), { status: 200 }));
+    });
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('username')).toHaveTextContent('alice');
   });
 
   it('treats a malformed stored token as logged-out (after refresh fails)', async () => {
