@@ -101,8 +101,10 @@ covers serve only that user's library. The admin config account cannot use OPDS
 
 ### KOSync
 
-Untouched. Progress is already per-user and documents are content hashes that
-survive the migration.
+Behavior unchanged. Progress is already per-user and documents are content
+hashes that survive the migration. The only code edit: the routes pass the
+authenticated user's ID to `resolveBookId`, since lineage chains are now
+scoped per user.
 
 ### Error handling
 
