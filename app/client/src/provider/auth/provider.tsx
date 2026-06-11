@@ -17,10 +17,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Loading is only meaningful for the mount-time silent refresh: if a valid
   // token is already present at mount there is nothing to wait for, so start
   // false. Otherwise stay true until the bootstrap refresh attempt resolves.
-  // Deriving the initial value here (instead of always-true + a synchronous
-  // setLoading in the effect) keeps the react-hooks rules satisfied without
-  // any suppression.
-  const [loading, setLoading] = useState(() => !hasValidToken(getToken()));
+  // Derived from `token` (already assigned above) so we read localStorage once
+  // and avoid an always-true + synchronous setLoading in the effect, keeping
+  // the react-hooks rules satisfied without any suppression.
+  const [loading, setLoading] = useState(!hasValidToken(token));
 
   // Keep state in sync with localStorage writes from lib/token (login,
   // logout, apiFetch refreshes) — they all dispatch TOKEN_CHANGED_EVENT.
@@ -35,10 +35,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // First render only: with no valid token, silently try one refresh — the
   // httpOnly refresh cookie may still be good (keeps logins across browser
-  // restarts). Ref-guarded so the effect body runs once even though its deps
-  // are complete (project rule: no eslint-disable; react-hooks rules stay on).
-  // setLoading runs only in the async .finally callback, never synchronously
-  // in the effect body, so it does not trip react-hooks/set-state-in-effect.
+  // restarts). Runs once via the ref guard; deps stay complete so the
+  // react-hooks rules are satisfied. setLoading only fires in the async
+  // .finally, never synchronously in the effect body.
   const bootstrapped = useRef(false);
   useEffect(() => {
     if (bootstrapped.current || valid) return;
@@ -56,7 +55,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     if (!valid || !claims) return;
     const delay = Math.max(claims.exp * 1000 - Date.now() - 60_000, 0);
-    const timer = setTimeout(() => void refreshAccessToken(), delay);
+    const timer = setTimeout(() => {
+      if (isExpired(claims)) {
+        // Woke past expiry (tab sleep): mask the expired window as loading so
+        // route guards don't bounce to /login while the refresh is in flight.
+        setLoading(true);
+      }
+      void refreshAccessToken().finally(() => setLoading(false));
+    }, delay);
     return () => clearTimeout(timer);
   }, [claims, valid]);
 
