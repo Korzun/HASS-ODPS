@@ -28,7 +28,7 @@ describe('MyProgressRow', () => {
   let mockDelete: (bookId: string) => Promise<boolean>;
 
   beforeEach(() => {
-    mockDelete = vi.fn<(bookId: string) => Promise<boolean>>();
+    mockDelete = vi.fn<(bookId: string) => Promise<boolean>>().mockResolvedValue(true);
     vi.mocked(useBook).mockReturnValue([mockBook, false, false, undefined]);
     vi.mocked(useMyProgress).mockReturnValue([mockProgress, false, false, undefined]);
     vi.mocked(useDeleteMyProgress).mockReturnValue([mockDelete, false, false, undefined]);
@@ -76,12 +76,7 @@ describe('MyProgressRow', () => {
   });
 
   it('shows an error toast when delete fails', async () => {
-    vi.mocked(useDeleteMyProgress).mockReturnValue([
-      mockDelete,
-      false,
-      true,
-      'Failed to clear progress',
-    ]);
+    mockDelete.mockResolvedValue(false);
     const user = userEvent.setup();
     renderWithProviders(<MyProgressRow bookId="book-1" />);
     await user.click(screen.getByRole('button', { name: /clear/i }));
