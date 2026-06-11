@@ -1,26 +1,26 @@
 import { useCallback, useState } from 'react';
 
-import { Card, Page, Toast } from '~/component';
+import { Card, Page } from '~/component';
 import { Button, TextInput } from '~/control';
 import { BooksIcon } from '~/icon';
 import { useAuthRefresh } from '~/provider/auth';
+import { useToast } from '~/provider/toast';
 
 import { useStyle } from './style';
 
 export const LoginPage = () => {
   const styles = useStyle();
   const refetch = useAuthRefresh();
+  const showToast = useToast();
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | undefined>();
-  const handleDismissError = useCallback(() => setError(undefined), []);
-
   const [username, setUsername] = useState<string | undefined>();
+  const [password, setPassword] = useState<string | undefined>();
+
   const handleUsernameChange = useCallback((newUsername: string | undefined) => {
     setUsername(newUsername);
   }, []);
 
-  const [password, setPassword] = useState<string | undefined>();
   const handlePasswordChange = useCallback((newPassword: string | undefined) => {
     setPassword(newPassword);
   }, []);
@@ -28,7 +28,6 @@ export const LoginPage = () => {
   const handleLogin = useCallback(async () => {
     try {
       setLoading(true);
-      setError(undefined);
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -37,14 +36,14 @@ export const LoginPage = () => {
       if (response.ok) {
         await refetch();
       } else {
-        setError('Invalid credentials');
+        showToast('Invalid credentials', 'error');
       }
     } catch {
-      setError('Network error — please try again');
+      showToast('Network error — please try again', 'error');
     } finally {
       setLoading(false);
     }
-  }, [username, password, refetch]);
+  }, [username, password, refetch, showToast]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -85,7 +84,6 @@ export const LoginPage = () => {
           </Button>
         </Card>
       </div>
-      {error && <Toast message={error} type="error" onDismiss={handleDismissError} />}
     </Page>
   );
 };

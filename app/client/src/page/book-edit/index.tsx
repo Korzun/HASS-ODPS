@@ -1,20 +1,24 @@
-import { useCallback, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { BookEditForm, Page, Toast } from '~/component';
+import { BookEditForm, Page } from '~/component';
 import { useBook } from '~/provider/book';
+import { useToast } from '~/provider/toast';
 
 import { useStyle } from './style';
 
 export const BookEditPage = () => {
   const { id } = useParams<{ id: string }>();
   const styles = useStyle();
+  const showToast = useToast();
 
   const [original, loading, hasError, errorMessage] = useBook(id!);
-  const [dismissedError, setDismissedError] = useState<string | undefined>();
-  const handleDismissError = useCallback(() => setDismissedError(errorMessage), [errorMessage]);
-  const toastError =
-    errorMessage !== undefined && errorMessage !== dismissedError ? errorMessage : undefined;
+
+  useEffect(() => {
+    if (errorMessage !== undefined) {
+      showToast(errorMessage, 'error');
+    }
+  }, [errorMessage, showToast]);
 
   if (loading) {
     return (
@@ -36,7 +40,6 @@ export const BookEditPage = () => {
 
   return (
     <Page>
-      {toastError && <Toast message={toastError} type="error" onDismiss={handleDismissError} />}
       <BookEditForm key={id} original={original} id={id!} />
     </Page>
   );
