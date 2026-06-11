@@ -2,6 +2,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserStore } from '../services/user-store';
 import { logger } from '../logger';
+import { verifyAccessToken, AuthUser } from '../services/jwt';
+
+export type { AuthUser };
 
 const log = logger('Auth');
 
@@ -73,9 +76,64 @@ export function sessionAuth(req: Request, res: Response, next: NextFunction): vo
   }
 }
 
-/** Admin-only gate — must run after sessionAuth. Returns 403 for non-admin sessions. */
+/** Bearer-JWT auth for the web UI/API. Attaches req.user on success. */
+export function jwtAuth(secret: Buffer) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const header = req.headers.authorization;
+    if (!header?.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const user = verifyAccessToken(secret, header.slice(7));
+    if (!user) {
+      log.debug('JWT auth rejected — invalid or expired token');
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    req.user = user;
+    next();
+  };
+}
+
+/**
+ * Blocks API access while a password change is pending. Runs before
+ * route-level jwtAuth, so it verifies the token itself; requests without a
+ * valid token pass through for jwtAuth to reject.
+ */
+export function passwordChangeGate(secret: Buffer) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (
+      !req.path.startsWith('/api/') ||
+      req.path === '/api/login' ||
+      req.path.startsWith('/api/auth/') ||
+      req.path === '/api/my/password'
+    ) {
+      next();
+      return;
+    }
+    const header = req.headers.authorization;
+    if (!header?.startsWith('Bearer ')) {
+      next();
+      return;
+    }
+    const user = verifyAccessToken(secret, header.slice(7));
+    if (user?.mustChangePassword) {
+      res.status(403).json({ error: 'Password change required' });
+      return;
+    }
+    next();
+  };
+}
+
+/**
+ * Admin-only gate — must run after jwtAuth. Returns 403 for non-admins.
+ * The req.session fallback is transitional while routes migrate off sessions
+ * (removed in the cleanup task at the end of the JWT migration).
+ */
 export function adminAuth(req: Request, res: Response, next: NextFunction): void {
-  if (!req.session.isAdmin) {
+  // req.session fallback is transitional while routes migrate off sessions
+  // (removed in the cleanup task at the end of the JWT migration).
+  if (!req.user?.isAdmin && !req.session?.isAdmin) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }

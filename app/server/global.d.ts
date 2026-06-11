@@ -15,6 +15,7 @@ declare global {
     interface Request {
       kosyncUser?: string;
       kosyncUserId?: string;
+      user?: import('./services/jwt').AuthUser;
     }
   }
 }
