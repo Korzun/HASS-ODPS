@@ -9,6 +9,9 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     minHeight: '100vh',
     backgroundColor: theme.color.bg.page,
     padding: `0 ${theme.space.xxl}`,
+    [theme.breakpoint.mobile]: {
+      padding: `0 ${theme.space.xxl}`,
+    },
   },
   title: {
     margin: `0 0 ${theme.space.xxxxl}`,
