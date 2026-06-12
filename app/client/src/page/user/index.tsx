@@ -18,23 +18,23 @@ export const UserPage = () => {
 
   return (
     <Page>
-      <Button loading={loggingOut} onClick={handleLogout} danger>
-        Log out
-      </Button>
       {mustChangePassword && (
         <div className={styles.banner}>You must change your password before continuing.</div>
       )}
       {!isAdmin && (
         <Fragment>
-          <UserChangePassword />
           {!mustChangePassword && (
             <Fragment>
               <SyncPassword />
               <MyProgress />
             </Fragment>
           )}
+          <UserChangePassword />
         </Fragment>
       )}
+      <Button loading={loggingOut} onClick={handleLogout} danger>
+        Log out
+      </Button>
     </Page>
   );
 };
