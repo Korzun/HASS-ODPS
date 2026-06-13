@@ -296,6 +296,9 @@ function decodeEntities(text: string): string {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
 }
 
+const ISO_8601_RE =
+  /^\d{4}(-\d{2}(-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?)?)?$/;
+
 function inferScheme(value: string): string {
   const lower = value.toLowerCase();
   if (lower.startsWith('urn:isbn:') || lower.startsWith('isbn:')) return 'ISBN';
@@ -437,19 +440,25 @@ export function parseEpub(filePath: string): EpubMeta {
   const series = calibreSeries || pickLang(collectionCandidates);
   const seriesIndex = calibreSeriesIndex || groupPosition;
 
-  // file-as: prefer dc:title attribute (EPUB 2 / Calibre), fall back to dc:creator file-as, then EPUB 3 <meta refines>
-  const attrFileAs = titleCandidate.text ? titleCandidate.fileAs : '';
-  const creatorFileAs = creatorCandidate.fileAs;
+  // titleSort: dc:title file-as only; EPUB 3 <meta refines> fallback for the title element
+  const attrTitleSort = titleCandidate.text ? titleCandidate.fileAs : '';
   const refinesMeta =
-    !attrFileAs && !creatorFileAs && titleCandidate.id
+    !attrTitleSort && titleCandidate.id
       ? metas.find(
           (m) => m['@_property'] === 'file-as' && m['@_refines'] === `#${titleCandidate.id}`
         )
       : undefined;
-  const fileAs =
-    attrFileAs ||
-    creatorFileAs ||
+  const titleSort =
+    attrTitleSort ||
     (refinesMeta ? decodeEntities((refinesMeta['#text'] ?? '').trim()) : '');
+
+  // authorSort: dc:creator file-as only; no fallback to title
+  const authorSort = creatorCandidate.fileAs;
+
+  // publishDate: dc:date, validated as ISO 8601; discard invalid values
+  const rawDate =
+    typeof metadata['dc:date'] === 'string' ? metadata['dc:date'].trim() : '';
+  const publishDate = ISO_8601_RE.test(rawDate) ? rawDate : '';
 
   // Step 4: cover image
   let coverData: Buffer | null = null;
@@ -488,7 +497,9 @@ export function parseEpub(filePath: string): EpubMeta {
 
   return {
     title,
-    fileAs,
+    titleSort,
+    authorSort,
+    publishDate,
     author,
     description,
     publisher,

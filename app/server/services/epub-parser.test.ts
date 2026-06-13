@@ -307,7 +307,9 @@ describe('parseEpub', () => {
     expect(meta.seriesIndex).toBe(0);
     expect(meta.coverData).toBeNull();
     expect(meta.coverMime).toBeNull();
-    expect(meta.fileAs).toBe('');
+    expect(meta.titleSort).toBe('');
+    expect(meta.authorSort).toBe('');
+    expect(meta.publishDate).toBe('');
   });
 
   it('falls back to filename stem when title absent', () => {
@@ -336,17 +338,19 @@ describe('parseEpub', () => {
     const meta = parseEpub(filePath);
 
     expect(meta.title).toBe('I, Robot');
-    expect(meta.fileAs).toBe('Asimov, Isaac');
+    expect(meta.titleSort).toBe('Asimov, Isaac');
+    expect(meta.authorSort).toBe('');
   });
 
-  it('returns an empty fileAs when the chosen title has no file-as attribute', () => {
+  it('returns empty titleSort when the chosen title has no file-as attribute', () => {
     const filePath = path.join(tmpDir, 'plain-title.epub');
     fs.writeFileSync(filePath, makeEpub({ title: 'Plain Title' }));
 
     const meta = parseEpub(filePath);
 
     expect(meta.title).toBe('Plain Title');
-    expect(meta.fileAs).toBe('');
+    expect(meta.titleSort).toBe('');
+    expect(meta.authorSort).toBe('');
   });
 
   it('parses file-as from an opf namespace attribute', () => {
@@ -368,7 +372,8 @@ describe('parseEpub', () => {
     const meta = parseEpub(filePath);
 
     expect(meta.title).toBe('I, Robot');
-    expect(meta.fileAs).toBe('Asimov, Isaac');
+    expect(meta.titleSort).toBe('Asimov, Isaac');
+    expect(meta.authorSort).toBe('');
   });
 
   it('parses file-as from an EPUB 3 <meta refines> element', () => {
@@ -391,7 +396,122 @@ describe('parseEpub', () => {
     const meta = parseEpub(filePath);
 
     expect(meta.title).toBe('Foundation');
-    expect(meta.fileAs).toBe('Asimov, Isaac');
+    expect(meta.titleSort).toBe('Asimov, Isaac');
+    expect(meta.authorSort).toBe('');
+  });
+
+  it('parses authorSort from dc:creator file-as attribute independently', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Foundation</dc:title>
+    <dc:creator file-as="Asimov, Isaac">Isaac Asimov</dc:creator>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'foundation-creator-fileas.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    const meta = parseEpub(filePath);
+
+    expect(meta.author).toBe('Isaac Asimov');
+    expect(meta.authorSort).toBe('Asimov, Isaac');
+    expect(meta.titleSort).toBe('');
+  });
+
+  it('does not fall back to authorSort when titleSort is absent', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>No Title Sort</dc:title>
+    <dc:creator file-as="Sort, Author">Author Name</dc:creator>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'no-title-sort.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    const meta = parseEpub(filePath);
+
+    expect(meta.titleSort).toBe('');
+    expect(meta.authorSort).toBe('Sort, Author');
+  });
+
+  it('parses a valid ISO 8601 date from dc:date', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Dated Book</dc:title>
+    <dc:date>2001-01-16</dc:date>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'dated.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    expect(parseEpub(filePath).publishDate).toBe('2001-01-16');
+  });
+
+  it('accepts partial ISO 8601 dates (year only, year-month)', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Year Book</dc:title>
+    <dc:date>2001</dc:date>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'year-only.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    expect(parseEpub(filePath).publishDate).toBe('2001');
+  });
+
+  it('discards an invalid dc:date value and returns empty string', () => {
+    const zip = new AdmZip();
+    zip.addFile('META-INF/container.xml', Buffer.from(sharedContainerXml));
+    zip.addFile(
+      'OEBPS/content.opf',
+      Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Bad Date Book</dc:title>
+    <dc:date>not-a-date</dc:date>
+  </metadata>
+  <manifest/><spine/>
+</package>`)
+    );
+    const filePath = path.join(tmpDir, 'bad-date.epub');
+    fs.writeFileSync(filePath, zip.toBuffer());
+
+    expect(parseEpub(filePath).publishDate).toBe('');
+  });
+
+  it('returns empty publishDate when dc:date is absent', () => {
+    const filePath = path.join(tmpDir, 'no-date.epub');
+    fs.writeFileSync(filePath, makeEpub({ title: 'No Date' }));
+
+    expect(parseEpub(filePath).publishDate).toBe('');
   });
 
   it('parses cover image', () => {
