@@ -18,6 +18,7 @@ model Book {
   publisher       String          @default("")
   series          String          @default("")
   seriesIndex     Float           @default(0) @map("series_index")
+  seriesId        String?         @map("series_id")
   identifiers     String          @default("[]")
   subjects        String          @default("[]")
   coverData       Bytes?          @map("cover_data")
@@ -30,10 +31,23 @@ model Book {
   chapterNames    String?         @map("chapter_names")
   pageCount       Int             @default(0) @map("page_count")
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seriesRel       Series?         @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   thumbnails      BookThumbnail[]
 
   @@id([userId, id])
   @@map("books")
+}
+
+model Series {
+  id      String @id
+  userId  String @map("user_id")
+  name    String
+  sortKey String @map("sort_key")
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books   Book[]
+
+  @@unique([userId, name])
+  @@map("series")
 }
 
 model BookThumbnail {
@@ -49,15 +63,16 @@ model BookThumbnail {
 }
 
 model User {
-  id                 String         @id
-  username           String         @unique
-  passwordHash       String?        @map("password_hash")
-  syncPassword       String?        @map("sync_password")
-  mustChangePassword Boolean        @default(false) @map("must_change_password")
+  id                 String            @id
+  username           String            @unique
+  passwordHash       String?           @map("password_hash")
+  syncPassword       String?           @map("sync_password")
+  mustChangePassword Boolean           @default(false) @map("must_change_password")
   progresses         Progress[]
   progressHistories  ProgressHistory[]
   refreshTokens      RefreshToken[]
   books              Book[]
+  series             Series[]
 
   @@map("users")
 }
