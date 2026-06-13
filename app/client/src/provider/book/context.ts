@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { BookList } from './type';
+import type { BookList, DisplayUnit } from './type';
 
 export type BookContext = {
   bookList: BookList;
@@ -10,6 +10,8 @@ export type BookContext = {
   loadingByBookId: Record<string, boolean>;
   errorByBookId: Record<string, string | undefined>;
   completeBookIds: Set<string>;
+  bookListItems: DisplayUnit[];
+  nextCursor: string | null;
   setBookList: (updater: (prev: BookList) => BookList) => void;
   setBookListFetched: (fetched: boolean) => void;
   setBookListLoading: (loading: boolean) => void;
@@ -18,6 +20,8 @@ export type BookContext = {
   setErrorForBook: (bookId: string, error: string | undefined) => void;
   setBookComplete: (bookId: string) => void;
   clearCompleteBookIds: () => void;
+  setBookListItems: (updater: (prev: DisplayUnit[]) => DisplayUnit[]) => void;
+  setNextCursor: (cursor: string | null) => void;
 };
 
 export const Context = createContext<BookContext>({
@@ -28,6 +32,8 @@ export const Context = createContext<BookContext>({
   loadingByBookId: {},
   errorByBookId: {},
   completeBookIds: new Set(),
+  bookListItems: [],
+  nextCursor: null,
   setBookList: () => {},
   setBookListFetched: () => {},
   setBookListLoading: () => {},
@@ -36,4 +42,6 @@ export const Context = createContext<BookContext>({
   setErrorForBook: () => {},
   setBookComplete: () => {},
   clearCompleteBookIds: () => {},
+  setBookListItems: () => {},
+  setNextCursor: () => {},
 });
