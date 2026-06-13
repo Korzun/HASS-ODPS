@@ -4,6 +4,9 @@ import argon2 from 'argon2';
 import { Owner, Progress } from '../types';
 import { generateUserId } from '../utils/id';
 import { WORDLIST } from './wordlist';
+import { logger } from '../logger';
+
+const log = logger('UserStore');
 
 const LOGIN_PASSWORD_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 const LOGIN_PASSWORD_LENGTH = 16;
@@ -212,6 +215,33 @@ export class UserStore {
         timestamp,
       },
     });
+    try {
+      const recent = await this.prisma.progressHistory.findFirst({
+        where: { userId, document: p.document, progress: p.progress, deviceId: p.device_id },
+        orderBy: { endTimestamp: 'desc' },
+      });
+      if (recent && timestamp - recent.endTimestamp <= 600) {
+        await this.prisma.progressHistory.update({
+          where: { id: recent.id },
+          data: { endTimestamp: timestamp },
+        });
+      } else {
+        await this.prisma.progressHistory.create({
+          data: {
+            userId,
+            document: p.document,
+            progress: p.progress,
+            percentage: p.percentage,
+            device: p.device,
+            deviceId: p.device_id,
+            startTimestamp: timestamp,
+            endTimestamp: timestamp,
+          },
+        });
+      }
+    } catch (err) {
+      log.warn(`Progress history write failed for user ${userId}: ${String(err)}`);
+    }
     return { ...p, timestamp };
   }
 
