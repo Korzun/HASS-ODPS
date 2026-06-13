@@ -541,8 +541,7 @@ export async function runMigrations(prisma: PrismaClient, booksDir: string): Pro
         SELECT id FROM series WHERE user_id = ${user_id} AND name = ${series}
       `;
       if (existing.length === 0) {
-        const { randomUUID } = await import('crypto');
-        const id = randomUUID();
+        const id = crypto.randomUUID();
         await prisma.$executeRaw`
           INSERT INTO series (id, user_id, name, sort_key) VALUES (${id}, ${user_id}, ${series}, ${series})
         `;
