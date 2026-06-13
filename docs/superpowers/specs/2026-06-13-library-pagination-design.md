@@ -43,9 +43,10 @@ The existing `series: String` field on `Book` is kept unchanged. It remains the 
 | Operation | Series side-effect |
 |---|---|
 | `addBook` | If `meta.series` is non-empty, upsert a `Series` row; set `book.seriesId` |
-| `reimportBook` | If the series name changed, clean up the old Series row (if empty) and upsert/reassign the new one |
+| `reimportBook` | If the series name changed, clean up the old Series row (if now empty) and upsert/reassign the new one |
 | `deleteBook` | If the deleted book was the last in its series, delete the `Series` row |
-| `scan` | Backfill `Series` rows for existing books that have a non-empty `series` string and no `seriesId` yet |
+
+The Prisma migration SQL backfills `Series` rows for all existing books that have a non-empty `series` string, so no application-level scan is needed on upgrade.
 
 ---
 
@@ -75,9 +76,16 @@ Both parameters are optional. When either is present, the paginated response sha
 ```
 
 - `items` — ordered display units for this page, capped at `take` (default 20)
-- `books` — flat array of all book summaries needed to render the items: one entry per standalone book, plus all books belonging to every series in this page
+- `books` — flat array of `BookSummary` objects needed to render the items. `BookSummary` is the existing `GET /api/books` field set: all `Book` fields except `path`, `description`, `identifiers`, `subjects`, `addedAt`, `chapterSpineMap`, and `chapterNames`. One entry per standalone book, plus all books belonging to every series in this page.
 - `nextCursor` — base64-encoded sort key of the last display unit; `null` when the library is exhausted
 - Series are always complete: if a series appears in `items`, every book in that series is included in `books`
+
+**`DisplayUnit` type:**
+```ts
+type DisplayUnit =
+  | { type: 'standalone'; bookId: string }
+  | { type: 'series'; seriesName: string };
+```
 
 ### Query logic (`BookStore.listBooksPage`)
 
@@ -103,7 +111,7 @@ The cursor is the `sortKey` of the last display unit on the current page.
 |---|---|---|
 | `bookListItems` | `DisplayUnit[]` | Ordered display units; grows as pages load |
 | `nextCursor` | `string \| null` | Cursor for the next page fetch |
-| `hasMore` | `boolean` | False when `nextCursor` is null and first page has loaded |
+| `hasMore` | `boolean` | True while `nextCursor` is non-null |
 
 The existing `bookList: Record<id, Book>` flat dict is retained. Books from each page are merged into it incrementally.
 
