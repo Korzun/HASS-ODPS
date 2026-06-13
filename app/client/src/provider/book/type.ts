@@ -25,3 +25,13 @@ export type Identifier = { scheme: string; value: string };
 export type Series = Record<string, BookList>;
 
 export type UploadResult = { uploaded: string[] };
+
+export type DisplayUnit =
+  | { type: 'standalone'; bookId: string }
+  | { type: 'series'; seriesName: string };
+
+export type PagedBookListResponse = {
+  items: DisplayUnit[];
+  books: Book[];
+  nextCursor: string | null;
+};
