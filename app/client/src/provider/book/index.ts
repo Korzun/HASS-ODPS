@@ -7,6 +7,7 @@ export {
   useFetchBook,
   useFetchBookList,
   useFetchNextPage,
+  useLibrarySubjects,
   usePatchBookMetadata,
   useRegenChapters,
   useScanLibrary,
