@@ -15,6 +15,7 @@ export const useFetchNextPage = (): FetchNextPage => {
     nextCursor,
     bookList,
     completeBookIds,
+    bookListFilter,
     setBookList,
     setBookListLoading,
     setBookListError,
@@ -33,7 +34,12 @@ export const useFetchNextPage = (): FetchNextPage => {
     setBookListLoading(true);
     setBookListError(undefined);
     try {
-      const url = withTargetUser(`/api/books?cursor=${encodeURIComponent(nextCursor)}&take=20`);
+      const params = new URLSearchParams();
+      params.append('cursor', nextCursor);
+      if (bookListFilter.type) params.append('type', bookListFilter.type);
+      if (bookListFilter.status) params.append('status', bookListFilter.status);
+      params.append('take', '20');
+      const url = withTargetUser(`/api/books?${params.toString()}`);
       const response = await apiFetch(url);
       if (!response.ok) throw new Error('Failed to fetch books');
       const {
@@ -68,6 +74,7 @@ export const useFetchNextPage = (): FetchNextPage => {
     nextCursor,
     bookList,
     completeBookIds,
+    bookListFilter,
     setBookList,
     setBookListLoading,
     setBookListError,

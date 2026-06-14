@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Context } from '../context';
-import type { Book, BookList, DisplayUnit, PagedBookListResponse } from '../type';
+import type { Book, BookList, BookListFilter, DisplayUnit, PagedBookListResponse } from '../type';
 
 import { useFetchNextPage } from './use-fetch-next-page';
 
@@ -33,6 +33,7 @@ function makeWrapper({
   bookListLoading = false,
   initialBooks = {} as BookList,
   initialItems = [] as DisplayUnit[],
+  bookListFilter = {} as BookListFilter,
   onSetBookList = vi.fn(),
   onSetBookListItems = vi.fn(),
   onSetNextCursor = vi.fn(),
@@ -78,7 +79,7 @@ function makeWrapper({
           clearCompleteBookIds: () => {},
           setBookListItems,
           setNextCursor: onSetNextCursor,
-          bookListFilter: {},
+          bookListFilter,
           setBookListFilter: () => {},
         }}
       >
@@ -189,5 +190,45 @@ describe('useFetchNextPage', () => {
     });
     await act(() => result.current());
     expect(onSetBookListError).toHaveBeenCalledWith('Failed to fetch books');
+  });
+
+  it('appends type filter param to next-page URL', async () => {
+    const cursor = btoa('Book A');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: (): Promise<PagedBookListResponse> =>
+          Promise.resolve({ items: [], books: [], nextCursor: null }),
+      })
+    );
+    const { result } = renderHook(() => useFetchNextPage(), {
+      wrapper: makeWrapper({ nextCursor: cursor, bookListFilter: { type: 'series' } }),
+    });
+    await act(() => result.current());
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/books?cursor=${encodeURIComponent(cursor)}&type=series&take=20`,
+      {}
+    );
+  });
+
+  it('appends status filter param to next-page URL', async () => {
+    const cursor = btoa('Book A');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: (): Promise<PagedBookListResponse> =>
+          Promise.resolve({ items: [], books: [], nextCursor: null }),
+      })
+    );
+    const { result } = renderHook(() => useFetchNextPage(), {
+      wrapper: makeWrapper({ nextCursor: cursor, bookListFilter: { status: 'completed' } }),
+    });
+    await act(() => result.current());
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/books?cursor=${encodeURIComponent(cursor)}&status=completed&take=20`,
+      {}
+    );
   });
 });
