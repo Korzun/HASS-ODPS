@@ -2,7 +2,7 @@ import { Fragment, useCallback, useState } from 'react';
 
 import { Card } from '~/component';
 import { Button, ConfirmModal } from '~/control';
-import { AlertOctagonIcon } from '~/icon';
+import { AlertOctagonIcon, CheckIcon, KeyIcon } from '~/icon';
 import { useToast } from '~/provider/toast';
 import { useRegenerateSyncPassword, useSyncPassword } from '~/provider/user';
 
@@ -55,11 +55,23 @@ export const SyncPassword = () => {
       <Card title="Sync password" headerAction={regenerateElement}>
         {fetchError && <div>Failed to load sync password.</div>}
         {!fetchError && (
-          <div className={styles.row}>
+          <div className={styles.pill}>
+            <KeyIcon className={styles.pillIcon} width={14} height={14} />
             <span className={styles.password}>{loadingFetch ? '…' : (displayPassword ?? '—')}</span>
-            <Button type="default" disabled={!displayPassword || loadingFetch} onClick={handleCopy}>
-              {copied ? 'Copied!' : 'Copy'}
-            </Button>
+            {copied ? (
+              <div className={styles.copiedBadge}>
+                <CheckIcon width={12} height={12} />
+                Copied!
+              </div>
+            ) : (
+              <Button
+                type="default"
+                disabled={!displayPassword || loadingFetch}
+                onClick={handleCopy}
+              >
+                Copy
+              </Button>
+            )}
           </div>
         )}
       </Card>
