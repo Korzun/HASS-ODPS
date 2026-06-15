@@ -74,7 +74,9 @@ export const LibraryPage = () => {
             {isFilterActive ? 'No books match these filters' : 'Your library is empty'}
           </div>
           <div className={style.emptyStateSubtitle}>
-            {isFilterActive ? 'Try adjusting or clearing the filters above' : 'No books have been added yet'}
+            {isFilterActive
+              ? 'Try adjusting or clearing the filters above'
+              : 'No books have been added yet'}
           </div>
         </div>
       ) : (
