@@ -68,7 +68,7 @@ export const FieldList = ({
           </div>
         ))}
       </div>
-      <Button type="dashed" onClick={onAdd}>
+      <Button type="dashed" onClick={onAdd} radius="card">
         {addLabel}
       </Button>
     </div>

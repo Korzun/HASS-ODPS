@@ -17,8 +17,16 @@ export enum ButtonType {
   Dashed = 'dashed',
 }
 
+export type ButtonRadiusValue = 'background' | 'card' | 'modal';
+export enum ButtonRadius {
+  Background = 'background',
+  Card = 'card',
+  Modal = 'modal',
+}
+
 export type StyleProps = {
   type: ButtonType;
+  radius?: ButtonRadius;
 };
 
 export const useStyle = createUseStyles((theme: Theme) => ({
@@ -32,7 +40,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     borderColor: 'transparent',
     borderStyle: 'solid',
     borderWidth: '1px',
-    borderRadius: theme.radius.md,
     padding: `${theme.space.md} ${theme.space.xxl}`,
     cursor: 'pointer',
     fontSize: '0.80rem', // button-specific size; not on the global fontSize scale
@@ -42,6 +49,16 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     transitionDuration: '0.1s',
     transitionTimingFunction: 'ease-in',
     '&:hover, &:focus, &:active': { transitionDuration: '0s' },
+  },
+
+  [ButtonRadius.Background]: {
+    borderRadius: theme.radius.lg,
+  },
+  [ButtonRadius.Card]: {
+    borderRadius: theme.radius.md,
+  },
+  [ButtonRadius.Modal]: {
+    borderRadius: theme.radius.md,
   },
 
   [ButtonType.Default]: {

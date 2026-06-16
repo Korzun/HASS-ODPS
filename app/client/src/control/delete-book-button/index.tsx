@@ -5,16 +5,17 @@ import { AlertOctagonIcon } from '~/icon';
 import { useBook, useDeleteBook } from '~/provider/book';
 import { path } from '~/router';
 
-import { Button } from '../button';
+import { Button, ButtonRadiusValue } from '../button';
 import { ConfirmModal } from '../confirm-modal';
 
 import { useStyle } from './style';
 
 interface DeleteBookButton {
   bookId: string;
+  radius?: ButtonRadiusValue;
 }
 
-export function DeleteBookButton({ bookId }: DeleteBookButton) {
+export function DeleteBookButton({ bookId, radius }: DeleteBookButton) {
   const style = useStyle();
 
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export function DeleteBookButton({ bookId }: DeleteBookButton) {
 
   return (
     <Fragment>
-      <Button onClick={handleDelete} danger>
+      <Button onClick={handleDelete} danger radius={radius}>
         Delete book
       </Button>
       <ConfirmModal

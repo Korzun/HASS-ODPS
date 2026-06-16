@@ -139,7 +139,7 @@ export function LinkProgressModal({
           )}
         </div>
         <div className={styles.footer}>
-          <Button type="text" onClick={handleCancel}>
+          <Button type="text" onClick={handleCancel} radius="modal">
             Cancel
           </Button>
           <Button
@@ -149,6 +149,7 @@ export function LinkProgressModal({
             }
             loading={linking}
             onClick={handleConfirm}
+            radius="modal"
           >
             Link
           </Button>
