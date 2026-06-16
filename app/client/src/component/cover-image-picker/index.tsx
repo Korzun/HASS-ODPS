@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { Card } from '~/component/card';
 import { Button } from '~/control';
@@ -14,17 +14,16 @@ interface Props {
 export const CoverImagePicker = ({ value, onChange }: Props) => {
   const styles = useStyle();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>(undefined);
 
+  // Derive the object URL from `value` as memoised data — no intermediate state needed.
+  const thumbnailUrl = useMemo(() => (value ? URL.createObjectURL(value) : undefined), [value]);
+
+  // Revoke the URL when it changes or the component unmounts.
   useEffect(() => {
-    if (!value) {
-      setThumbnailUrl(undefined);
-      return;
-    }
-    const url = URL.createObjectURL(value);
-    setThumbnailUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [value]);
+    return () => {
+      if (thumbnailUrl) URL.revokeObjectURL(thumbnailUrl);
+    };
+  }, [thumbnailUrl]);
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
