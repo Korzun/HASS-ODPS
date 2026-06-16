@@ -59,13 +59,19 @@ export function PasswordResultModal({
           </p>
           <div className={styles.row}>
             <span className={styles.password}>{password ?? '—'}</span>
-            <Button type="default" disabled={!password} onClick={handleCopy}>
+            <Button
+              type="default"
+              disabled={!password}
+              onClick={handleCopy}
+              radius="modal"
+              success={copied}
+            >
               {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </div>
         <div className={styles.footer}>
-          <Button onClick={handleDone} type="primary">
+          <Button onClick={handleDone} type="primary" radius="modal">
             Done
           </Button>
         </div>

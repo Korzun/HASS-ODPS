@@ -132,7 +132,7 @@ export function SetProgressModal({
           </div>
         )}
         <div className={styles.footer}>
-          <Button type="text" onClick={handleCancel}>
+          <Button type="text" onClick={handleCancel} radius="modal">
             Cancel
           </Button>
           <Button
@@ -141,6 +141,7 @@ export function SetProgressModal({
             loading={isBusy}
             disabled={isBusy || isNoop}
             onClick={handleConfirm}
+            radius="modal"
           >
             {isClearing ? 'Clear Progress' : isCompleted ? 'Mark Complete' : 'Save Progress'}
           </Button>

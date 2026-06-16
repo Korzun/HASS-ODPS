@@ -83,7 +83,7 @@ export const LoginPage = () => {
               value={password}
             />
           </div>
-          <Button loading={loading} type="primary" onClick={handleLogin}>
+          <Button loading={loading} type="primary" onClick={handleLogin} radius="card">
             Sign In
           </Button>
         </Card>

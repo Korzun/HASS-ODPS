@@ -64,6 +64,7 @@ export const SyncPassword = () => {
               prefix={copied ? CheckIcon : undefined}
               disabled={regenerating || (!copied && (!displayPassword || loadingFetch))}
               onClick={handleCopy}
+              radius="card"
             >
               {copied ? 'Copied!' : 'Copy'}
             </Button>

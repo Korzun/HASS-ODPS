@@ -3,7 +3,7 @@ import { ComponentType, useCallback } from 'react';
 
 import { IconProps, SpinnerIcon } from '~/icon';
 
-import { ButtonType, ButtonTypeValue, useStyle } from './style';
+import { ButtonType, ButtonTypeValue, ButtonRadius, ButtonRadiusValue, useStyle } from './style';
 
 type ButtonVariant =
   | { danger?: boolean; success?: false | undefined }
@@ -15,6 +15,7 @@ type ButtonProps = React.PropsWithChildren<
     loading?: boolean;
     onClick?: () => void;
     prefix?: ComponentType<IconProps>;
+    radius?: ButtonRadiusValue;
     suffix?: ComponentType<IconProps>;
     tabIndex?: number;
     title?: string;
@@ -28,6 +29,7 @@ export const Button = ({
   loading = false,
   onClick = () => {},
   prefix: Prefix,
+  radius = ButtonRadius.Background as ButtonRadiusValue,
   suffix: Suffix,
   success = false,
   tabIndex,
@@ -38,6 +40,7 @@ export const Button = ({
   const className = cx(
     styles.root,
     styles[type],
+    styles[radius],
     { [styles.danger]: danger },
     { [styles.loading]: loading },
     { [styles.disabled]: disabled },
@@ -85,4 +88,4 @@ export const Button = ({
   );
 };
 
-export type { ButtonTypeValue };
+export type { ButtonTypeValue, ButtonRadiusValue };

@@ -3,15 +3,16 @@ import { Fragment, useCallback, useState } from 'react';
 import { useToast } from '~/provider/toast';
 import { useResetUserPassword } from '~/provider/user';
 
-import { Button } from '../button';
+import { Button, ButtonRadiusValue } from '../button';
 import { ConfirmModal } from '../confirm-modal';
 import { PasswordResultModal } from '../password-result-modal';
 
 interface ResetPasswordButtonProps {
+  radius?: ButtonRadiusValue;
   username: string;
 }
 
-export const ResetPasswordButton = ({ username }: ResetPasswordButtonProps) => {
+export const ResetPasswordButton = ({ radius, username }: ResetPasswordButtonProps) => {
   const [resetUserPassword, resetting] = useResetUserPassword();
   const showToast = useToast();
 
@@ -37,7 +38,7 @@ export const ResetPasswordButton = ({ username }: ResetPasswordButtonProps) => {
 
   return (
     <Fragment>
-      <Button type="link" onClick={handleClick} loading={resetting}>
+      <Button type="link" onClick={handleClick} loading={resetting} radius={radius}>
         Reset password
       </Button>
       <ConfirmModal

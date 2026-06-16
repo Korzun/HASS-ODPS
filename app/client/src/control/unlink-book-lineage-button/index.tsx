@@ -3,7 +3,7 @@ import { Fragment, useCallback, useState } from 'react';
 import { AlertOctagonIcon } from '~/icon';
 import { useBook, useUnlinkBookLineage } from '~/provider/book';
 
-import { Button, type ButtonTypeValue } from '../button';
+import { Button, type ButtonTypeValue, ButtonRadiusValue } from '../button';
 import { ConfirmModal } from '../confirm-modal';
 
 import { useStyle } from './style';
@@ -13,6 +13,7 @@ interface UnlinkBookLineageButtonProps {
   buttonType?: ButtonTypeValue;
   documentId: string;
   onSuccess?: () => void;
+  buttonRadius?: ButtonRadiusValue;
 }
 
 export const UnlinkBookLineageButton = ({
@@ -20,6 +21,7 @@ export const UnlinkBookLineageButton = ({
   buttonType,
   documentId,
   onSuccess,
+  buttonRadius,
 }: UnlinkBookLineageButtonProps) => {
   const style = useStyle();
 
@@ -46,7 +48,7 @@ export const UnlinkBookLineageButton = ({
 
   return (
     <Fragment>
-      <Button type={buttonType} onClick={handleUnlink} danger>
+      <Button type={buttonType} onClick={handleUnlink} danger radius={buttonRadius}>
         unlink
       </Button>
       <ConfirmModal

@@ -103,6 +103,7 @@ export const PasswordResetPage = () => {
               loading={loading}
               type="primary"
               onClick={handleChangePassword}
+              radius="card"
             >
               Change password
             </Button>

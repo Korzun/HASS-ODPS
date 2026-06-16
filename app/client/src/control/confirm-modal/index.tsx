@@ -75,10 +75,16 @@ export function ConfirmModal({
         </div>
         <div className={styles.body}>{children}</div>
         <div className={styles.footer}>
-          <Button onClick={handleCancel} disabled={loading} type="text">
+          <Button onClick={handleCancel} disabled={loading} type="text" radius="modal">
             {cancelText}
           </Button>
-          <Button onClick={handleConfirm} loading={loading} type="primary" danger={danger}>
+          <Button
+            onClick={handleConfirm}
+            loading={loading}
+            type="primary"
+            danger={danger}
+            radius="modal"
+          >
             {confirmText}
           </Button>
         </div>

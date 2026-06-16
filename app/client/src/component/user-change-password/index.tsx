@@ -85,6 +85,7 @@ export const UserChangePassword = () => {
         type="primary"
         loading={loading}
         onClick={handleChangePassword}
+        radius="card"
         disabled={
           !isPasswordValid ||
           currentPassword.length === 0 ||
