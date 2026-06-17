@@ -33,6 +33,24 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     color: theme.color.text.faint,
     flexShrink: 0,
   },
+  clearButton: {
+    '&&': {
+      borderRadius: '50%',
+      padding: theme.space.md,
+      color: theme.color.gray[900],
+      flexShrink: 0,
+      marginRight: `-${theme.space.xs}`,
+      '&:hover': {
+        backgroundColor: theme.color.danger.light,
+        color: theme.color.gray[900],
+      },
+      '&:active': {
+        backgroundColor: theme.color.danger.light,
+        filter: 'brightness(0.92)',
+        color: theme.color.gray[900],
+      },
+    },
+  },
   input: {
     flex: 1,
     background: 'none',
