@@ -44,17 +44,6 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fontFamily: theme.fontFamily.body,
     '&::placeholder': { color: theme.color.text.faint },
   },
-  clearButton: {
-    color: theme.color.text.faint,
-    fontSize: theme.fontSize.sm,
-    cursor: 'pointer',
-    flexShrink: 0,
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    lineHeight: 1,
-    '&:hover': { color: theme.color.text.muted },
-  },
   chip: {
     display: 'inline-flex',
     alignItems: 'center',
