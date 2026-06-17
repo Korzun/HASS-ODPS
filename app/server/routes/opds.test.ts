@@ -109,6 +109,17 @@ describe('GET /opds/', () => {
     expect(res.text).toContain('/opds/books');
     expect(res.text).toContain('<?xml');
   });
+
+  it('root feed contains links to all 5 catalog sections', async () => {
+    const res = await request(app).get('/opds/').set(basicAuth('alice', 'secret'));
+    expect(res.text).toContain('/opds/books');
+    expect(res.text).toContain('/opds/authors');
+    expect(res.text).toContain('/opds/series');
+    expect(res.text).toContain('/opds/subjects');
+    expect(res.text).toContain('/opds/status');
+    const entryCount = (res.text.match(/<entry>/g) ?? []).length;
+    expect(entryCount).toBe(5);
+  });
 });
 
 describe('GET /opds/books', () => {
