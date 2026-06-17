@@ -544,8 +544,14 @@ describe('GET /opds/series/:seriesId', () => {
 
 describe('GET /opds/subjects', () => {
   it('returns a navigation feed with one entry per distinct subject', async () => {
-    await bookStore.addBook(alice, 'su1', stage('su1'), { ...FAKE_META, subjects: ['Fantasy', 'Adventure'] });
-    await bookStore.addBook(alice, 'su2', stage('su2'), { ...FAKE_META, subjects: ['Fantasy', 'Science Fiction'] });
+    await bookStore.addBook(alice, 'su1', stage('su1'), {
+      ...FAKE_META,
+      subjects: ['Fantasy', 'Adventure'],
+    });
+    await bookStore.addBook(alice, 'su2', stage('su2'), {
+      ...FAKE_META,
+      subjects: ['Fantasy', 'Science Fiction'],
+    });
     const res = await request(app).get('/opds/subjects').set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/atom\+xml/);
@@ -565,11 +571,17 @@ describe('GET /opds/subjects', () => {
 
 describe('GET /opds/subjects/:subject', () => {
   it('returns an acquisition feed with books tagged with the subject', async () => {
-    await bookStore.addBook(alice, 'su3', stage('su3'), { ...FAKE_META, title: 'Fantasy Book', subjects: ['Fantasy'] });
-    await bookStore.addBook(alice, 'su4', stage('su4'), { ...FAKE_META, title: 'Sci-Fi Book', subjects: ['Science Fiction'] });
-    const res = await request(app)
-      .get('/opds/subjects/Fantasy')
-      .set(basicAuth('alice', 'secret'));
+    await bookStore.addBook(alice, 'su3', stage('su3'), {
+      ...FAKE_META,
+      title: 'Fantasy Book',
+      subjects: ['Fantasy'],
+    });
+    await bookStore.addBook(alice, 'su4', stage('su4'), {
+      ...FAKE_META,
+      title: 'Sci-Fi Book',
+      subjects: ['Science Fiction'],
+    });
+    const res = await request(app).get('/opds/subjects/Fantasy').set(basicAuth('alice', 'secret'));
     expect(res.status).toBe(200);
     expect(res.text).toContain('Fantasy Book');
     expect(res.text).not.toContain('Sci-Fi Book');
@@ -586,7 +598,11 @@ describe('GET /opds/subjects/:subject', () => {
   });
 
   it('handles URL-encoded subject names', async () => {
-    await bookStore.addBook(alice, 'su5', stage('su5'), { ...FAKE_META, title: 'Space Book', subjects: ['Science Fiction'] });
+    await bookStore.addBook(alice, 'su5', stage('su5'), {
+      ...FAKE_META,
+      title: 'Space Book',
+      subjects: ['Science Fiction'],
+    });
     const res = await request(app)
       .get('/opds/subjects/Science%20Fiction')
       .set(basicAuth('alice', 'secret'));
@@ -594,12 +610,18 @@ describe('GET /opds/subjects/:subject', () => {
     expect(res.text).toContain('Space Book');
   });
 
-  it('does not expose other users\' books', async () => {
-    await bookStore.addBook(alice, 'su6', stage('su6'), { ...FAKE_META, title: 'Alice Fantasy', subjects: ['Fantasy'] });
-    await bookStore.addBook(bob, 'su7', stage('su7'), { ...FAKE_META, title: 'Bob Fantasy', subjects: ['Fantasy'] });
-    const res = await request(app)
-      .get('/opds/subjects/Fantasy')
-      .set(basicAuth('alice', 'secret'));
+  it("does not expose other users' books", async () => {
+    await bookStore.addBook(alice, 'su6', stage('su6'), {
+      ...FAKE_META,
+      title: 'Alice Fantasy',
+      subjects: ['Fantasy'],
+    });
+    await bookStore.addBook(bob, 'su7', stage('su7'), {
+      ...FAKE_META,
+      title: 'Bob Fantasy',
+      subjects: ['Fantasy'],
+    });
+    const res = await request(app).get('/opds/subjects/Fantasy').set(basicAuth('alice', 'secret'));
     expect(res.text).toContain('Alice Fantasy');
     expect(res.text).not.toContain('Bob Fantasy');
   });
