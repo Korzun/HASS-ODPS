@@ -3184,3 +3184,68 @@ describe('listBooksBySubject', () => {
     expect(books.map((b) => b.title)).not.toContain('Bob Fantasy');
   });
 });
+
+describe('listBooksByStatus', () => {
+  async function setProgress(userId: string, bookId: string, percentage: number): Promise<void> {
+    await prisma.progress.upsert({
+      where: { userId_document: { userId, document: bookId } },
+      create: {
+        userId,
+        document: bookId,
+        progress: String(percentage),
+        percentage,
+        device: 'test',
+        deviceId: 'test-device',
+        timestamp: Math.floor(Date.now() / 1000),
+      },
+      update: { percentage },
+    });
+  }
+
+  it('returns all books for not-started when none have progress', async () => {
+    await bookStore.addBook(OWNER, 'g1', stage('g1'), { ...FAKE_META, title: 'Book A' });
+    const books = await bookStore.listBooksByStatus(OWNER, 'not-started');
+    expect(books.map((b) => b.id)).toContain('g1');
+  });
+
+  it('not-started excludes books with any progress', async () => {
+    await bookStore.addBook(OWNER, 'g2', stage('g2'), { ...FAKE_META, title: 'Started Book' });
+    await setProgress(OWNER.userId, 'g2', 0.5);
+    const books = await bookStore.listBooksByStatus(OWNER, 'not-started');
+    expect(books.map((b) => b.id)).not.toContain('g2');
+  });
+
+  it('in-progress returns only partially read books', async () => {
+    await bookStore.addBook(OWNER, 'g3', stage('g3'), { ...FAKE_META, title: 'In Progress' });
+    await bookStore.addBook(OWNER, 'g4', stage('g4'), { ...FAKE_META, title: 'Unread' });
+    await bookStore.addBook(OWNER, 'g5', stage('g5'), { ...FAKE_META, title: 'Done' });
+    await setProgress(OWNER.userId, 'g3', 0.5);
+    await setProgress(OWNER.userId, 'g5', 1.0);
+    const books = await bookStore.listBooksByStatus(OWNER, 'in-progress');
+    expect(books.map((b) => b.id)).toEqual(['g3']);
+  });
+
+  it('completed returns only fully read books', async () => {
+    await bookStore.addBook(OWNER, 'g6', stage('g6'), { ...FAKE_META, title: 'Complete' });
+    await bookStore.addBook(OWNER, 'g7', stage('g7'), { ...FAKE_META, title: 'Partial' });
+    await setProgress(OWNER.userId, 'g6', 1.0);
+    await setProgress(OWNER.userId, 'g7', 0.3);
+    const books = await bookStore.listBooksByStatus(OWNER, 'completed');
+    expect(books.map((b) => b.id)).toEqual(['g6']);
+  });
+
+  it('is scoped to owner', async () => {
+    const alice: Owner = OWNER;
+    const bob: Owner = { userId: 'usr_test000000000000001', username: 'bob' };
+    await prisma.user.create({ data: { id: bob.userId, username: bob.username } });
+    fs.mkdirSync(path.join(booksRoot, bob.username), { recursive: true });
+
+    await bookStore.addBook(alice, 'g8', stage('g8'), { ...FAKE_META, title: 'Alice Book' });
+    await bookStore.addBook(bob, 'g9', stage('g9'), { ...FAKE_META, title: 'Bob Book' });
+    await setProgress(alice.userId, 'g8', 1.0);
+    await setProgress(bob.userId, 'g9', 1.0);
+    const books = await bookStore.listBooksByStatus(alice, 'completed');
+    expect(books.map((b) => b.id)).toContain('g8');
+    expect(books.map((b) => b.id)).not.toContain('g9');
+  });
+});
