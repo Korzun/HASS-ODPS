@@ -11,6 +11,7 @@ type ButtonVariant =
 
 type ButtonProps = React.PropsWithChildren<
   {
+    className?: string;
     disabled?: boolean;
     loading?: boolean;
     onClick?: () => void;
@@ -24,6 +25,7 @@ type ButtonProps = React.PropsWithChildren<
 >;
 export const Button = ({
   children,
+  className: classNameProp,
   danger = false,
   disabled = false,
   loading = false,
@@ -44,7 +46,8 @@ export const Button = ({
     { [styles.danger]: danger },
     { [styles.loading]: loading },
     { [styles.disabled]: disabled },
-    { [styles.success]: success }
+    { [styles.success]: success },
+    classNameProp
   );
 
   const handleClick = useCallback(

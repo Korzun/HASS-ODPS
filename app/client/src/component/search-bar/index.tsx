@@ -232,7 +232,14 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
           aria-autocomplete="list"
         />
         {hasAnyActive && (
-          <Button danger prefix={XIcon} tabIndex={0} title="Clear search" onClick={clearAll} />
+          <Button
+            type="text"
+            className={style.clearButton}
+            prefix={XIcon}
+            tabIndex={0}
+            title="Clear search"
+            onClick={clearAll}
+          />
         )}
       </div>
       {isOpen && flatSuggestions.length > 0 && (
