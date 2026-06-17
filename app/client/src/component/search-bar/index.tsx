@@ -1,7 +1,8 @@
 import cx from 'classnames';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { SearchIcon } from '~/icon';
+import { Button } from '~/control';
+import { SearchIcon, XIcon } from '~/icon';
 import type { BookListFilter } from '~/provider/book';
 
 import { useStyle } from './style';
@@ -231,14 +232,7 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
           aria-autocomplete="list"
         />
         {hasAnyActive && (
-          <button
-            type="button"
-            className={style.clearButton}
-            aria-label="Clear search"
-            onClick={clearAll}
-          >
-            ✕
-          </button>
+          <Button danger prefix={XIcon} tabIndex={0} title="Clear search" onClick={clearAll} />
         )}
       </div>
       {isOpen && flatSuggestions.length > 0 && (
