@@ -111,8 +111,8 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const suggestions = useSearchSuggestions(inputValue, filter);
-  const flatSuggestions: Suggestion[] = suggestions.flatMap((g: SuggestionGroup) => g.items);
+  const { groups, loading: suggestionsLoading } = useSearchSuggestions(inputValue, filter);
+  const flatSuggestions: Suggestion[] = groups.flatMap((g: SuggestionGroup) => g.items);
 
   const chips = filterToChips(filter);
   const hasAnyActive = chips.length > 0 || !!filter.query;
@@ -258,9 +258,16 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
           />
         )}
       </div>
-      {isOpen && flatSuggestions.length > 0 && (
+      {isOpen && suggestionsLoading && (
+        <div className={style.dropdown}>
+          <div className={style.dropdownLoading}>
+            <div className={style.dropdownSpinner} role="status" aria-label="Searching" />
+          </div>
+        </div>
+      )}
+      {isOpen && !suggestionsLoading && flatSuggestions.length > 0 && (
         <div className={style.dropdown} role="listbox">
-          {suggestions.map((group) => (
+          {groups.map((group) => (
             <div key={group.type} className={style.dropdownGroup}>
               <div className={style.dropdownGroupLabel}>{group.label}</div>
               {group.items.map((item) => {

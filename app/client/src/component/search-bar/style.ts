@@ -111,6 +111,24 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     background: theme.color.chip.subject.bg,
     borderColor: theme.color.chip.subject.border,
   },
+  '@keyframes spin': {
+    from: { transform: 'rotate(0deg)' },
+    to: { transform: 'rotate(360deg)' },
+  },
+  dropdownLoading: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: `${theme.space.xxl} 0`,
+  },
+  dropdownSpinner: {
+    width: 16,
+    height: 16,
+    border: `2px solid ${theme.color.border.default}`,
+    borderTopColor: theme.color.text.faint,
+    borderRadius: '50%',
+    animation: '$spin 0.6s linear infinite',
+  },
   dropdown: {
     position: 'absolute',
     top: 'calc(100% + 4px)',
