@@ -8,6 +8,8 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   header: {
     ...theme.recipe.card.header,
+    borderTopLeftRadius: theme.radius.lg,
+    borderTopRightRadius: theme.radius.lg,
     '&$danger': { color: theme.color.danger.default },
     '&$collapsed': { borderBottomStyle: 'none' },
   },
