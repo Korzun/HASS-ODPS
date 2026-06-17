@@ -3,12 +3,7 @@ import { BookStore } from '../services/book-store';
 import { UserStore } from '../services/user-store';
 import { opdsAuth } from '../middleware/auth';
 import { logger } from '../logger';
-import {
-  navigationFeed,
-  acquisitionFeed,
-  navEntry,
-  bookEntry,
-} from './opds-templates';
+import { navigationFeed, acquisitionFeed, navEntry, bookEntry } from './opds-templates';
 
 const log = logger('OPDS');
 
