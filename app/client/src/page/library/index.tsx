@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { Page, BookRow, FilterBar, SeriesRow } from '~/component';
+import { Page, BookRow, SearchBar, SeriesRow } from '~/component';
 import { SpinnerIcon } from '~/icon';
 import { useIsAdmin } from '~/provider/auth';
 import {
@@ -64,16 +64,16 @@ export const LibraryPage = () => {
     );
   }
 
-  const isFilterActive =
-    bookListFilter.query !== undefined ||
-    bookListFilter.author !== undefined ||
-    bookListFilter.seriesName !== undefined ||
-    bookListFilter.status !== undefined ||
-    (bookListFilter.subjects ?? []).length > 0;
+  const isSearchActive =
+    !!bookListFilter.query ||
+    !!bookListFilter.author ||
+    !!bookListFilter.seriesName ||
+    !!bookListFilter.status ||
+    (bookListFilter.subjects?.length ?? 0) > 0;
 
   return (
     <Page>
-      <FilterBar filter={bookListFilter} onChange={setBookListFilter} />
+      <SearchBar filter={bookListFilter} onChange={setBookListFilter} />
       {bookListItems.length === 0 ? (
         <div className={style.emptyState}>
           {bookListLoading ? (
@@ -81,10 +81,10 @@ export const LibraryPage = () => {
           ) : (
             <>
               <div className={style.emptyStateTitle}>
-                {isFilterActive ? 'No books match these filters' : 'Your library is empty'}
+                {isSearchActive ? 'No books match your search' : 'Your library is empty'}
               </div>
               <div className={style.emptyStateSubtitle}>
-                {isFilterActive
+                {isSearchActive
                   ? 'Try adjusting or clearing the filters above'
                   : 'No books have been added yet'}
               </div>
