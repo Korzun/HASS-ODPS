@@ -2,9 +2,10 @@ import cx from 'classnames';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { BookListFilter } from '~/provider/book';
+
+import { useStyle } from './style';
 import type { Suggestion, SuggestionGroup } from './use-search-suggestions';
 import { useSearchSuggestions } from './use-search-suggestions';
-import { useStyle } from './style';
 
 const STATUS_LABELS: Record<string, string> = {
   'not-started': 'Not Started',
@@ -20,7 +21,8 @@ type ChipDef =
 
 function filterToChips(filter: BookListFilter): ChipDef[] {
   const chips: ChipDef[] = [];
-  if (filter.status) chips.push({ kind: 'status', value: STATUS_LABELS[filter.status] ?? filter.status });
+  if (filter.status)
+    chips.push({ kind: 'status', value: STATUS_LABELS[filter.status] ?? filter.status });
   if (filter.author) chips.push({ kind: 'author', value: filter.author });
   if (filter.seriesName) chips.push({ kind: 'series', value: filter.seriesName });
   for (const s of filter.subjects ?? []) chips.push({ kind: 'subject', value: s });
@@ -29,19 +31,27 @@ function filterToChips(filter: BookListFilter): ChipDef[] {
 
 function removeChip(filter: BookListFilter, chip: ChipDef): BookListFilter {
   switch (chip.kind) {
-    case 'status':  return { ...filter, status: undefined };
-    case 'author':  return { ...filter, author: undefined };
-    case 'series':  return { ...filter, seriesName: undefined };
-    case 'subject': return { ...filter, subjects: filter.subjects?.filter(s => s !== chip.value) };
+    case 'status':
+      return { ...filter, status: undefined };
+    case 'author':
+      return { ...filter, author: undefined };
+    case 'series':
+      return { ...filter, seriesName: undefined };
+    case 'subject':
+      return { ...filter, subjects: filter.subjects?.filter((s) => s !== chip.value) };
   }
 }
 
 function applySelection(filter: BookListFilter, suggestion: Suggestion): BookListFilter {
   switch (suggestion.type) {
-    case 'status':  return { ...filter, status: suggestion.value as BookListFilter['status'] };
-    case 'author':  return { ...filter, author: suggestion.value };
-    case 'series':  return { ...filter, seriesName: suggestion.value };
-    case 'subject': return { ...filter, subjects: [...(filter.subjects ?? []), suggestion.value] };
+    case 'status':
+      return { ...filter, status: suggestion.value as BookListFilter['status'] };
+    case 'author':
+      return { ...filter, author: suggestion.value };
+    case 'series':
+      return { ...filter, seriesName: suggestion.value };
+    case 'subject':
+      return { ...filter, subjects: [...(filter.subjects ?? []), suggestion.value] };
   }
 }
 
@@ -146,13 +156,15 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setHighlightedIndex(i =>
+        setHighlightedIndex((i) =>
           flatSuggestions.length === 0 ? 0 : (i + 1) % flatSuggestions.length
         );
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setHighlightedIndex(i =>
-          flatSuggestions.length === 0 ? 0 : (i - 1 + flatSuggestions.length) % flatSuggestions.length
+        setHighlightedIndex((i) =>
+          flatSuggestions.length === 0
+            ? 0
+            : (i - 1 + flatSuggestions.length) % flatSuggestions.length
         );
       } else if (e.key === 'Enter') {
         e.preventDefault();
@@ -196,13 +208,19 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
         </>
       )}
       <div className={style.inputRow}>
-        <span className={style.searchIcon} aria-hidden>⌕</span>
+        <span className={style.searchIcon} aria-hidden>
+          ⌕
+        </span>
         <input
           ref={inputRef}
           className={style.input}
-          placeholder={chips.length > 0 ? 'Search titles…' : 'Search by title, author, series, subject, or status…'}
+          placeholder={
+            chips.length > 0
+              ? 'Search titles…'
+              : 'Search by title, author, series, subject, or status…'
+          }
           value={inputValue}
-          onChange={e => {
+          onChange={(e) => {
             setInputValue(e.target.value);
             setHighlightedIndex(0);
             if (!isOpen) open();
@@ -214,17 +232,22 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
           aria-autocomplete="list"
         />
         {hasAnyActive && (
-          <button type="button" className={style.clearButton} aria-label="Clear search" onClick={clearAll}>
+          <button
+            type="button"
+            className={style.clearButton}
+            aria-label="Clear search"
+            onClick={clearAll}
+          >
             ✕
           </button>
         )}
       </div>
       {isOpen && flatSuggestions.length > 0 && (
         <div className={style.dropdown} role="listbox">
-          {suggestions.map(group => (
+          {suggestions.map((group) => (
             <div key={group.type} className={style.dropdownGroup}>
               <div className={style.dropdownGroupLabel}>{group.label}</div>
-              {group.items.map(item => {
+              {group.items.map((item) => {
                 const idx = flatIndex++;
                 return (
                   <div
@@ -234,14 +257,24 @@ export function SearchBar({ filter, onChange }: SearchBarProps) {
                     })}
                     role="option"
                     aria-selected={idx === highlightedIndex}
-                    onMouseDown={e => e.preventDefault()}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => selectSuggestion(item)}
                   >
-                    <span className={cx(style.dropdownItemType, style[TYPE_DROPDOWN_CLASS[item.type] as keyof typeof style])}>
+                    <span
+                      className={cx(
+                        style.dropdownItemType,
+                        style[TYPE_DROPDOWN_CLASS[item.type] as keyof typeof style]
+                      )}
+                    >
                       {group.label}
                     </span>
                     <span className={style.dropdownItemText}>
-                      {renderHighlighted(item.label, item.matchStart, item.matchLength, style.dropdownItemMatch)}
+                      {renderHighlighted(
+                        item.label,
+                        item.matchStart,
+                        item.matchLength,
+                        style.dropdownItemMatch
+                      )}
                     </span>
                     {item.additive && <span className={style.dropdownItemAdditive}>＋</span>}
                   </div>

@@ -416,8 +416,8 @@ export function createUiRouter(
     const subjectsValue: string[] = Array.isArray(subjects)
       ? (subjects as string[]).filter((s): s is string => typeof s === 'string' && s.length > 0)
       : typeof subjects === 'string' && subjects
-      ? [subjects]
-      : [];
+        ? [subjects]
+        : [];
 
     const filters: BookListFilters | undefined =
       status !== undefined ||

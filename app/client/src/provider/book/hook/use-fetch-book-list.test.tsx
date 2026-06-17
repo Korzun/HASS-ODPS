@@ -266,7 +266,10 @@ describe('useFetchBookList', () => {
       wrapper: makeWrapper({ bookListFilter: { subjects: ['Fantasy', 'Adventure'] } }),
     });
     await act(() => result.current());
-    expect(fetch).toHaveBeenCalledWith('/api/books?subjects=Fantasy&subjects=Adventure&take=20', {});
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/books?subjects=Fantasy&subjects=Adventure&take=20',
+      {}
+    );
   });
 
   it('omits filter params when bookListFilter is empty', async () => {
