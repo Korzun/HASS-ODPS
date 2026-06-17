@@ -347,6 +347,23 @@ export class BookStore {
     return this.sortByTitle(rows).map((r) => this.prismaBookToBook(owner, r));
   }
 
+  async listBooksByStatus(
+    owner: Owner,
+    status: 'not-started' | 'in-progress' | 'completed'
+  ): Promise<Book[]> {
+    const progresses = await this.prisma.progress.findMany({
+      where: { userId: owner.userId },
+      select: { document: true, percentage: true },
+    });
+    const progressMap = new Map(progresses.map((p) => [p.document, p.percentage]));
+    const statusWhere = standaloneStatusWhere(status, progressMap);
+    const rows = await this.prisma.book.findMany({
+      where: { userId: owner.userId, ...statusWhere },
+      select: BOOK_SELECT,
+    });
+    return this.sortByTitle(rows).map((r) => this.prismaBookToBook(owner, r));
+  }
+
   async getBookById(owner: Owner, id: string): Promise<Book | null> {
     const row = await this.prisma.book.findUnique({
       where: { userId_id: { userId: owner.userId, id } },
