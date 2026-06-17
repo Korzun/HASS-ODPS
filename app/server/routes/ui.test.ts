@@ -459,8 +459,16 @@ describe('GET /api/books (paginated)', () => {
 
 describe('GET /api/books — search params', () => {
   it('accepts query param and returns matching books', async () => {
-    await bookStore.addBook(aliceOwner, 'b1', stage('b1'), { ...FAKE_META, title: 'The Fifth Season', series: '' });
-    await bookStore.addBook(aliceOwner, 'b2', stage('b2'), { ...FAKE_META, title: 'Piranesi', series: '' });
+    await bookStore.addBook(aliceOwner, 'b1', stage('b1'), {
+      ...FAKE_META,
+      title: 'The Fifth Season',
+      series: '',
+    });
+    await bookStore.addBook(aliceOwner, 'b2', stage('b2'), {
+      ...FAKE_META,
+      title: 'Piranesi',
+      series: '',
+    });
     const token = await loginAlice();
     const res = await request(app)
       .get('/api/books?take=20&query=fifth')
@@ -470,8 +478,18 @@ describe('GET /api/books — search params', () => {
   });
 
   it('accepts author param and returns matching books', async () => {
-    await bookStore.addBook(aliceOwner, 'b1', stage('b1'), { ...FAKE_META, title: 'Book A', author: 'N.K. Jemisin', series: '' });
-    await bookStore.addBook(aliceOwner, 'b2', stage('b2'), { ...FAKE_META, title: 'Book B', author: 'Arkady Martine', series: '' });
+    await bookStore.addBook(aliceOwner, 'b1', stage('b1'), {
+      ...FAKE_META,
+      title: 'Book A',
+      author: 'N.K. Jemisin',
+      series: '',
+    });
+    await bookStore.addBook(aliceOwner, 'b2', stage('b2'), {
+      ...FAKE_META,
+      title: 'Book B',
+      author: 'Arkady Martine',
+      series: '',
+    });
     const token = await loginAlice();
     const res = await request(app)
       .get('/api/books?take=20&author=Jemisin')
@@ -481,8 +499,16 @@ describe('GET /api/books — search params', () => {
   });
 
   it('accepts seriesName param and returns only that series', async () => {
-    await bookStore.addBook(aliceOwner, 'b1', stage('b1'), { ...FAKE_META, title: 'Dune 1', series: 'Dune' });
-    await bookStore.addBook(aliceOwner, 'b2', stage('b2'), { ...FAKE_META, title: 'Standalone', series: '' });
+    await bookStore.addBook(aliceOwner, 'b1', stage('b1'), {
+      ...FAKE_META,
+      title: 'Dune 1',
+      series: 'Dune',
+    });
+    await bookStore.addBook(aliceOwner, 'b2', stage('b2'), {
+      ...FAKE_META,
+      title: 'Standalone',
+      series: '',
+    });
     const token = await loginAlice();
     const res = await request(app)
       .get('/api/books?take=20&seriesName=Dune')
@@ -493,10 +519,16 @@ describe('GET /api/books — search params', () => {
 
   it('accepts multiple subjects params (AND filter)', async () => {
     await bookStore.addBook(aliceOwner, 'b1', stage('b1'), {
-      ...FAKE_META, title: 'Book A', series: '', subjects: ['Fantasy', 'Fiction'],
+      ...FAKE_META,
+      title: 'Book A',
+      series: '',
+      subjects: ['Fantasy', 'Fiction'],
     });
     await bookStore.addBook(aliceOwner, 'b2', stage('b2'), {
-      ...FAKE_META, title: 'Book B', series: '', subjects: ['Fantasy'],
+      ...FAKE_META,
+      title: 'Book B',
+      series: '',
+      subjects: ['Fantasy'],
     });
     const token = await loginAlice();
     const res = await request(app)

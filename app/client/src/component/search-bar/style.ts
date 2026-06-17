@@ -89,10 +89,26 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     color: 'inherit',
     '&:hover': { opacity: 0.8 },
   },
-  chipStatus:  { color: theme.color.chip.status.text,  background: theme.color.chip.status.bg,  borderColor: theme.color.chip.status.border  },
-  chipAuthor:  { color: theme.color.chip.author.text,  background: theme.color.chip.author.bg,  borderColor: theme.color.chip.author.border  },
-  chipSeries:  { color: theme.color.chip.series.text,  background: theme.color.chip.series.bg,  borderColor: theme.color.chip.series.border  },
-  chipSubject: { color: theme.color.chip.subject.text, background: theme.color.chip.subject.bg, borderColor: theme.color.chip.subject.border },
+  chipStatus: {
+    color: theme.color.chip.status.text,
+    background: theme.color.chip.status.bg,
+    borderColor: theme.color.chip.status.border,
+  },
+  chipAuthor: {
+    color: theme.color.chip.author.text,
+    background: theme.color.chip.author.bg,
+    borderColor: theme.color.chip.author.border,
+  },
+  chipSeries: {
+    color: theme.color.chip.series.text,
+    background: theme.color.chip.series.bg,
+    borderColor: theme.color.chip.series.border,
+  },
+  chipSubject: {
+    color: theme.color.chip.subject.text,
+    background: theme.color.chip.subject.bg,
+    borderColor: theme.color.chip.subject.border,
+  },
   dropdown: {
     position: 'absolute',
     top: 'calc(100% + 4px)',
@@ -137,10 +153,22 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     letterSpacing: '0.04em',
     flexShrink: 0,
   },
-  dropdownItemTypeStatus:  { color: theme.color.chip.status.text,  background: theme.color.chip.status.bg  },
-  dropdownItemTypeAuthor:  { color: theme.color.chip.author.text,  background: theme.color.chip.author.bg  },
-  dropdownItemTypeSeries:  { color: theme.color.chip.series.text,  background: theme.color.chip.series.bg  },
-  dropdownItemTypeSubject: { color: theme.color.chip.subject.text, background: theme.color.chip.subject.bg },
+  dropdownItemTypeStatus: {
+    color: theme.color.chip.status.text,
+    background: theme.color.chip.status.bg,
+  },
+  dropdownItemTypeAuthor: {
+    color: theme.color.chip.author.text,
+    background: theme.color.chip.author.bg,
+  },
+  dropdownItemTypeSeries: {
+    color: theme.color.chip.series.text,
+    background: theme.color.chip.series.bg,
+  },
+  dropdownItemTypeSubject: {
+    color: theme.color.chip.subject.text,
+    background: theme.color.chip.subject.bg,
+  },
   dropdownItemText: { flex: 1, minWidth: 0 },
   dropdownItemMatch: { fontWeight: theme.fontWeight.bold },
   dropdownItemAdditive: {
