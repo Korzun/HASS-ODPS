@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import {
   Card,
@@ -13,11 +13,13 @@ import {
 import { useIsAdmin } from '~/provider/auth';
 import { useSeries, useSeriesBookList } from '~/provider/book';
 import { useMySeriesProgress } from '~/provider/progress';
+import { path } from '~/router';
 
 import { useStyle } from './style';
 
 export const SeriesPage = () => {
   const { name } = useParams<{ name: string }>();
+  const navigate = useNavigate();
   const style = useStyle();
 
   const [isAdmin] = useIsAdmin();
@@ -91,7 +93,9 @@ export const SeriesPage = () => {
         <Card title="Subjects">
           <div className={style.subjects}>
             {series.subjects.map((subject, index) => (
-              <Tag key={subject + index}>{subject}</Tag>
+              <Tag key={subject + index} onClick={() => navigate(path.libraryWithSubject(subject))}>
+                {subject}
+              </Tag>
             ))}
           </div>
         </Card>

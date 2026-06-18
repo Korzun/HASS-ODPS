@@ -9,4 +9,12 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     fontSize: theme.fontSize.sm,
     border: `1px solid ${theme.color.brand.outline}`,
   },
+  clickable: {
+    cursor: 'pointer',
+    '&:hover': {
+      background: theme.color.brand.default,
+      color: theme.color.brand.light,
+      borderColor: theme.color.brand.default,
+    },
+  },
 }));
