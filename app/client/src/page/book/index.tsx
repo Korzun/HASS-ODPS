@@ -71,11 +71,17 @@ export const BookPage = () => {
   if (book !== undefined && book.publisher) {
     metadata.push({ title: 'publisher', value: book.publisher });
   }
+  if (book !== undefined && book.publishDate) {
+    const formatted = new Date(book.publishDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+    metadata.push({ title: 'published', value: formatted });
+  }
   if (book !== undefined) {
     metadata.push({ title: 'size', value: formatSize(book.size) });
-  }
-  if (book !== undefined && book.publishDate) {
-    metadata.push({ title: 'published', value: book.publishDate });
   }
 
   // Description
