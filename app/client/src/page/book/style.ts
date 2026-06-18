@@ -72,8 +72,11 @@ export const useStyle = createUseStyles((theme: Theme) => ({
     color: theme.color.text.primary,
   },
   author: {
+    display: 'inline-block',
     color: theme.color.text.secondary,
     marginBottom: theme.space.sm,
+    cursor: 'pointer',
+    '&:hover': { color: theme.color.brand.default },
   },
   series: {
     display: 'inline-block',

@@ -3,9 +3,9 @@ import * as pathInternal from './path-internal';
 export const book = (bookId: string) => pathInternal.book(encodeURIComponent(bookId));
 export const bookEdit = (bookId: string) => pathInternal.bookEdit(encodeURIComponent(bookId));
 export const home = () => pathInternal.home();
-export const library = () => pathInternal.library();
+export const library = (options?: { subject?: string; author?: string }) =>
+  pathInternal.library(options);
 export const series = (seriesName: string) => pathInternal.series(encodeURIComponent(seriesName));
-export const libraryWithSubject = (subject: string) => pathInternal.libraryWithSubject(subject);
 export const passwordReset = () => pathInternal.passwordReset();
 export const upload = () => pathInternal.upload();
 export const user = () => pathInternal.user();
