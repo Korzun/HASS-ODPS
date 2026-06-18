@@ -133,7 +133,7 @@ export const BookPage = () => {
                 src={coverSrc}
                 alt={book.title}
                 width={80}
-                height={118}
+                height={128}
               />
             ) : (
               <div className={styles.coverPlaceholder} />

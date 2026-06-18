@@ -6,20 +6,16 @@ import { useStyle } from './style';
 
 interface CoverStackProps {
   seriesName: string;
-  containerWidth: number;
-  containerHeight: number;
   layerWidth: number;
   layerHeight: number;
 }
 
 export function CoverStack({
   seriesName,
-  containerWidth,
-  containerHeight,
   layerWidth,
   layerHeight,
 }: CoverStackProps) {
-  const style = useStyle({ containerHeight, containerWidth });
+  const style = useStyle({ layerHeight, layerWidth });
   const [bookList] = useSeriesBookList(seriesName);
 
   return (
