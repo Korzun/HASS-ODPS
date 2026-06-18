@@ -98,7 +98,7 @@ export const BookPage = () => {
 
   const coverSrc = useAuthorizedSrc(
     book?.hasCover
-      ? withTargetUser(`/api/books/${encodeURIComponent(book.id)}/cover?width=170`)
+      ? withTargetUser(`/api/books/${encodeURIComponent(book.id)}/cover?width=160`)
       : null
   );
 

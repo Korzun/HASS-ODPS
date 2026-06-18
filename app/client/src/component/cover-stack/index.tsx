@@ -10,11 +10,7 @@ interface CoverStackProps {
   layerHeight: number;
 }
 
-export function CoverStack({
-  seriesName,
-  layerWidth,
-  layerHeight,
-}: CoverStackProps) {
+export function CoverStack({ seriesName, layerWidth, layerHeight }: CoverStackProps) {
   const style = useStyle({ layerHeight, layerWidth });
   const [bookList] = useSeriesBookList(seriesName);
 
@@ -31,7 +27,7 @@ export function CoverStack({
               sequence={seq}
               width={layerWidth}
               height={layerHeight}
-              thumbnailWidth={170}
+              thumbnailWidth={160}
             />
           );
         })}
