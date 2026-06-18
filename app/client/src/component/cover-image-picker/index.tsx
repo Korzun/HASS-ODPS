@@ -72,8 +72,14 @@ export const CoverImagePicker = ({ value, onChange }: Props) => {
         <div className={styles.size}>{sizeLabel}</div>
       </div>
       <div className={styles.actions}>
-        <Button onClick={handleChoose}>{value ? 'Change…' : 'Choose image…'}</Button>
-        {value && <Button onClick={handleClear}>Clear</Button>}
+        <Button radius="card" onClick={handleChoose}>
+          {value ? 'Change…' : 'Choose image…'}
+        </Button>
+        {value && (
+          <Button radius="card" onClick={handleClear}>
+            Clear
+          </Button>
+        )}
       </div>
     </Card>
   );

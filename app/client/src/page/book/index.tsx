@@ -44,6 +44,11 @@ export const BookPage = () => {
     }
   }, [book, navigate]);
 
+  const handleSubjectNavigate = useCallback(
+    (subject: string) => navigate(path.libraryWithSubject(subject)),
+    [navigate]
+  );
+
   // Metadata
   const metadata: Metadata[] = [];
   if (!isAdmin) {
@@ -147,7 +152,9 @@ export const BookPage = () => {
         {book.subjects.length > 0 && (
           <div className={styles.subjects}>
             {book.subjects.map((subject, index) => (
-              <Tag key={subject + index}>{subject}</Tag>
+              <Tag key={subject + index} onClick={() => handleSubjectNavigate(subject)}>
+                {subject}
+              </Tag>
             ))}
           </div>
         )}

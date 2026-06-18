@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { useCallback, useState } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LibraryTargetProvider, useLibraryTarget } from '~/provider/library-target';
@@ -183,9 +184,11 @@ describe('useBookList', () => {
     vi.stubGlobal('fetch', mockFetch);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <LibraryTargetProvider>
-        <BookProvider>{children}</BookProvider>
-      </LibraryTargetProvider>
+      <MemoryRouter>
+        <LibraryTargetProvider>
+          <BookProvider>{children}</BookProvider>
+        </LibraryTargetProvider>
+      </MemoryRouter>
     );
 
     const { result } = renderHook(() => ({ list: useBookList(), filter: useBookListFilter() }), {
