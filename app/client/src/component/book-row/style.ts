@@ -12,14 +12,14 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   },
   coverImg: {
     width: 43,
-    height: 60,
+    height: 68,
     objectFit: 'cover',
     borderRadius: theme.radius.md,
     display: 'block',
   },
   coverPlaceholder: {
     width: 43,
-    height: 60,
+    height: 68,
     background: '#e0e0e0', // single-component placeholder shade
     borderRadius: 2, // placeholder-specific tiny radius
   },

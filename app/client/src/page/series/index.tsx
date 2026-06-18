@@ -77,10 +77,8 @@ export const SeriesPage = () => {
           <div className={style.hero}>
             <CoverStack
               seriesName={name!}
-              containerWidth={100}
-              containerHeight={130}
               layerWidth={80}
-              layerHeight={118}
+              layerHeight={128}
             />
             <div>
               <h1 className={style.title}>{name}</h1>
