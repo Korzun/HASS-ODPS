@@ -45,8 +45,13 @@ export const BookPage = () => {
   }, [book, navigate]);
 
   const handleSubjectNavigate = useCallback(
-    (subject: string) => navigate(path.libraryWithSubject(subject)),
+    (subject: string) => navigate(path.library({ subject })),
     [navigate]
+  );
+
+  const handleAuthorNavigate = useCallback(
+    () => navigate(path.library({ author: book?.author ?? '' })),
+    [book, navigate]
   );
 
   // Metadata
@@ -137,7 +142,11 @@ export const BookPage = () => {
                   </span>
                 )}
               </div>
-              {book.author.length > 0 && <div className={styles.author}>{book.author}</div>}
+              {book.author.length > 0 && (
+                <div className={styles.author} onClick={handleAuthorNavigate}>
+                  {book.author}
+                </div>
+              )}
             </div>
           </div>
           <div className={styles.metadata}>

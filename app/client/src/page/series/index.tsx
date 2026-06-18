@@ -81,7 +81,12 @@ export const SeriesPage = () => {
             />
             <div>
               <h1 className={style.title}>{name}</h1>
-              <div className={style.author}>{series.author}</div>
+              <div
+                className={style.author}
+                onClick={() => navigate(path.library({ author: series.author }))}
+              >
+                {series.author}
+              </div>
             </div>
           </div>
           <div className={style.metadata}>
@@ -93,7 +98,7 @@ export const SeriesPage = () => {
         <Card title="Subjects">
           <div className={style.subjects}>
             {series.subjects.map((subject, index) => (
-              <Tag key={subject + index} onClick={() => navigate(path.libraryWithSubject(subject))}>
+              <Tag key={subject + index} onClick={() => navigate(path.library({ subject }))}>
                 {subject}
               </Tag>
             ))}
