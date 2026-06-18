@@ -54,11 +54,7 @@ export function SeriesRow({ seriesName }: SeriesRowProps) {
   return (
     <Card size="small" onClick={handleNavigate}>
       <div className={styles.root}>
-        <CoverStack
-          seriesName={seriesName}
-          layerWidth={43}
-          layerHeight={68}
-        />
+        <CoverStack seriesName={seriesName} layerWidth={43} layerHeight={68} />
         <div className={styles.info}>
           <div className={styles.name}>{seriesName}</div>
           <div className={styles.meta}>{meta.join(' · ')}</div>
