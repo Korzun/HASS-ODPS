@@ -28,6 +28,13 @@ export const UserRegister = () => {
     setUsername(newValue ?? '');
   }, []);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' && !loading) void handleRegisterUser();
+    },
+    [handleRegisterUser, loading]
+  );
+
   const handleDone = useCallback(() => {
     setResult(null);
   }, []);
@@ -43,6 +50,7 @@ export const UserRegister = () => {
             layout="horizontal"
             label="Username"
             autoComplete="off"
+            onKeyDown={handleKeyDown}
           />
           <Button type="primary" radius="card" loading={loading} onClick={handleRegisterUser}>
             {loading ? 'Registering…' : 'Register'}
