@@ -24,6 +24,13 @@ import {
 
 const log = logger('BookStore');
 
+/** Compares two cover blobs (or their absence) for equality. */
+function buffersEqual(a: Buffer | Uint8Array | null, b: Buffer | Uint8Array | null): boolean {
+  if (a === null && b === null) return true;
+  if (a === null || b === null) return false;
+  return Buffer.from(a).equals(Buffer.from(b));
+}
+
 // All book columns except coverData (binary blob); coverMime serves as the hasCover proxy.
 const BOOK_SELECT = {
   id: true,
@@ -607,7 +614,7 @@ export class BookStore {
   ): Promise<Book | null> {
     const exists = await this.prisma.book.findUnique({
       where: { userId_id: { userId: owner.userId, id } },
-      select: { id: true, series: true, seriesId: true },
+      select: { id: true, series: true, seriesId: true, coverData: true },
     });
     if (!exists) return null;
     const oldSeriesId = exists.seriesId;
@@ -621,6 +628,12 @@ export class BookStore {
     }
     const meta = importer.parseEpub(filePath);
     const newId = importer.partialMD5(filePath);
+
+    // Cached per-width thumbnails are derived from the cover; if the cover changed we must
+    // drop them so a stale thumbnail is never served — especially under the new immutable
+    // cache URL, where it would otherwise be cached indefinitely. Regeneration happens via
+    // the caller's thumbnail enqueue / reconcile.
+    const coverChanged = !buffersEqual(exists.coverData, meta.coverData);
 
     if (newId !== id) {
       const collision = await this.prisma.book.findUnique({
@@ -747,6 +760,15 @@ export class BookStore {
             pageCount: meta.pageCount,
             seriesId: newSeriesId,
           },
+        });
+      }
+
+      // Invalidate stale thumbnails when the cover changed. In the id-change branch the
+      // FK onUpdate: Cascade has already moved the rows to newId, so keying on newId
+      // covers both branches.
+      if (coverChanged) {
+        await tx.bookThumbnail.deleteMany({
+          where: { userId: owner.userId, bookId: newId },
         });
       }
 
