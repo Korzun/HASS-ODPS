@@ -1177,6 +1177,42 @@ describe('reimportBook', () => {
     expect(updated!.title).toBe('Updated');
   });
 
+  it('deletes stale thumbnails when the cover changes on reimport', async () => {
+    const stagedPath = path.join(booksDir, 'staged-cover-changed.epub');
+    fs.writeFileSync(stagedPath, makeMinimalEpub('CoverChanged'));
+    const id = partialMD5(stagedPath);
+    await bookStore.addBook(OWNER, id, stagedPath, FAKE_META);
+    await bookStore.saveThumbnail(OWNER.userId, id, 150, Buffer.from('thumb-old'), 'image/jpeg');
+    expect(await bookStore.getThumbnail(OWNER.userId, id, 150)).not.toBeNull();
+
+    const importer: ScanImporter = {
+      parseEpub: () => ({ ...FAKE_META, coverData: Buffer.from('fake-cover-NEW') }),
+      partialMD5: () => id,
+    };
+    await bookStore.reimportBook(OWNER, id, importer);
+
+    expect(await bookStore.getThumbnail(OWNER.userId, id, 150)).toBeNull();
+  });
+
+  it('keeps thumbnails when the cover is unchanged on reimport', async () => {
+    const stagedPath = path.join(booksDir, 'staged-cover-same.epub');
+    fs.writeFileSync(stagedPath, makeMinimalEpub('CoverSame'));
+    const id = partialMD5(stagedPath);
+    await bookStore.addBook(OWNER, id, stagedPath, FAKE_META);
+    await bookStore.saveThumbnail(OWNER.userId, id, 150, Buffer.from('thumb-keep'), 'image/jpeg');
+
+    const importer: ScanImporter = {
+      // Same cover bytes as FAKE_META, but a changed title to prove the reimport ran.
+      parseEpub: () => ({ ...FAKE_META, title: 'Renamed' }),
+      partialMD5: () => id,
+    };
+    await bookStore.reimportBook(OWNER, id, importer);
+
+    const thumb = await bookStore.getThumbnail(OWNER.userId, id, 150);
+    expect(thumb).not.toBeNull();
+    expect(Buffer.from(thumb!.data).toString()).toBe('thumb-keep');
+  });
+
   it('cascades id change to progress table when partial MD5 shifts', async () => {
     const epubBuf = makeMinimalEpub('Before');
     const stagedPath = path.join(booksDir, 'staged-cascade.epub');
