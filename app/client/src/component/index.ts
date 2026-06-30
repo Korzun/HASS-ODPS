@@ -20,6 +20,7 @@ export { ProgressIndicator } from './progress-indicator';
 export { SeriesRow } from './series-row';
 export { SyncPassword } from './sync-password';
 export { Tag } from './tag';
+export { ThemeSetting } from './theme-setting';
 export { UploadItem } from './upload-item';
 export { UploadZone } from './upload-zone';
 export { UserChangePassword } from './user-change-password';
