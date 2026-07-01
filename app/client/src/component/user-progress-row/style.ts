@@ -21,6 +21,10 @@ export const useStyle = createUseStyles((theme: Theme) => ({
   book: {
     fontSize: theme.fontSize.md,
     flexGrow: 1,
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   metadata: {
     fontSize: theme.fontSize.md,
