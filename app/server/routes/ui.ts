@@ -26,6 +26,7 @@ import { TokenStore, REFRESH_TOKEN_TTL_MS } from '../services/token-store';
 import { logger } from '../logger';
 import { parseEpub, partialMD5 } from '../services/epub-parser';
 import { writeMetadata, EpubChanges } from '../services/epub-writer';
+import { assertValidEpub, EpubValidationError } from '../services/epub-validator';
 import { parseCfiSpineIndex, spineIndexToChapter } from '../utils/cfi';
 import { decodeProgressCursor, parseProgressTake } from '../utils/progress-pagination';
 import { ThumbnailQueue } from '../services/thumbnail-queue';
@@ -559,6 +560,23 @@ export function createUiRouter(
             error: `Failed to parse EPUB: ${err instanceof Error ? err.message : String(err)}`,
           });
           return;
+        }
+        try {
+          await assertValidEpub(fs.readFileSync(savedPath));
+        } catch (err: unknown) {
+          try {
+            fs.unlinkSync(savedPath);
+          } catch {
+            /* file may already be gone */
+          }
+          if (err instanceof EpubValidationError) {
+            res.status(400).json({
+              error: 'EPUB failed validation',
+              validation: { messages: err.messages, counts: err.counts },
+            });
+            return;
+          }
+          throw err;
         }
         // parseEpub falls back to the file's basename when no dc:title is present.
         // Since savedPath is a staging path with a unique prefix, we must ignore
