@@ -1,10 +1,10 @@
 import { createUseStyles, type Theme } from '~/provider/theme';
 
 export const useStyle = createUseStyles((theme: Theme) => {
-  // Concentric inner corner: the lens/segments are inset from the track's outer edge by
-  // the track's 1px border + `space.xxs` padding, so their radius must be the track's
-  // radius minus that inset for the corners to nest evenly.
-  const innerRadius = `calc(${theme.radius.md} - ${theme.space.xxs} - 1px)`;
+  // The lens fills the track edge-to-edge (no padding gap), so its corners sit directly
+  // against the track's 1px border. Matching the track's inner radius (outer radius minus
+  // the border) makes the two corners coincide — one rounded edge, no nested "double" radii.
+  const innerRadius = `calc(${theme.radius.md} - 1px)`;
 
   return {
     // Equal-width columns: every segment is `1fr`, so the lens has a constant width
@@ -15,7 +15,7 @@ export const useStyle = createUseStyles((theme: Theme) => {
       display: 'grid',
       gridAutoFlow: 'column',
       gridAutoColumns: '1fr',
-      padding: theme.space.xxs,
+      padding: 0,
       backgroundColor: theme.color.bg.card,
       borderStyle: 'solid',
       borderWidth: '1px',
@@ -25,20 +25,18 @@ export const useStyle = createUseStyles((theme: Theme) => {
       '-webkit-user-select': 'none',
       '&$disabled': { opacity: 0.5, cursor: 'not-allowed' },
     },
-    // The active highlight. Width = inner track / count; slides one own-width per step.
-    // Styled as a raised button-like tile (input surface + hairline border + the flat
-    // `cardStack` stack-shadow) to match the app's other controls — no blurred drop shadow.
+    // The active highlight fills the full track height and one column, sliding one own-width
+    // per step. Raised button-like tile: `input` surface + the flat `cardStack` stack-shadow
+    // (no blurred drop shadow). It carries no border of its own — flush against the track,
+    // a border would stack against the track's and read as a double line.
     lens: {
       position: 'absolute',
       zIndex: 0,
-      top: theme.space.xxs,
-      bottom: theme.space.xxs,
-      left: theme.space.xxs,
-      width: `calc((100% - 2 * ${theme.space.xxs}) / var(--seg-count))`,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      width: `calc(100% / var(--seg-count))`,
       backgroundColor: theme.color.bg.input,
-      borderStyle: 'solid',
-      borderWidth: '1px',
-      borderColor: theme.color.border.default,
       boxShadow: theme.shadow.cardStack,
       borderRadius: innerRadius,
       transform: 'translateX(calc(var(--seg-index) * 100%))',
