@@ -17,9 +17,30 @@ import { createUiRouter } from './ui';
 import { AppConfig, EpubMeta, Owner } from '../types';
 
 jest.mock('../logger');
+jest.mock('../services/epub-validator', () => {
+  class EpubValidationError extends Error {
+    messages: { id: string; severity: string; message: string }[];
+    counts: Record<string, number>;
+    constructor(
+      messages: { id: string; severity: string; message: string }[],
+      counts: Record<string, number>
+    ) {
+      super('EPUB failed validation');
+      this.name = 'EpubValidationError';
+      this.messages = messages;
+      this.counts = counts;
+    }
+  }
+  return {
+    EpubValidationError,
+    assertValidEpub: jest.fn().mockResolvedValue({ valid: true }),
+  };
+});
 jest.setTimeout(30000);
 import { ThumbnailQueue } from '../services/thumbnail-queue';
 import { ScanJobStore } from '../services/scan-job-store';
+import { assertValidEpub, EpubValidationError } from '../services/epub-validator';
+const mockAssertValid = assertValidEpub as jest.MockedFunction<typeof assertValidEpub>;
 
 // The SPA routes call res.sendFile('client/dist/index.html'). Create a
 // minimal placeholder before the suite runs so the file exists in CI.
@@ -691,6 +712,31 @@ describe('POST /api/books/upload', () => {
     const stagingDir = path.join(booksDir, '.staging');
     const staged = fs.existsSync(stagingDir) ? fs.readdirSync(stagingDir) : [];
     expect(staged).toEqual([]);
+  });
+
+  it('rejects an EPUB that fails validation with 400 and does not store it', async () => {
+    const epubBuf = makeEpub({ title: 'Bad Book', author: 'A' });
+    mockAssertValid.mockRejectedValueOnce(
+      new EpubValidationError([{ id: 'RSC-005', severity: 'ERROR', message: 'parse error' }], {
+        FATAL: 0,
+        ERROR: 1,
+        WARNING: 0,
+        INFO: 0,
+        USAGE: 0,
+      })
+    );
+    const token = await loginAlice();
+    const res = await request(app)
+      .post('/api/books/upload')
+      .set(...bearer(token))
+      .attach('files', epubBuf, 'bad.epub');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/validation/i);
+    expect(res.body.validation.messages[0].id).toBe('RSC-005');
+
+    const onDisk = fs.readdirSync(booksDir).filter((f) => f.endsWith('.epub') && !f.startsWith('staged-'));
+    expect(onDisk).toHaveLength(0);
   });
 });
 
