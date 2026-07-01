@@ -51,7 +51,7 @@ export const UserProgressRow = ({ bookId, username }: UserProgressRowProps) => {
     return null;
   }
 
-  const bookTitle = book?.title ?? progress.document;
+  const bookTitle = book ? book.titleSort || book.title : progress.document;
   const isUnresolved = book === undefined && !bookLoading;
 
   const metadataList: string[] = [];

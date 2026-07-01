@@ -234,3 +234,43 @@ describe('UserProgressRow — Clear functionality', () => {
     await waitFor(() => expect(screen.getByText('Failed to clear progress')).toBeDefined());
   });
 });
+
+describe('UserProgressRow — title display', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  const setupWithBook = (book: Book) => {
+    vi.mocked(useIsAdmin).mockReturnValue([false, false] as ReturnType<typeof useIsAdmin>);
+    vi.mocked(useBook).mockReturnValue([book, false, false, undefined] as ReturnType<
+      typeof useBook
+    >);
+    vi.mocked(useUserProgress).mockReturnValue([
+      { document: book.id, percentage: 0.5, device: 'Kobo', timestamp: 1000 },
+      false,
+      false,
+      undefined,
+    ] as ReturnType<typeof useUserProgress>);
+    vi.mocked(useDeleteUserProgress).mockReturnValue([
+      vi.fn<(bookId: string) => Promise<boolean>>().mockResolvedValue(true),
+      false,
+      false,
+      undefined,
+    ] as unknown as ReturnType<typeof useDeleteUserProgress>);
+  };
+
+  it('prefers titleSort over title', () => {
+    setupWithBook({
+      id: 'book-1',
+      title: 'The Great Gatsby',
+      titleSort: 'Great Gatsby, The',
+    } as unknown as Book);
+    renderWithProviders(<UserProgressRow bookId="book-1" username="alice" />);
+    expect(screen.getByText('Great Gatsby, The')).toBeDefined();
+    expect(screen.queryByText('The Great Gatsby')).toBeNull();
+  });
+
+  it('falls back to title when titleSort is empty', () => {
+    setupWithBook({ id: 'book-1', title: 'Foundation', titleSort: '' } as unknown as Book);
+    renderWithProviders(<UserProgressRow bookId="book-1" username="alice" />);
+    expect(screen.getByText('Foundation')).toBeDefined();
+  });
+});
