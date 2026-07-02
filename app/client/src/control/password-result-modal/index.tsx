@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { copyToClipboard } from '~/utils';
+
 import { Button } from '../button';
 
 import { useStyle } from './style';
@@ -64,7 +66,8 @@ export function PasswordResultModal({
 
   const handleCopy = useCallback(async () => {
     if (!password) return;
-    await navigator.clipboard.writeText(password);
+    const ok = await copyToClipboard(password);
+    if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [password]);

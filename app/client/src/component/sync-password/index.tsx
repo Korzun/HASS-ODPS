@@ -5,6 +5,7 @@ import { Button, ConfirmModal } from '~/control';
 import { AlertOctagonIcon, CheckIcon, KeyIcon } from '~/icon';
 import { useToast } from '~/provider/toast';
 import { useRegenerateSyncPassword, useSyncPassword } from '~/provider/user';
+import { copyToClipboard } from '~/utils';
 
 import { useStyle } from './style';
 
@@ -21,10 +22,14 @@ export const SyncPassword = () => {
 
   const handleCopy = useCallback(async () => {
     if (!displayPassword) return;
-    await navigator.clipboard.writeText(displayPassword);
+    const ok = await copyToClipboard(displayPassword);
+    if (!ok) {
+      showToast('Failed to copy sync password', 'error');
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [displayPassword]);
+  }, [displayPassword, showToast]);
 
   const handleRegenerateClick = useCallback(() => setShowConfirm(true), []);
   const handleCancel = useCallback(() => setShowConfirm(false), []);
