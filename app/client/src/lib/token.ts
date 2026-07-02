@@ -61,6 +61,19 @@ export const decodeClaims = (token: string): AuthClaims | null => {
 export const isExpired = (claims: AuthClaims): boolean => claims.exp * 1000 <= Date.now();
 
 /**
+ * Stable per-user identity for the current access token, or null when there is
+ * no valid token (logged out). Prefers the DB user id; falls back to username
+ * for the config-based admin, whose token carries no `sub`. Used to scope
+ * device-local preferences so they follow the user, not the browser.
+ */
+export const currentIdentity = (): string | null => {
+  const token = getToken();
+  if (!token) return null;
+  const claims = decodeClaims(token);
+  return claims ? (claims.userId ?? claims.username) : null;
+};
+
+/**
  * Pulls the accessToken string out of an auth response body, or null when
  * the shape is wrong — guards against persisting "undefined" as a token.
  */
