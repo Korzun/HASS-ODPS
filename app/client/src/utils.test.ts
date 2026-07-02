@@ -1,11 +1,45 @@
 import {
   areObjectArraysIdentical,
   areStringArraysIdentical,
+  copyToClipboard,
   formatSize,
   formatTimestamp,
   generateUUID,
   relativeTime,
 } from './utils';
+
+describe('copyToClipboard', () => {
+  it('uses navigator.clipboard when available (secure context)', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    await expect(copyToClipboard('secret')).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith('secret');
+  });
+
+  it('falls back to execCommand when navigator.clipboard is unavailable (HTTP)', async () => {
+    // @ts-expect-error simulating a non-secure (HTTP) context
+    navigator.clipboard = undefined;
+    const execCommand = vi.fn().mockReturnValue(true);
+    // @ts-expect-error execCommand is not typed on the jsdom document
+    document.execCommand = execCommand;
+
+    await expect(copyToClipboard('secret')).resolves.toBe(true);
+    expect(execCommand).toHaveBeenCalledWith('copy');
+  });
+
+  it('falls back to execCommand when navigator.clipboard.writeText rejects', async () => {
+    Object.assign(navigator, {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+    });
+    const execCommand = vi.fn().mockReturnValue(true);
+    // @ts-expect-error execCommand is not typed on the jsdom document
+    document.execCommand = execCommand;
+
+    await expect(copyToClipboard('secret')).resolves.toBe(true);
+    expect(execCommand).toHaveBeenCalledWith('copy');
+  });
+});
 
 describe('generateUUID', () => {
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;

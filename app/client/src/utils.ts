@@ -16,6 +16,39 @@ export function generateUUID(): string {
   });
 }
 
+// navigator.clipboard requires a secure context (HTTPS). Home Assistant is often
+// served over HTTP on the local network, so we fall back to a temporary textarea
+// and the legacy execCommand('copy'). Returns whether the copy succeeded.
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // fall through to the legacy path (e.g. permission denied, not focused)
+    }
+  }
+
+  if (typeof document === 'undefined') return false;
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  // Keep it out of view and prevent scrolling/zoom side effects.
+  textarea.style.position = 'fixed';
+  textarea.style.top = '-9999px';
+  textarea.setAttribute('readonly', '');
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
 export function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
