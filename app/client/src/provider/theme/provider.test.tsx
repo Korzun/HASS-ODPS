@@ -3,8 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeJwt } from '~/lib/test-jwt';
+import { clearToken, setToken } from '~/lib/token';
+
 import { Context } from './context';
 import { ThemeProvider } from './provider';
+
+// A signed-in access token for the given user, wrapped in act because
+// setToken/clearToken dispatch the token-changed event the provider listens to.
+const tokenFor = (sub: string) =>
+  makeJwt({ sub, username: sub, isAdmin: false, mustChangePassword: false, exp: 9999999999 });
+const login = (sub: string) => act(() => setToken(tokenFor(sub)));
+const logout = () => act(() => clearToken());
 
 // Controllable matchMedia: tests set `current.matches` and fire change listeners.
 const current = { matches: false, listeners: new Set<(e: { matches: boolean }) => void>() };
@@ -84,8 +94,9 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('mode')).toHaveTextContent('dark');
   });
 
-  it('persists an explicit choice and ignores the OS', async () => {
+  it('persists a signed-in user’s explicit choice under a per-user key', async () => {
     const user = userEvent.setup();
+    login('alice');
     const { unmount } = render(
       <ThemeProvider>
         <Probe />
@@ -93,7 +104,9 @@ describe('ThemeProvider', () => {
     );
     await user.click(screen.getByText('go dark'));
     expect(screen.getByTestId('mode')).toHaveTextContent('dark');
-    expect(localStorage.getItem('theme-setting')).toBe('dark');
+    expect(localStorage.getItem('theme-setting:alice')).toBe('dark');
+    // No stray global key that could leak across users / survive logout.
+    expect(localStorage.getItem('theme-setting')).toBeNull();
 
     unmount();
     installMatchMedia(); // OS = light
@@ -104,5 +117,54 @@ describe('ThemeProvider', () => {
     );
     expect(screen.getByTestId('setting')).toHaveTextContent('dark');
     expect(screen.getByTestId('mode')).toHaveTextContent('dark');
+  });
+
+  it('returns to auto when the user logs out', async () => {
+    const user = userEvent.setup();
+    login('alice');
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>
+    );
+    await user.click(screen.getByText('go dark'));
+    expect(screen.getByTestId('mode')).toHaveTextContent('dark');
+
+    logout();
+    expect(screen.getByTestId('setting')).toHaveTextContent('auto');
+    expect(screen.getByTestId('mode')).toHaveTextContent('light'); // follows OS again
+  });
+
+  it('restores the user’s saved choice when they log back in', async () => {
+    const user = userEvent.setup();
+    login('alice');
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>
+    );
+    await user.click(screen.getByText('go dark'));
+    logout();
+    expect(screen.getByTestId('setting')).toHaveTextContent('auto');
+
+    login('alice');
+    expect(screen.getByTestId('setting')).toHaveTextContent('dark');
+    expect(screen.getByTestId('mode')).toHaveTextContent('dark');
+  });
+
+  it('does not leak one user’s choice to another', async () => {
+    const user = userEvent.setup();
+    login('alice');
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>
+    );
+    await user.click(screen.getByText('go dark'));
+    logout();
+
+    login('bob');
+    expect(screen.getByTestId('setting')).toHaveTextContent('auto');
+    expect(screen.getByTestId('mode')).toHaveTextContent('light');
   });
 });

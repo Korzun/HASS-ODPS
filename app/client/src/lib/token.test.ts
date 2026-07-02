@@ -5,6 +5,7 @@ import {
   AuthClaims,
   TOKEN_CHANGED_EVENT,
   clearToken,
+  currentIdentity,
   decodeClaims,
   extractAccessToken,
   getToken,
@@ -117,5 +118,36 @@ describe('isExpired', () => {
   it('is false before exp and true after', () => {
     expect(isExpired(claims(Math.floor(Date.now() / 1000) + 60))).toBe(false);
     expect(isExpired(claims(Math.floor(Date.now() / 1000) - 60))).toBe(true);
+  });
+});
+
+describe('currentIdentity', () => {
+  it('is null when logged out', () => {
+    expect(currentIdentity()).toBeNull();
+  });
+
+  it('prefers the user id (sub) when present', () => {
+    setToken(
+      makeJwt({
+        sub: 'u1',
+        username: 'alice',
+        isAdmin: false,
+        mustChangePassword: false,
+        exp: 9999999999,
+      })
+    );
+    expect(currentIdentity()).toBe('u1');
+  });
+
+  it('falls back to username for the config admin (no sub)', () => {
+    setToken(
+      makeJwt({ username: 'admin', isAdmin: true, mustChangePassword: false, exp: 9999999999 })
+    );
+    expect(currentIdentity()).toBe('admin');
+  });
+
+  it('is null when the token is malformed', () => {
+    setToken('not-a-jwt');
+    expect(currentIdentity()).toBeNull();
   });
 });
